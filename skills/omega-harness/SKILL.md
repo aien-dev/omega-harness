@@ -74,6 +74,29 @@ When an error repeats:
 
 Record only the verified causal lesson, with its pin and the condition that would invalidate it. Never turn an untested workaround into an unconditional rule.
 
+## 6. Keep the guides current (part of every task)
+
+Whichever agent makes a change also updates the guides. Do not leave it for someone else. A task that changes something these skills describe is not done until the matching skill matches the new reality.
+
+Before you finish, check whether your change touched any of these, and update the skill that covers it:
+
+| You changed | Update |
+|---|---|
+| Omega syntax, keywords, types, traps, limits, error codes, host or device words, the compiler or its pin | `omega-encoding`, plus the pins in `omega-harness` |
+| Build, compile, gate or verification commands, or the seed procedure | `omega-harness` sections 3 and 4 |
+| Conversion, encoder or bridge behavior, or what it supports | the conversion note in `omega-harness` section 2, and the README |
+| Status vocabulary, receipts, report or handoff conventions, wire formats | `omega-communication` |
+| Repository purpose, ownership, names, archive state, plan authority, merge or Alpha policy, a resolved or new contradiction | `aien-repositories` |
+| These skills, their install method or their layout | the README and the affected skill |
+
+How to do it:
+
+1. Edit the guide in the same piece of work as the change. Give the new source commit and date, and remove any rule the change made untrue; do not just add a contradicting one.
+2. If an example or expected output changed, rerun it against the new pin and record what you observed. Never copy a predicted result into the guide.
+3. Open a pull request on `aien-dev/omega-harness` with the evidence, and link it to the change that caused it. If that change is not merged yet, open the guide PR as a draft and say it is pending until the change lands.
+4. If you are not allowed to change the guide, or you are unsure, open an issue on `aien-dev/omega-harness` describing exactly what is now stale, and say so in your report. Silence is not an option.
+5. Your final report must say one of two things: which guides you updated, or that no guide was affected and why.
+
 ## Sources
 
 - Shared public rules: https://www.aienos.com/agents/RULES.md
