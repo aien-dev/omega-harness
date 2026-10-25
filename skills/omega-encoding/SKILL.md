@@ -270,6 +270,21 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
   qualified host ([#L739-L743](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L739-L743)).
 - Evidence for any host claim: compiler sha256, source sha256, output binary sha256, exact command,
   exit status, and the observed bytes. A program that ignores a negative result is not evidence.
+- Measured 2026-10-25 while building a disk image with the seed (`omc` 734f0a39-era branch build),
+  the failures that cost the most wasted compiles:
+  - A **global** array is never an argument; only a local or an array parameter is. `read fd G ...`
+    with `G` a global is refused — make the buffer local in the function or pass an `edit uchar N`
+    parameter. Correspondingly, registers are the constraint: about ten live names plus deep nested
+    calls hit error 12, so precompute into a small global pool (`put Tv 0 ...` / `get Tv 0`) instead
+    of nesting four-deep arithmetic in an argument.
+  - `fopen` returns `long`, but `read`, `write`, `fclose`, `fsync`, `fseek`, `ftrunc` and `fchmod`
+    take `fd` as `int`: `read int fi A 0 n`. `fseek`'s offset and `ftrunc`'s length are `long`, so a
+    `ulong` constant must be converted explicitly (`ftrunc int fo long IMGLN`); a plain `ulong`
+    value there is error 7, not a quiet narrowing.
+  - There are no implicit conversions in any argument position: mixing a `ulong` value with a
+    `uchar` array element (`xor c get A i`) is error 7 until you write `xor c ulong get A i`.
+  - Host words and `global` need program mode: without `fn main` the unit compiles in function mode
+    and every host word is error 9 with an empty output file, which reads like a broken pin.
 
 ## 10. Wire serialization (only what the pin defines)
 

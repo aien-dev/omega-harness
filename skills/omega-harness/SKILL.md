@@ -29,6 +29,7 @@ Companion skills in this package:
 - Reuse the existing unit composition, error handling, buffer layouts and build patterns. Make bounds, types, ownership, effects and wire encodings explicit. Keep authorization and refusal paths working, not just the happy-path bytes.
 - Migrate the actual consumers before deleting a replaced implementation. Preserve history and immutable evidence. Matching a recorded hash does not prove parity with the current foreign reference; where the contract calls for it, run an independently built oracle.
 - Conversion between Omega and other languages is not this skill's job. Route it to `aien-dev/omega-bridge`, which implements checked conversion for a declared subset and refuses universal conversion. An MCP wrapper is optional tooling and does not widen what the bridge can convert.
+- No outside dependency is adopted silently (Drake, 2026-10-25). When the work needs one, either write it in seeded Omega or import it through `aien-dev/omega-bridge` — importing is usually cheaper than hand-writing the Omega. A host binary, library or language runtime that remains in the build or runtime path gets its exact version, what it does for us, and the Omega/bridge replacement recorded next to the artifact. Do not shell out to a host tool for logic the product is supposed to own, and do not hand-roll Omega for something the bridge already converts.
 
 ## 3. Compile, execute, challenge
 
