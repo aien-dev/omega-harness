@@ -7,7 +7,7 @@ description: What AIEN builds and which repository owns a task: mission, doctrin
 
 Use this guide when choosing an AIEN repository, explaining the project, or making a cross-repository/status claim. This is routing knowledge, not permission to publish, merge, rename repositories, access hardware or change a live service.
 
-**Source snapshot: 2026-10-25.** Start with [the live agent entrypoint](https://www.aienos.com/agents/), [shared rules](https://www.aienos.com/agents/RULES.md) and [machine-readable catalog](https://www.aienos.com/data/agent-repos.json). The catalog read for this guide was generated at `2026-10-25T20:44:58Z`, listing 56 public repositories. It supplies actual default branches, instruction filenames, fork and archived flags. It is an hourly discovery index, not proof of implementation or deployment. Follow its linked `AGENTS.md` or `CLAUDE.md`, then the relevant directory's `.crumb` and source.
+**Source snapshot: 2026-10-25.** Start with [the live agent entrypoint](https://www.aienos.com/agents/), [shared rules](https://www.aienos.com/agents/RULES.md) and [machine-readable catalog](https://www.aienos.com/data/agent-repos.json). The catalog read for this guide was generated at `2026-10-25T21:31:00Z`, listing 57 public repositories. It supplies actual default branches, instruction filenames, fork and archived flags. It is an hourly discovery index, not proof of implementation or deployment. Follow its linked `AGENTS.md` or `CLAUDE.md`, then the relevant directory's `.crumb` and source.
 
 ## What AIEN is trying to build
 
@@ -80,6 +80,7 @@ For memory, do not route to an archived repo just because its name sounds right.
 - [synapse](https://github.com/aien-dev/synapse): agent-native changesets/coordination with Git/Radicle interoperability. A coordination claim is not a verification verdict.
 - [spark-connector](https://github.com/aien-dev/spark-connector): volunteer-verification connector; enrollment is not blanket permission to execute hardware or change trust anchors.
 - [agent-archive](https://github.com/aien-dev/agent-archive): conversation provenance. A transcript retains what an agent said, not proof the claim was true. Never export private transcript content by default.
+- [omega-harness](https://github.com/aien-dev/omega-harness): the agent skill guides themselves (`omega-harness`, `omega-encoding`, `omega-communication`, and this `aien-repositories`). Guidance, not a compiler or a gate. Whichever agent makes a change updates the matching skill in the same piece of work, or opens an issue naming what is stale.
 
 ### User-facing and supporting projects
 
