@@ -270,8 +270,10 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
   qualified host ([#L739-L743](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L739-L743)).
 - Evidence for any host claim: compiler sha256, source sha256, output binary sha256, exact command,
   exit status, and the observed bytes. A program that ignores a negative result is not evidence.
-- Measured 2026-10-25 while building a disk image with the seed (`omc` 734f0a39-era branch build),
-  the failures that cost the most wasted compiles:
+- Measured 2026-10-25 while building a disk image with the seed compiler `seed/out/omc` sha256
+  `c99eda2465036c0637a444689a65dd7fc736e4fa8a8b4cf3456b0ce1b57f8996` (omega branch
+  `feat/allen-imac-competition` `c3fb79697`, off main `55f9b0af`). These are NOT re-measured at the
+  `734f0a39…` pin. The failures that cost the most wasted compiles:
   - A **global** array is never an argument; only a local or an array parameter is. `read fd G ...`
     with `G` a global is refused — make the buffer local in the function or pass an `edit uchar N`
     parameter. Correspondingly, registers are the constraint: about ten live names plus deep nested
