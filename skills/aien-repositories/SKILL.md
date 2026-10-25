@@ -78,6 +78,7 @@ For memory, do not route to an archived repo just because its name sounds right.
 - [aien-receipts](https://github.com/aien-dev/aien-receipts): append-only published verification records, indexed by exact repository/commit. Read signatures, verdicts, retained logs, required check set and backend, not just a summary badge.
 - [benchmarks-mv](https://github.com/aien-dev/benchmarks-mv): measurement methods and bundles. Distinguish MEASURED from MODELED and compare the declared experiment with its physical ceiling and previous run.
 - [synapse](https://github.com/aien-dev/synapse): agent-native changesets/coordination with Git/Radicle interoperability. A coordination claim is not a verification verdict.
+- [omega-harness](https://github.com/aien-dev/omega-harness): the shared agent operating guides (`omega-harness`, `omega-encoding`, `omega-communication`, `aien-repositories`), installed locally under `~/.omp/agent/skills`. Whoever changes Omega syntax, gates, status vocabulary or repository ownership updates the matching skill in the same piece of work, as a draft PR while the causing change is unmerged. A guide is guidance, not qualification.
 - [spark-connector](https://github.com/aien-dev/spark-connector): volunteer-verification connector; enrollment is not blanket permission to execute hardware or change trust anchors.
 - [agent-archive](https://github.com/aien-dev/agent-archive): conversation provenance. A transcript retains what an agent said, not proof the claim was true. Never export private transcript content by default.
 
@@ -98,6 +99,8 @@ Keep **proposed**, **implemented**, **verified**, **qualified** and **deployed**
 **Merge is not Alpha.** The inspected [Omega workflow](https://github.com/aien-dev/omega-mv/blob/main/.github/workflows/aien-verification.yml) header explicitly says GitHub checks are advisory and do not gate merges, while `alpha/*` tags require a signed full Spark bundle for a commit on main. Inspect the bundle's actual backends and coverage before saying hardware-qualified. Do not generalize one repo's workflow or historical README to all merge policy; never add an automatic merge label without authority.
 
 Observed contradictions to keep visible, not silently reconcile:
+
+- omega-mv `main` compiles OM-1 only, while the OM-2 profile (hex literals, `rotr`/`rotl`, `unroll`, `inline`, `layout`, `fresh`, `abstract`/`holds dup32`, unsized views with `part`, `out`, `export`, errors 27-29) is implemented and qualified on the draft stack `om2/compiler-s4` @ `f6a6492fd` (#750 #753 #754 #764) with the normative contract on `om2/contract`. Draft-branch syntax is not available on `main`; merging the stack moves `main`'s `OMC_PIN`. Do not cite an OM-2 fixture as a `main` capability.
 
 - The AienOS README describes an older universal Spark-before-merge process. Its [newer repository instructions](https://github.com/aien-dev/aienix/blob/main/AGENTS.md) warn that historical README prose is not current merge policy.
 - Omega README's opening candidate wording coexists with its explicit statement that the seeded compiler landed from PR #696. Its source and current instructions determine availability, not the older introductory sentence.

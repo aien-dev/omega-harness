@@ -23,6 +23,10 @@ Everything below was read from one pin. Re-check before relying on it; the compi
 
 Every citation links to that commit: `https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/<path>#L<n>`.
 
+Sections 1-13 describe OM-1, which is what `main` compiles. **Section 14 is a second, opt-in profile
+(OM-2) that exists only on unmerged draft branches** as of 2026-10-25, with its own compiler pin and
+its own words, checks and error codes. Read section 14 before writing anything that uses them.
+
 Re-check recipe (read only, in a fresh clone, never in a shared working tree another agent may be using):
 
 ```sh
@@ -311,6 +315,9 @@ A refused compile may still leave bytes on stdout. Never run output from a non-z
 Capacity boundaries are gated in `seed/omc/gate12.sh` (e.g. 1024 globals accepted, 1025 refused;
 511 functions plus `main` accepted, 512 plus `main` refused).
 
+Codes 1-23 are OM-1. An OM-2 unit (section 14) adds 27 (`obligation=init`), 28 (`ctor`) and 29
+(`layout`), and reuses 14 for expansion fuel and slot overflow with `obligation=growth`.
+
 ## 12. Before any claim
 
 1. Inspect the compiler, not memory. Find the rule in `omc.om` or a gate fixture at the pinned commit
@@ -360,3 +367,159 @@ x = add get b 0 uint 1
 ret int x
 end
 ```
+
+## 14. Profile OM-2 (opt-in per unit; draft branches only)
+
+Status on 2026-10-25: **IMPLEMENTED on unmerged draft branches, QUALIFIED there by the repository's
+own qualification lane, not on `main`.** `main` compiles OM-1 only (section 0 pins). Do not use these
+words in a unit you expect `main`'s compiler to accept, and re-read this section at whatever pin you
+actually run.
+
+| Item | Value |
+|---|---|
+| Compiler branch | `aien-dev/omega-mv`, `om2/compiler-s4` @ `f6a6492fd` (stack: #750 #753 #754 #764, draft) |
+| Compiled `omc` | sha256 `499236398aabc652e2dae27fe4bdc4c5db3d3726314356e0dbef23e3345803ec` |
+| Normative contract | `spec/omegese-om2.md` @ `om2/contract` (`245bb74e…0881`), plus `spec/omegese-om2-errata.md` (E1-E18) |
+| Implemented-by description | `docs/one_layer/OMEGESE.md` §9.13 on that branch |
+| Error/`diag` behaviour | OMEGESE §9.13 on that branch; qualification records in the #752 branch |
+
+The contract plus its errata are normative; OMEGESE §9.13 says what `omc` implements of it. Where this
+section and either of those disagree, they win and this section is stale.
+
+**Opt-in.** Leading blank and `note` lines are skipped. If the next line is exactly `om2`, `om2 diag`
+or `om2 fmt`, the unit is OM-2. Otherwise it is OM-1 and nothing changes: in OM-1 these words are not
+reserved, so `rotr` is an unknown word (error 3) but remains usable as your own name.
+
+**Reserved in OM-2 only:** `rotr rotl unroll inline fresh abstract seal open holds layout field at
+little big part out export ops`. Using one as a name is error 16 there.
+
+**`om2 diag`** appends machine records to stderr after the unchanged human line: `omc-diag 1 code=E
+sev=S line=N col=C span=A-B expect=K found=H obligation=O profile=OM-2`, plus `omc-site 1 line=N
+iter=k` per runtime trap site and `omc-check 1 kept|erased line=N rule=dup32|-` per `seal`. `found` is
+the offending bytes as hex (≤32 bytes), `-` when empty. Parse records by key, never by position.
+
+**`om2 fmt`** writes canonical text for the rest of the input (bytes after the first LF) and nothing
+else: blanks between words collapsed to one space except next to `(` or `)`, no trailing blanks, one
+final LF. It is idempotent and `compile(fmt(x))` is byte-identical to `compile(x)`. It refuses (16)
+unless `om2 fmt` is the very first line at byte 0.
+
+**Words that change what is checked**
+
+- `rotr x n`, `rotl x n`: `x` and `n` one unsigned type; result `x`'s type. A number `n` outside
+  `0..w-1` traps 7 at run time, not compile time. `uint`/`ulong` with a number `n` lower to one
+  `ROR`/`EXTR`; other cases check the amount then use `RORV`.
+- `for i T K unroll`: `K` a literal 1..64. The body is emitted K times with `i` constant, so
+  `break`/`continue` whose innermost loop is that loop is error 9 and a write to `i` is error 7.
+  Removing `unroll` cannot change behaviour; it only changes size and speed.
+- `fn NAME ... to T inline`: each call is expanded in place; the standalone body is still emitted.
+  `new` inside it, or reaching an inline function again (directly or through non-inline calls) is
+  error 9. A fifth nesting level and a 65th copy of one loop are error 14. An argument that is a
+  number is materialised in a register, so folding does **not** reach through parameters.
+- Folding happens only inside an unrolled or inlined body, on typed numbers, and never for an
+  operation that would trap (signed overflow, divisor 0, shift at or above the width) and never for a
+  conversion. A **number** index into a sized array up to 4095 becomes an immediate offset with no
+  runtime check; every other index keeps trap 3. Never assume constant propagation through
+  parameters.
+
+**Capacity you will hit** (all error 14 with `obligation=growth`, except registers):
+
+- 65536 expansion fuel per function, charged in emission order: an unrolled loop costs K when it
+  starts, an inline call 1 at its call line; exactly 65536 is allowed. Two nested 64-copy unrolls
+  (4160) compile, three do not.
+- 65536 emitted words per function; 64 copies per unrolled loop; 4 inline levels.
+- 16 registers (error 12) still bound every function, unrolled or not.
+- 6 parameter slots (error 9). An unsized `view`/`edit` takes **two** slots (pointer, count); a
+  scalar, a sized array, a layout or `out` takes one.
+- Inline functions are also compiled standalone, in source order, each with its own fuel, so a fuel
+  error names the first function in source order that runs out, not necessarily one you called.
+
+**Declarations that move checks from run time to compile time**
+
+```
+layout blk 8
+field lo uint at 0 little
+field hi uint at 4 little
+end
+```
+
+`layout NAME SIZE` then `field F T [COUNT] at OFF little|big` lines then `end`, at top level before the
+first `fn`. `T` is any integer type; a signed field is sign-extended on read; `COUNT` omitted means a
+scalar (E5). A field past `SIZE`, or a byte shared with an earlier field, is error 29 at that field
+line.
+
+- A parameter is `c view blk` / `c edit blk` and is a `uchar` array of exactly `SIZE` bytes (one
+  pointer). `get c F`, `get c F i`, `put c F v`, `put c F i v` use the field's width and byte order.
+- **A field is read through a layout parameter, not a plain local array.** `c = new uchar 8 0` then
+  `get c lo` is error 3 (unknown field); pass `c` to a function taking `view blk`, or read bytes
+  with `get c 0`. Field names also shadow locals in that position (E15).
+
+`fn f s edit uint 8 fresh to uint` declares scratch whose incoming elements are undefined. `omc`
+tracks, per fresh array, which elements are definitely written on the compiled path; a `get` of an
+element that is not definitely written is error 27 (`obligation=init`) on that line. An `if` without
+`else`, a `while` and a rolled `for` do not advance the set; an `if/else` keeps what both arms wrote;
+an unrolled or inlined body keeps what it wrote. Passing a fresh array to a non-inline call, or to
+`read`/`write`, is error 27 as well. Length at most 64 and at most 16 fresh arrays per function.
+
+```
+abstract v32 ulong
+holds v32 dup32
+fn v32mk x uint to v32
+ret seal v32 or shl ulong x 32 ulong x
+end
+```
+
+`abstract NAME T [ops W ...]` (`T` `uint`/`ulong`, `W` from `rotr rotl and or xor`) and `holds NAME
+dup32` are separate top-level lines before the first `fn`. A value of `NAME` is made only by `seal NAME
+v` inside the function `NAME` followed by `mk` that returns `NAME`; a `seal` anywhere else is error 28
+(`obligation=ctor`). `open v` gives the `T` value. Operations not listed by `ops`, a conversion, a
+comparison, an array or field of `NAME`, and `NAME` as an entry parameter or result are error 7.
+`holds NAME dup32` makes every `seal` check `high32 == low32` at run time (trap 10), **erased** only
+when the constructor body is exactly `ret seal NAME or shl ulong x 32 ulong x` with `x` a `uint`
+parameter — which is what makes the compact SHA-256 constructor free. `om2 diag` reports
+`kept`/`erased`, so never assume erasure: read the record.
+
+**Unsized views and slicing**
+
+- A parameter `a view T *` / `a edit T *` accepts any length: a sized array, another unsized one, or a
+  `text` (view only). `len a` is its run-time count. Every index into it is checked at run time,
+  including a number, and is never eliminated (no error 21 there either). A sized array never goes to
+  a sized parameter of a different length (error 7).
+- `part A o k` (o, k `ulong`) is only an argument for an **unsized** parameter (anywhere else, error 9;
+  a sized parameter, error 7). `o` is read, then `k`, then `o <= len A` and `k <= len A - o` are
+  checked in that order (trap 3); `o + k` is never formed, so the 2^64 wrap is not a bypass. For the
+  distinct-name rule (error 19) a part is its base array: `A` and a part of it, or two parts of `A`
+  in one call, are error 19 whatever the ranges.
+- A part of a local or an `edit` is an `edit` (or a `view` with `view` in front); a part of a `view` or
+  `text` is a `view`.
+- A `new` array is always sized; `fresh` needs a length.
+
+**Entry points and buffers**
+
+- `export fn NAME ...` marks a function-mode entry; with any export, words 0..E-1 are branches to the
+  exports in source order (E ≤ 32, a 33rd is error 14, `export` with `fn main` is error 9). Without
+  exports the OM-1 rule holds (word 0 branches to the last function).
+- `NAME out T N` is a buffer the caller owns; the binding copies it out after status 0. Inside the unit
+  it behaves as an `edit` of `T N`.
+- Function mode is still not runnable on its own; it is called through `aien-dev/omega-bridge`, which
+  owns the ABI and refuses what it cannot convert.
+
+**Verified example** `examples/om2-tour.om` uses hex literals, a `dup32` constructor, an unrolled fresh
+write, a layout parameter with both byte orders, an unsized view, `part`, and `rotr`. Observed
+2026-10-25, Linux AArch64, compiler sha256 `49923639…03ec`:
+
+| Check | Observed |
+|---|---|
+| compile `om2-tour.om` | exit 0, empty stderr |
+| run | exit 0 |
+| one constant changed inside `stamp` | exit 11 |
+| `holds v32 dup31` instead of `dup32` | compile exit 28, `omc: line 8: error 28` |
+| `x = uint 0x100000000` | compile exit 8 |
+| `x = uint 0X10` | compile exit 6 |
+| `part a 0 2` as a statement | compile exit 9 |
+| `rotr 1 1` in a unit without `om2` | compile exit 3 (unknown word in OM-1) |
+| `om2` twice | compile exit 16 |
+| `om2 fmt` applied twice | identical bytes; `compile(fmt(x))` exit 0 |
+
+Refusal codes seen there and in the qualification records (`obligation=` in brackets): 3, 4, 5, 6, 8,
+9, 12 (`regs`), 14 (`growth`/`init`), 16, 19, 20, 21, 27 (`init`), 28 (`ctor`), 29 (`layout`). A
+refused compile may still leave bytes on stdout; never run them.
