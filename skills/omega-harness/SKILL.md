@@ -20,6 +20,14 @@ Companion skills in this package:
 3. Work in an isolated checkout pinned to the canonical source. Do not use another agent's dirty working tree, and never checkout, reset or stash in a shared one. Read lock files and the contracts of callers and the build before choosing dependencies.
 4. Write a short plan: intended behavior, invariants, affected consumers, allowed effects, the acceptance command and a negative control. For device work, start from the hardware mechanism and its vendor manual. Having a tool installed does not authorize using it.
 
+## Mathematics goes through Wolfram (mandatory)
+
+Every computation, derivation, identity check, unit conversion and numeric constant goes through the
+Wolfram tools, not mental arithmetic and not a throwaway script. Read `skills/wolfram-math/SKILL.md`:
+it carries the rule, the MCP setup that any agent can perform without a human, the two verification
+calls, and the failure handling. A session whose Wolfram tools are not mounted is not math-capable:
+say so and stop rather than estimating.
+
 ## 2. Implement in the actual language
 
 - First-party implementation belongs in `.om`. Existing C, Rust and shell are unfinished migration, not permission to add more foreign code. Never pass off a foreign implementation as generated code, vendor code, glue or an `.om` file.
