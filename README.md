@@ -1,0 +1,57 @@
+# Omega Harness
+
+Agent skills for working in Omega, the `.om` language of AienOS, and in the AIEN repositories. An agent that loads these skills finds the actual source before acting, writes `.om` code that the seeded compiler accepts, runs what it builds, and reports its status without overstating it.
+
+Skills can't make agents flawless. What these do is turn the mistakes agents keep repeating into checks they must run before they claim anything: stale syntax, guessed compiler limits, compiling without running, labeling host-only runs as qualified, and choosing the wrong repository.
+
+| Skill | Use it for |
+|---|---|
+| [`omega-harness`](skills/omega-harness/SKILL.md) | The overall workflow: orient, implement in `.om`, compile, run, challenge, handle effects, learn from repeated errors |
+| [`omega-encoding`](skills/omega-encoding/SKILL.md) | The language the seeded compiler accepts: prefix words, types, traps, bounds, registers, host I/O, byte layouts, error codes, plus two runnable examples |
+| [`omega-communication`](skills/omega-communication/SKILL.md) | Status labels, reports, PR text, agent handoffs, receipts, wire formats, corrections |
+| [`aien-repositories`](skills/aien-repositories/SKILL.md) | What AIEN builds, who decides what, and which repository owns a task |
+
+The skills use the Agent Skills layout (`skills/<name>/SKILL.md` with `name` and `description` frontmatter), so any agent that reads that layout picks them up.
+
+## Install
+
+Clone the repository, then put the skill directories where your agent looks for skills:
+
+```sh
+git clone https://github.com/aien-dev/omega-harness.git
+```
+
+| Agent | Skill directory |
+|---|---|
+| oh-my-pi (`omp`) | `~/.omp/agent/skills/` or a project's `.omp/skills/` |
+| Claude Code | `~/.claude/skills/` or a project's `.claude/skills/` |
+| Codex and other Agent Skills readers | `~/.agents/skills/` or a project's `.agents/skills/` |
+
+```sh
+cp -R omega-harness/skills/* ~/.agents/skills/   # pick the directory for your agent
+```
+
+`omp` can also read them in place. Add the clone's `skills` directory to `skills.customDirectories` in `~/.omp/agent/config.yml`. Once installed, agents load a skill automatically when the task matches its description. In `omp` you can also invoke one directly with `/skill:omega-harness`.
+
+## Conversion
+
+These skills cover working in Omega itself. Conversion between Omega and other languages belongs to [`omega-bridge`](https://github.com/aien-dev/omega-bridge). It converts a declared, checked subset and refuses to attempt universal conversion. You can run an MCP server in front of it if you want automated conversion, but that wrapper doesn't let it convert anything beyond that subset.
+
+## Check the examples yourself
+
+The examples run on Linux AArch64 hosts only:
+
+```sh
+git clone https://github.com/aien-dev/omega-mv.git omega-src
+sha256sum omega-src/seed/out/omc   # 734f0a39319fbfa930bcc62cb30dbf06d47d78e126372b74f5baf478e6126b61 at the pin
+omega-src/seed/out/omc < skills/omega-encoding/examples/fnv1a32.om > fnv; echo "compile rc=$?"
+chmod +x fnv && printf abc | ./fnv | od -An -tx1   # 0b e9 47 1a
+```
+
+The `omega-encoding` skill (section 13) records the full set of observed results and the negative controls.
+
+## Keeping it current
+
+Each skill names the omega-mv commit it was checked against (main `55f9b0af47de70a3d06357985cf99ae3e45c016f`, 2026-10-25) and lists the known places where the sources disagree. When the compiler changes, recheck the cited lines, rerun the examples, then update the pins. Do not edit old evidence. Contributions follow the [shared AIEN agent rules](https://www.aienos.com/agents/RULES.md).
+
+Written by Drake Stapleton with AIEN agents. Apache License 2.0.

@@ -1,0 +1,113 @@
+---
+name: aien-repositories
+description: What AIEN builds and which repository owns a task: mission, doctrine, plan authority, task routing, evidence and status discipline, known source drift. Use before choosing an AIEN repository or making a cross-repository or status claim.
+---
+
+# AIEN: mission, ownership and evidence
+
+Use this guide when choosing an AIEN repository, explaining the project, or making a cross-repository/status claim. This is routing knowledge, not permission to publish, merge, rename repositories, access hardware or change a live service.
+
+**Source snapshot: 2026-10-25.** Start with [the live agent entrypoint](https://www.aienos.com/agents/), [shared rules](https://www.aienos.com/agents/RULES.md) and [machine-readable catalog](https://www.aienos.com/data/agent-repos.json). The catalog read for this guide was generated at `2026-10-25T20:44:58Z`, listing 56 public repositories. It supplies actual default branches, instruction filenames, fork and archived flags. It is an hourly discovery index, not proof of implementation or deployment. Follow its linked `AGENTS.md` or `CLAUDE.md`, then the relevant directory's `.crumb` and source.
+
+## What AIEN is trying to build
+
+AIEN, led by Drake Stapleton with agents as collaborators, is building persistent intelligent computing on owner-controlled hardware: an operating system, an explicit computational language, a machine realization layer, a host runtime and a reproducible verification/learning loop. The ambition is a system that turns an objective into explicit conditions, discovers how the available machine can realize them, verifies effects, acts and learns from the result. It is **research-grade and pre-alpha**, not a finished autonomous operating system or a promise of flawless verification.
+
+The short working doctrine is:
+
+> Weights suggest. Programs explain. Omega verifies. Physics authorizes. Evidence teaches.
+
+Read that with the [canonical responsibility boundaries](https://github.com/aien-dev/aien-architecture-mv/blob/main/PLAN_AUTHORITY.md): `ATLAS AWAKENS. ALLEN INTENDS. AIEN PROPOSES. OMEGA DEFINES. FORGE REALIZES. AEGIS VERIFIES. HARDWARE ACTS. EVIDENCE TEACHES.` These are responsibilities, not a literal turn order. FORGE is physical realization and policy, not a substitute security authority. AEGIS is the cross-cutting invariant checker, not automatically the repository named `aegis-runtime-mv`.
+
+- **Weights/model fluency propose**, never establish truth, permission or completed work. A persuasive explanation, generated program or model review is not a measured result.
+- **Programs make claims inspectable**: inputs, transformations, invariants, failure conditions and allowed effects. Omega aims to separate computational meaning from disposable machine representation. A semantic identity is not proof that a program is correct or authorized.
+- **Physics constrains realizability**: memory movement, locality, bandwidth, queues, scheduling and device/OS interfaces must be established, not invented. Removing a userspace library does not establish independence from the kernel, firmware or driver.
+- **Evidence teaches**: execute a declared experiment, retain failures and controls, bind observations to source, toolchain, command and environment, then distill a reusable lesson. This is experience-first learning, not turning fluent text into knowledge by storing it.
+- **Omega is the forward first-party implementation language**. Existing C, Rust, shell and other infrastructure are unfinished migration, not evidence that the destination changed. Qualify replacements, migrate actual consumers and remove superseded implementation while preserving history and immutable receipts. Do not rename foreign source or alter language statistics to pretend a migration happened. External interfaces and independent oracles need explicit roles.
+
+The default-branch [Omega README](https://github.com/aien-dev/omega-mv/blob/main/README.md) and [instructions](https://github.com/aien-dev/omega-mv/blob/main/AGENTS.md) distinguish the merged seeded `.om` compiler from legacy OSC/C and candidate-only work. The earlier M6 fixed-output self-copy result is not general compiler self-hosting. Compiler fixpoint, diverse compilation, GPU launch and end-to-end model execution are separate claims. Discover the current supported language and pins before writing `.om`; never infer them from an old model answer or skill.
+
+## Which authority answers which question?
+
+In [aien-architecture-mv](https://github.com/aien-dev/aien-architecture-mv):
+
+1. [PLAN_AUTHORITY.md](https://github.com/aien-dev/aien-architecture-mv/blob/main/PLAN_AUTHORITY.md) defines precedence.
+2. [doctrine/ARCHITECTURE.md](https://github.com/aien-dev/aien-architecture-mv/blob/main/doctrine/ARCHITECTURE.md) owns responsibilities and terminology.
+3. [doctrine/ROADMAP.md](https://github.com/aien-dev/aien-architecture-mv/blob/main/doctrine/ROADMAP.md) owns milestone IDs and status, including historical limitations.
+4. [CURRENT_EXECUTION_PLAN.md](https://github.com/aien-dev/aien-architecture-mv/blob/main/CURRENT_EXECUTION_PLAN.md) owns cross-project sequence. Read later dated corrections, not just its opening baseline.
+5. [ADRs](https://github.com/aien-dev/aien-architecture-mv/tree/main/docs/adr) own recorded decisions. Check status and amendments; an ADR filename or merged prose is not implementation evidence.
+
+Component code and reproducible evidence win for what actually runs. Architecture wins for ownership and intended cross-project sequence. Do not create a competing master plan to resolve a contradiction; record it and repair the proper authority.
+
+## Task-to-repository routing
+
+Names below are current catalog slugs under `https://github.com/aien-dev/`. Use the live catalog for every repository not listed here. These are ownership routes, not deployment assertions.
+
+### Core foundations
+
+| Task | Start here | Boundary |
+| --- | --- | --- |
+| Whole-system entrypoint, component set or pin changes | [aienix](https://github.com/aien-dev/aienix) | **AienOS**, the whole system. Currently a pinned submodule front door, not an imported monorepo. Component fixes belong in their own repos. |
+| Architecture, accepted boundaries, sequence, milestone interpretation | [aien-architecture-mv](https://github.com/aien-dev/aien-architecture-mv) | Doctrine and checking tools, not the product runtime. |
+| Boot, kernel scheduling, IPC, isolation, capabilities, recovery/storage | [aienux](https://github.com/aien-dev/aienux) | **Aienux**, the kernel, not the whole AienOS system. Read its local roadmap and security invariants. |
+| Language, seed/compiler, semantics, reaction composition, native GPU engine | [omega-mv](https://github.com/aien-dev/omega-mv) | Separate seeded `.om`, legacy C, host references and chip-qualified work. |
+| Machine realization, FORGE providers, native GB10 submission and historical boot artifacts | [physics-mv](https://github.com/aien-dev/physics-mv) | Current subsystem name is FORGE; old `PHYSICS_*` identifiers and receipts stay unchanged. |
+| Small boot root | [atlas](https://github.com/aien-dev/atlas) | Read its actual default branch (`master` in this snapshot); QEMU qualification is not native hardware qualification. |
+| GPU machine-code toolchain/runtime/driver-client work | [CUDApp](https://github.com/aien-dev/CUDApp) | Check target support and remaining driver/OS dependencies; do not imply a complete driver replacement. |
+
+### Runtime and learning
+
+- [aien-sovereign-core-mv](https://github.com/aien-dev/aien-sovereign-core-mv): host runtime, `aien` CLI, inference ABI, scheduling/KV state and verification tooling. Product source and gate manifests determine implementation; installed service state requires separate evidence.
+- [allen](https://github.com/aien-dev/allen): persistent-subject programme, identity/continuity contracts and acceptance work. Do not identify Allen with an interchangeable model or claim planned subject capabilities already run.
+- [aegis-runtime-mv](https://github.com/aien-dev/aegis-runtime-mv): agent gateway, heartbeat/task workflow and storage attachment. It is not all of the AEGIS verification doctrine.
+- [spark-rsi-mv](https://github.com/aien-dev/spark-rsi-mv): evaluation/promotion and cryptographic-ledger attachment, not proof of autonomous improvement merely because an experiment proposes a better candidate.
+- [aien-train](https://github.com/aien-dev/aien-train): training programme and research route toward training on Omega. Its [current instructions](https://github.com/aien-dev/aien-train/blob/main/AGENTS.md) explicitly describe plans and empty output directories, not a working training engine.
+
+For memory, do not route to an archived repo just because its name sounds right. [ADR 0036](https://github.com/aien-dev/aien-architecture-mv/blob/main/docs/adr/0036-release-v1-memory-owner.md) names `aien-allen-memory` with an engaged Allen identity for release E4, while preserving ADR 0022's Omega-layer `rx_cortex` ownership. Durable execution journals, evidence receipts, subject memory and a coding agent's recall service are different things. A `.crumb` records directory role/invariants and provenance; `.crumb.local` is temporary coordination. Neither stale metadata nor a recalled model suggestion overrides code or receipts.
+
+### Interchange and network
+
+- [aien-protocols-mv](https://github.com/aien-dev/aien-protocols-mv): canonical wire/state specifications and schemas. Change the contract here rather than silently forking it in a consumer.
+- [interplane-mv](https://github.com/aien-dev/interplane-mv): model/runtime interoperability and conformance. Its [instructions](https://github.com/aien-dev/interplane-mv/blob/main/AGENTS.md) make the model untrusted: parsing never executes, transport never grants, a valid envelope is not authorization, and a signature proves origin, not authority. Runtime policy decides; requests cannot upgrade its decision. `STATUS.md` owns implementation/qualification claims.
+- [omega-bridge](https://github.com/aien-dev/omega-bridge): checked Omega-subset conversion, native bindings and opt-in GPU artifact boundary. [Current instructions](https://github.com/aien-dev/omega-bridge/blob/main/AGENTS.md) explicitly refuse universal conversion: Python/C input conversion is not implemented. Adapter admission is not proof of device execution.
+- [omnet](https://github.com/aien-dev/omnet): Omega security-critical networking, initially server-side Tailnet Lock. Its [README](https://github.com/aien-dev/omnet/blob/main/README.md) says pre-alpha and separates runtime bounds/traps from protocol correctness, authorization, timing and exhaustion. Stock client compatibility, daemon integration and live deployment each need their own evidence; an open integration PR is unavailable on default branch.
+- [open-humanity](https://github.com/aien-dev/open-humanity): opt-in assistance-network attachment. Discovery or a peer request does not grant local execution, identity, secret access or administrative authority.
+
+### Evidence and workflow
+
+- [aien-receipts](https://github.com/aien-dev/aien-receipts): append-only published verification records, indexed by exact repository/commit. Read signatures, verdicts, retained logs, required check set and backend, not just a summary badge.
+- [benchmarks-mv](https://github.com/aien-dev/benchmarks-mv): measurement methods and bundles. Distinguish MEASURED from MODELED and compare the declared experiment with its physical ceiling and previous run.
+- [synapse](https://github.com/aien-dev/synapse): agent-native changesets/coordination with Git/Radicle interoperability. A coordination claim is not a verification verdict.
+- [spark-connector](https://github.com/aien-dev/spark-connector): volunteer-verification connector; enrollment is not blanket permission to execute hardware or change trust anchors.
+- [agent-archive](https://github.com/aien-dev/agent-archive): conversation provenance. A transcript retains what an agent said, not proof the claim was true. Never export private transcript content by default.
+
+### User-facing and supporting projects
+
+Route site content/building to [aienos.com](https://github.com/aien-dev/aienos.com), INTERPLANE publication to [interplane.io](https://github.com/aien-dev/interplane.io), and proposed native edge serving to [aien-edge](https://github.com/aien-dev/aien-edge). The catalog explicitly says the edge server is not deployed and the sites use GitHub Pages; do not infer deployment from a server implementation. Translation integration belongs to [aien-translate](https://github.com/aien-dev/aien-translate), not automatically its preserved `translate` upstream fork. Use [readings-window](https://github.com/aien-dev/readings-window) for bounded read-only telemetry, [pi-register](https://github.com/aien-dev/pi-register) for service registration, and [aien-rig](https://github.com/aien-dev/aien-rig) for gaming-PC tuning. A telemetry endpoint does not authorize experiments or stopping a service. Supporting apps and forks are not core components merely because they are in the organization.
+
+### Archived and external references
+
+Consult live `archived` and `fork` flags before contributing. This snapshot marks `aien-yardsticks`, `MojoLlama`, `cortex-rs`, `crumb-spec-mv`, `spark-crumbs-mv`, `aien-local-stack` and several old `spark-*` tools as archived. They are historical references, not default destinations for new work. Crumb's protocol remains used in active core repositories despite its standalone repos being archived. Firmware preservation forks (`rpi5-uefi`, EDK II family, Trusted Firmware-A) have their own upstream provenance, licenses and branch names; do not present them as wholly original AIEN implementations.
+
+MAX, Mojo, CUDA, Transformers, PyTorch or another vendor tool does not become the AIEN trusted stack because it is installed, exposed in a skill, used as an oracle or present in a fork. Check the declared product boundary. Do not delete an independent oracle or recorded dependency just to make a sovereignty claim look stronger.
+
+## Status discipline and known source drift
+
+Keep **proposed**, **implemented**, **verified**, **qualified** and **deployed** separate. Report exact repository/commit, command, backend, date, verdict and exclusions. NOT_RUN, BLOCKED_HARDWARE, BLOCKED_OPERATOR and MISSING_IMPLEMENTATION never mean PASS. Host execution on a machine with a GPU is still host evidence; QEMU evidence does not qualify physical hardware; a single kernel parity test does not qualify serving a complete model. A merged PR is not a release, an open PR is not an available feature, and neither proves what binary is running.
+
+**Merge is not Alpha.** The inspected [Omega workflow](https://github.com/aien-dev/omega-mv/blob/main/.github/workflows/aien-verification.yml) header explicitly says GitHub checks are advisory and do not gate merges, while `alpha/*` tags require a signed full Spark bundle for a commit on main. Inspect the bundle's actual backends and coverage before saying hardware-qualified. Do not generalize one repo's workflow or historical README to all merge policy; never add an automatic merge label without authority.
+
+Observed contradictions to keep visible, not silently reconcile:
+
+- The AienOS README describes an older universal Spark-before-merge process. Its [newer repository instructions](https://github.com/aien-dev/aienix/blob/main/AGENTS.md) warn that historical README prose is not current merge policy.
+- Omega README's opening candidate wording coexists with its explicit statement that the seeded compiler landed from PR #696. Its source and current instructions determine availability, not the older introductory sentence.
+- Architecture README acknowledges roadmap R15/R16 wording lagging candidate results. The execution plan contains dated corrections to older baselines. Read exact candidate receipts and exceptions before raising status.
+- [ADR 0038](https://github.com/aien-dev/aien-architecture-mv/blob/main/docs/adr/0038-names-aienux-kernel-aienos-system.md) establishes **AienOS system / Aienux kernel**, but its rename request is not proof both renames happened. Current system slug is **`aien-dev/aienix`**, kernel **`aien-dev/aienux`**. Do not rename `aienix` or reuse `aienos` as onboarding cleanup: redirects, signed repository identities, pins, judge consumers and receipt paths require a coordinated migration. Preserve historical evidence, cryptographic labels and identifiers exactly.
+
+## Refresh before acting
+
+1. Fetch the live catalog; resolve the actual repository, default branch, archived flag and instruction filename. Never manufacture `main/AGENTS.md` URLs from naming habits.
+2. Read current shared/repository instructions, directory crumbs, plan authority and relevant accepted ADRs. Compare the local checkout to current remote source and record the source SHA used.
+3. For a feature/status claim, inspect default-branch code plus matching receipts and corrections. Check proposed PR state separately. For deployment, obtain evidence of the running artifact and configuration, not just the source tree.
+4. If instructions, model memory or a managed skill disagrees with current source, identify the discrepancy and use the stronger current evidence. Skills about retired MAX/Mojo workflows, old compiler limitations, old repository slugs or old gate policy are especially prone to drift.
+5. Update this routing snapshot with source date/pins and remaining contradictions. Preserve Drake Stapleton's intentional attribution; never copy credentials, private machine addresses, home paths, SSH usernames or operator-only configuration into public guidance.
