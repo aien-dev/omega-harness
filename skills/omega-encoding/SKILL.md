@@ -360,3 +360,5 @@ x = add get b 0 uint 1
 ret int x
 end
 ```
+
+- Numeric work in or behind an `.om` unit (limits, sizes, masks, checksums, expected values, tolerances) is computed with Wolfram and quoted with the query, never by hand: see `skills/wolfram-math/SKILL.md`.
