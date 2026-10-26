@@ -260,6 +260,9 @@ end
   indentation. `note` is the only comment form; the rest of its line is not read
   ([omc.om#L4873](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L4873)).
 - `fn NAME (PARAM TYPE)* to TYPE|void` ... `end`. At most 6 parameters (error 9). `main` takes none.
+  In an OM-2 unit the limit is 6 parameter *slots*: an unsized array (`view T *`, `edit T *`) takes 2,
+  so a 7th slot is error 9 on the `fn` line (observed with omc `befb8199`, 2026-10-26, building
+  omega-mv `om/tls`). Pack small fixed inputs into one array.
 - A unit with `fn main` is a static AArch64 Linux ELF (program mode). Without `fn main` the output is
   bare function words (function mode): it compiles with exit 0 but is **not runnable**. Host words
   and `global` are error 9 there, and `text` is program-mode only ([#L400-L407](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L400-L407), [#L454-L459](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L454-L459), [#L629](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L629)).
@@ -375,7 +378,8 @@ From OMEGESE 9.4 and 9.7 ([#L449-L474](https://github.com/aien-dev/omega-mv/blob
 - `global NAME T N`: zero-filled pool in the program image, N 1..16777216, at most 1 GiB of pools
   total (error 23), program mode only. Globals are visible in every function.
 - **A global is never passed as an argument** (error 19). A function works on a global by naming it
-  directly; parameters carry scalars and local arrays only. The arrays of one call must be distinct
+  directly; parameters carry scalars and local arrays only. Two `part`s of one array, or an array and
+  a part of it, in one call are also error 19 (omc `befb8199`). The arrays of one call must be distinct
   names (error 19).
 - `NAME = new T N v`: local stack array, N elements each v, only in a function's outermost block
   (error 9 inside a block), at most 4 MiB of local arrays (error 23). **N must be a literal or an
@@ -387,6 +391,8 @@ From OMEGESE 9.4 and 9.7 ([#L449-L474](https://github.com/aien-dev/omega-mv/blob
 - `get A i`, `put A i v`, `len A`. A constant index outside the array is error 21; any other index is
   checked at run time (trap 3). No word yields an address or adds to one.
 - `text NAME "bytes"`: read-only `uchar` array; escapes only `\n \t \\ \"` (error 22 otherwise).
+  There is no `\r`: protocols that need CR LF (HTTP, SMTP) write the CR at run time
+  (omega-mv `om/tls/test/tls/client.om` `cl_crlf`).
 - Structs: fields are 8-byte cells, no padding, no packed layouts (a `uint` field still takes 8
   bytes). `read`/`write`/`len` of a struct are error 7. Never treat a struct as a wire layout.
 
