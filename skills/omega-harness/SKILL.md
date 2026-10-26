@@ -103,7 +103,7 @@ fi
 `seed/spirv/irspirv.om` in [omega-mv #804](https://github.com/aien-dev/omega-mv/pull/804)
 is a handwritten Omega backend for the same OSC IR v1 scalar subset as irwasm.
 Source exercised on 2026-10-26:
-`ced678b28a72ce5fc9945eafedaa4cf020020b18`, compiler
+`4ad014ed3342e202e4fdb1d31b38b8e6f2e0a117`, compiler
 `befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d`.
 This guide change is pending that PR's merge; it is not a main-branch claim yet.
 
@@ -113,7 +113,10 @@ This guide change is pending that PR's merge; it is not a main-branch claim yet.
   scalar slots and output `[canonical_result_bits, native_status]`.
   Launch one work item; success status is zero, traps retain `100 + trap`.
 - Run `nice -n 19 ionice -c3 sh seed/spirv/gate-irspirv.sh` with
-  `SPIRV_VAL` and a single PoCL `OCL_ICD_VENDORS` file set as documented.
+  `SPIRV_VAL` and `POCL_LIBRARY` (absolute trusted PoCL shared-library path).
+  The library selection is compiled into the C host, which overwrites inherited
+  vendor settings and disables layer discovery before any OpenCL call. It does
+  not inspect and reopen an environment-selected ICD manifest.
   The C host is the explicitly requested verification/demo interface to OpenCL,
   never a translator dependency. LLVM is inside the PoCL oracle, not the Omega
   emission path. Validate before executing: the external reader can abort on
@@ -125,7 +128,10 @@ This guide change is pending that PR's merge; it is not a main-branch claim yet.
   The add-to-sub mutant completes successfully but the parity checker exits 1
   for exactly one mismatch. API/setup faults use exit 2 and cannot satisfy it.
   Full logs, per-case tables, raw artifacts and toolchain ledger are retained in
-  `evidence/IRSPIRV/20261026-ced678b28/`.
+  `evidence/IRSPIRV/20261026-4ad014ed3/`. Host controls also prove inherited
+  discovery is ignored and missing/unconfigured libraries fail closed. A file
+  access trace shows no GPU devices, system OpenCL vendor/layer directories, or
+  inherited nonexistent probe paths accessed; its public copy redacts home paths.
 - Exercised oracle versions: PoCL 7.2 at
   `888c9774b94590fff1afef003154ca2c0ea66605`, LLVM/clang 18.1.3,
   SPIRV-LLVM-Translator 18.1.8, SPIRV-Tools v2025.1, ocl-icd 2.3.2.
