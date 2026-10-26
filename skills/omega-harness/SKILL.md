@@ -37,6 +37,12 @@ say so and stop rather than estimating.
 - Reuse the existing unit composition, error handling, buffer layouts and build patterns. Make bounds, types, ownership, effects and wire encodings explicit. Keep authorization and refusal paths working, not just the happy-path bytes.
 - Migrate the actual consumers before deleting a replaced implementation. Preserve history and immutable evidence. Matching a recorded hash does not prove parity with the current foreign reference; where the contract calls for it, run an independently built oracle.
 - Conversion between Omega and other languages is not this skill's job. Route it to `aien-dev/omega-bridge`, which implements checked conversion for a declared subset and refuses universal conversion. An MCP wrapper is optional tooling and does not widen what the bridge can convert.
+- The pending scalar IR-to-WebAssembly backend is owned by omega-mv, not a foreign-source import:
+  [draft #787](https://github.com/aien-dev/omega-mv/pull/787), source
+  `8e083692ae1f597966c8d2eb6a92292bb278eb41`, stacked on boolean IR fix
+  [draft #786](https://github.com/aien-dev/omega-mv/pull/786). It is written in seeded Omega.
+  See `omega-encoding` section 0 for the tested candidate hashes, exact limits and refusal boundary.
+  This is pending work, not a merged or deployed browser path.
 
 ## 3. Compile, execute, challenge
 
@@ -59,6 +65,15 @@ chmod +x prog && ./prog; echo "run rc=$?"
 - Qualification case files (`.cases` in omega-mv) are executed by a conductor, not run directly. More than one conductor exists under `seed/qualification/`, and picking the wrong one looks like a failing gate. Read the conductor's `main` for its argument count first. Observed 2026-10-25 with compiler `734f0a39319fbfa930bcc62cb30dbf06d47d78e126372b74f5baf478e6126b61`: `seed/qualification/om2/gate.om` takes four arguments (`omc pinhash casesfile scratchdir`) and summarises as `OM2GATE PASS cases=N pass=N fail=N invalid=N not_run=N`; `seed/qualification/security673/gate669.om` accepts at most one argument and exits 90 under a four-argument call. A usage status such as 90 from a conductor is INVALID setup, never a qualified refusal.
 - A benchmark can need a seekable stdin. A checker replay that seeks back over its input 101 times exits 90 when stdin is a pipe, and the same command exits 0 when stdin is an opened regular file. Supply a file, and do not count the setup-status exit as a control result.
 - Compiler changes need the repository's referee and wrong-word-mutant checks, not just a self-fixpoint. Before running any gate, read its prerequisites, device requirements and whether it writes receipts.
+- For the pending IR/wasm candidate above, run `nice -n 19 sh seed/wasm/gate-irwasm.sh`.
+  Node v24.21.0 is a read-only wasm validation/execution oracle only; never use Node to generate
+  IR or wasm. The production path is `.om -> omc ir -> irwasm.om -> wasm`, with no Node runtime
+  dependency. Observed at that source: `PASS parity cases=129 units=13 traps=29; every export exercised`,
+  byte-identical repeat translations, add-to-sub mutant rejected by the parity checker (exit 1),
+  and named parse/type refusals with empty stdout. Retained logs/artifacts live in
+  `evidence/IRWASM-20261026/`. Browser integration and GPU/Alpha qualification are NOT_RUN.
+  Candidate compiler sha256 is `befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d`;
+  its om4-built and self-built fixpoint agrees. The older pin/fixpoint above remains dated history.
 - Record the source revision, the compiler, source and binary hashes, the exact command, the platform, expected versus observed result, and the limits. A local smoke run is not repository qualification, not a merge and not a deployment.
 
 ## 4. Effects and authority

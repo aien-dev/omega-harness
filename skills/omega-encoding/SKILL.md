@@ -10,7 +10,8 @@ cannot express, and before encoding bytes, integers or host I/O in Omega.
 
 ## 0. Pin and how to re-check it
 
-Everything below was read from one pin. Re-check before relying on it; the compiler changes.
+The general-language citations below retain their dated historical pin. The newer,
+scope-specific pin immediately below is the tested IR/wasm candidate, not main.
 
 | Item | Value |
 |---|---|
@@ -22,6 +23,53 @@ Everything below was read from one pin. Re-check before relying on it; the compi
 | Language document `docs/one_layer/OMEGESE.md` | blob `89a27d2e68519eb45c103abb23dfe05a68d8ad69` |
 
 Every citation links to that commit: `https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/<path>#L<n>`.
+
+### Pending IR/wasm candidate (2026-10-26)
+
+Source: omega-mv `8e083692ae1f597966c8d2eb6a92292bb278eb41`,
+[draft #787](https://github.com/aien-dev/omega-mv/pull/787), stacked on the separate
+boolean IR fix [draft #786](https://github.com/aien-dev/omega-mv/pull/786).
+Pending until both changes land; do not describe this backend as available on main.
+
+| Candidate item | Verified value |
+|---|---|
+| `seed/omc/omc.om` | sha256 `bd64bb6f20952818e155328f429ab6cd36bba213e3e00b60d796336f9d0c9343` |
+| `seed/out/omc` | sha256 `befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d` |
+| Prior main compiler at `ec07d25d5506d33567adbd4d9b518177b7933bad` | sha256 `499236398aabc652e2dae27fe4bdc4c5db3d3726314356e0dbef23e3345803ec` |
+| `seed/wasm/irwasm.om` | sha256 `8dc7bf602eb882e26a18b9e2dc4cacdd3ad68827215e71874b14c4acb237ccf8` |
+
+The candidate corrects IR-mode boolean AND/OR/XOR typing: all three previously
+exited 7 and now compile to bytes identical to the C encoder, accepted by checker2.
+Boolean arithmetic and shifts remain refused. The om4-built compiler and two
+self-rebuilds are byte-identical; the full compiler referee/wrong-word-mutant gate
+ended `GATE5 PASS`. Retained evidence:
+`evidence/IR-BOOL-20261026/` in draft #786.
+
+`seed/wasm/irwasm.om` is a seeded Omega backend for **scalar OSC IR v1**, not an
+arbitrary foreign-source converter. It writes an import-free WebAssembly MVP module
+and exports each function under its ASCII IR name. ABI tags bool/u8/u16/u32/i8/i16/i32
+map to i32, u64/i64 to i64, void to no result. Internal canonical i64 locals preserve
+width and signedness; signed overflow, invalid shifts/casts/division, explicit traps
+and lowered loop guards become wasm runtime traps. Wasm does not expose Omega's
+numeric trap code. Supported instructions: CONST/MOV/BIN/UN/CMP/CAST/CALL/TRAP/BR/CBR/RET.
+Limits and exact mappings:
+[`OMEGESE.md` section 11.1](https://github.com/aien-dev/omega-mv/blob/8e083692ae1f597966c8d2eb6a92292bb278eb41/docs/one_layer/OMEGESE.md#L914).
+Versions other than 1, memory/reference/arena/pool/slice tags and operations refuse.
+The module is buffered so parse/type/capacity refusals have empty stdout.
+
+Host command: `nice -n 19 sh seed/wasm/gate-irwasm.sh`.
+Observed on Linux AArch64, Node v24.21.0 used **only as a read-only oracle**:
+`PASS parity cases=129 units=13 traps=29; every export exercised`.
+The parity checker rejected an add-to-sub IR-byte mutant with exit 1; two translations
+of every unit were identical, and named refusal exits were pinned with empty stdout.
+Source-bound full logs/artifacts: `evidence/IRWASM-20261026/` in draft #787.
+No browser integration, GPU qualification, merge or deployment was run.
+
+Existing guide examples were rerun with this candidate compiler: FNV `abc` emitted
+`0b e9 47 1a`, compile/run exit 0; `trap_narrow.om` compiled with exit 0 and ran with
+exit 105. Removing only the unmasked store (negative control) changed the run exit
+to 44. The historical examples and their old measured evidence below remain intact.
+
 
 Re-check recipe (read only, in a fresh clone, never in a shared working tree another agent may be using):
 
