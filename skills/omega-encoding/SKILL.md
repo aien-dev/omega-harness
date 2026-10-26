@@ -240,6 +240,104 @@ and compare the new hash with the pin yourself ([omega-from-seed.sh#L52-L60](htt
 Full host qualification is `sh seed/host/check.sh` (author-verified on 2026-10-23 per
 `seed/host/README.md`); a host pass is never hardware qualification.
 
+## 1b. Ask `omq` what fits at a hole (PENDING: draft omega-mv #838)
+
+Status: EXERCISED on host only (Linux AArch64, 2026-10-26) at
+[omega-mv #838](https://github.com/aien-dev/omega-mv/pull/838) head
+`8cb5d2de821acd251387e359e782f3ee319d5ae6`, compiler `seed/out/omc`
+`2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`, `omq` sha256
+`6d5db676adb0ee3776097b9430f703e0f94d20246e37b810df44c7b2756e1ce8`: `sh seed/query/check.sh` printed
+`SEED QUERY PASS 36 checks`. The PR is a draft and not merged, so `seed/query/` is absent from
+main until it lands. Source of every rule below: `seed/query/README.md` at that head.
+
+`omq` (`seed/query/omq.om`, seeded Omega) reads a program with one hole `??` and prints one JSON
+line: what `omc` accepts at the hole. It runs the given `omc` on witness programs and reports only
+forms that compiled, so it follows the compiler instead of restating its rules. It still does not
+replace compiling and running the finished program (section 1a).
+
+```sh
+seed/out/omc < seed/query/omq.om > omq && chmod +x omq
+./omq seed/out/omc < prog.om          # one JSON line on stdout
+./omq seed/out/omc prefix < reqs.bin  # prefix-viability server
+```
+
+- Hole: a line that is only `??` is a statement hole; `??` inside a line is a value hole. With no
+  hole `omq` only checks the program.
+- Exit: 0 answer printed; 1 more than one hole or a hole outside a function; 2 usage, or a compiler
+  that fails `omq`'s selftest (`/bin/true` or a wrong path never yields an answer).
+- `hole`: 1-based `line`, `kind` (`statement`/`value`), the enclosing function's `fn_line`, block `depth`.
+- `check`: `code` 0 when the text before the hole, closed off by a trap and the missing `end`s,
+  compiles; otherwise the `omc` error `code` and `line`, plus `sev`, `col`, `expect`, `found`,
+  `obligation`, `span` for an OM-2 diagnostic, a `why` sentence, and possibly a recompiled repair
+  (`fix_rename`, `fix_move_up` or `fix_append_end`, with `rc_after_fix`).
+- `check.status`, one of four values, never a plain VALID:
+  `INVALID` (`omc` rejects the text and the error lies before the hole: nothing at the hole repairs
+  it); `INCOMPLETE` (with a hole, the closed-off witness compiles, so a valid completion exists);
+  `VALID-UNPROVEN` (no hole and `omc` accepts: well formed only, contracts become run-time traps,
+  no behaviour proven); `UNKNOWN` (the error lies after the hole, in the witness's added closing
+  lines, and may depend on what the hole holds).
+- `scope`: names visible at the hole, typed by probing `omc` (`T[]` for an array; `writable` when
+  `put` into it compiles). Names from closed blocks are absent.
+- `fns`: function signatures. `next`: forms that compiled at the hole; `<T>` is a slot for a value
+  of type T. At a value hole `expect` lists the expected types. A user-function call appears with a
+  concrete argument list.
+- `obligations`: `function`, `open` blocks innermost first, `regs_free` (more `ulong` names that
+  fit before error 12), `contracts` (`requires`/`ensures`, invariants of open loops), `effects`
+  (host-word effects already used, e.g. `read:fs`, `write:io`, `net`).
+- `compiles`: how many times `omc` ran.
+
+Observed at the pin above (transcript and script retained as host evidence by the author, not in this
+repository), from the omega-mv root, with `stmt.om` = `fn main to int` / `n = uint 3` / `??` / `end`:
+
+```text
+$ ./omq seed/out/omc < stmt.om; echo "rc=$?"
+{"hole":{"line":3,"kind":"statement","fn_line":1,"depth":1},"check":{"code":0,"status":"INCOMPLETE"},"scope":[{"name":"n","type":"uint"}],"fns":["fn main to int"],"next":["ret <int>","n = <uint>","NEW = <value>","if <bool>","while <bool>","for NAME T COUNT","trap <1..255>","exit <int>"],"obligations":{"function":"fn main to int","open":["fn"],"regs_free":15,"contracts":[],"effects":[]},"compiles":36}
+rc=0
+```
+
+Value hole, `value.om` = `fn main to int` / `n = uint 3` / `x = add n ??`:
+
+```text
+{"hole":{"line":3,"kind":"value","fn_line":1,"depth":1},"check":{"code":0,"status":"INCOMPLETE"},"scope":[{"name":"n","type":"uint"}],"fns":["fn main to int"],"expect":["uint"],"next":["n","add <uint> <uint>","sub <uint> <uint>","mul <uint> <uint>","div <uint> <uint>","rem <uint> <uint>","and <uint> <uint>","or <uint> <uint>","xor <uint> <uint>","shl <uint> <uint>","shr <uint> <uint>","uint <any>"],"obligations":{"function":"fn main to int","open":["fn"],"regs_free":15,"contracts":[],"effects":[]},"compiles":37}
+```
+
+Error before the hole, `bad.om` = `fn main to int` / `n = uint 3` / `ret int m` / `??` / `end`
+(status `INVALID`, exit 0 because an answer was printed):
+
+```text
+{"hole":{"line":4,"kind":"statement","fn_line":1,"depth":1},"check":{"code":3,"line":3,"sev":"unknown","col":9,"expect":"name","found":"m","obligation":"-","span":[34,35],"why":"unknown name: define it before this line (globals, consts and texts above their first use; locals in an enclosing block that is still open)","status":"INVALID"},"scope":[],"fns":["fn main to int"],"next":[],"obligations":{"function":"fn main to int","open":["fn"],"regs_free":0,"contracts":[],"effects":[]},"compiles":34}
+```
+
+No hole (`ret int n` in place of `??`), two holes, and a fake compiler:
+
+```text
+{"check":{"code":0,"status":"VALID-UNPROVEN"},"compiles":3}
+rc=0
+{"error":"more than one ?? hole","compiles":2}
+rc=1
+$ ./omq /bin/true < stmt.om
+omq: cannot run the compiler
+rc=2
+```
+
+Prefix mode: `omq OMC prefix` reads requests on fd 0, each a 4-byte little-endian length then that
+many bytes of program prefix, and writes one line `V CODE` per request: whether the prefix can still
+be completed to a program `omc` accepts, and the `omc` exit code. `V` per `omq.om` lines 2390-2392:
+0 whole unit accepted, 1 prefix still completable, 2 dead, 3 compiler did not run. Requests
+`fn main to int` + `x = add`; the same with `x = add int 1 2` / `ret x` / `end`; and
+`fn main to int` + `abcdefghij = 1` gave:
+
+```text
+1 4
+0 0
+2 13
+```
+
+Limits: one hole per request; a call with several array parameters gives every array parameter the
+same candidate rank, so a call needing two different arrays of one element type may be missing from
+`next`; struct-typed parameters are not filled; the text after the hole is not checked (it is the
+part still to be written). Each answer costs tens to a few hundred compiles.
+
 ## 2. Program shape
 
 ```
