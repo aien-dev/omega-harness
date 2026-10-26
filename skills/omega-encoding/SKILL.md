@@ -457,6 +457,80 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
 - Evidence for any host claim: compiler sha256, source sha256, output binary sha256, exact command,
   exit status, and the observed bytes. A program that ignores a negative result is not evidence.
 
+### 9a. Pending bounded networking batch (#788)
+
+**Pending, not a current compiler pin.** On 2026-10-26,
+[omega-mv PR #808](https://github.com/aien-dev/omega-mv/pull/808), source
+`58d6fb6a2f72b1ab02c0eb0c01afe141303c968d`, adds these Linux-arm64 host words:
+
+| Word | Contract |
+|---|---|
+| `peercred fd A off capacity` | Writable capacity at least 12; zero or negative errno; writes little-endian PID/UID/GID from `SO_PEERCRED`. Compare against application policy on a connected Unix socket; credentials alone grant nothing. |
+| `pollfds A off n interval` | Writable packed eight-byte `pollfd` records, byte length multiple of eight and at most 8192; returns ready-entry count, zero timeout, or negative errno. Interval is nanoseconds; negative is infinite. |
+| `sendmsg fd A off n flags` | One checked payload, private single `iovec`, no ancillary data; adds `MSG_NOSIGNAL`, returns partial count or negative errno. |
+
+The same pending source narrows `sockopt` to four-byte scalar values:
+`SOL_SOCKET` options `SO_REUSEADDR`, `SO_REUSEPORT`, `SO_KEEPALIVE`, `SO_SNDBUF`,
+`SO_RCVBUF`, and `IPPROTO_TCP/TCP_NODELAY`. Unknown options return `-92`
+(`ENOPROTOOPT`); incorrect scalar length returns `-22` (`EINVAL`). Ordinary
+kernel errors remain unchanged. Slices are checked before kernel calls.
+
+Sockets, `accept4` (`accept`), connection establishment, `send`/`recv`,
+`waitio`, and `fclose` already exist; do not describe HTTP/JSON library work as
+a missing socket interface. Callers own partial-I/O loops, monotonic deadlines,
+EINTR/EAGAIN handling, framing and descriptor lifecycle. Do not retry `fclose`
+after an error. Public TLS termination and tailnet encryption do not make
+Omega a TLS client: outbound GitHub consumers stay host dependencies until
+the separate `.om` TLS implementation is qualified.
+
+Author-exercised candidate only: bootstrap compiler
+`befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d`;
+one-stage candidate `b3159185ac433884184c83e573ae2397a72ce3d3bfb98fdd9c7838e4b2f98c3c`.
+`OMC=<candidate> sh seed/host/gate.sh` and `OMC=<candidate> sh seed/host/negative.sh`
+exited zero; all compiler invocations in the corrected host gate use `OMC`,
+including its nested refusal driver and generated identity fixtures.
+`python3 seed/host/net-mutant.py` caught the wrong-syscall and ignored-error
+mutants via assertion exit 1 while the original fixtures exited zero.
+Expanded `seed/host/tests/netdata.om` exercised short sends, EPIPE without
+SIGPIPE, repeated descriptor reuse and monotonic timeout, exiting zero;
+the three bounds controls exited 103. Source fixture SHA256
+`6762de311b8b1cb4f1f9220bc3837b29733fcf382ac3c2cd19e8096c02789f88`.
+The distinct parent/child peer-credential fixture also exposed an older
+`getppid` lowering defect: Linux-arm64 syscall 110 is `timer_settime`, whereas
+`getppid` is 173. This source corrects it and requires a positive parent PID.
+The earlier fixture accepted negative errors. Earlier candidate host-gate
+logs used the committed compiler for two paths and are mixed-compiler evidence,
+not full qualification of that candidate. Preserve those logs as history.
+These checks do not establish a reseed/fixpoint, merged state, or hardware
+qualification. The compiler integration owner performs the batch reseed and
+refreshes the authoritative pin only after its referee and compatibility gates.
+
+### 9b. HTTP/1.1 and JSON library units (#788)
+
+[omega-mv PR #814](https://github.com/aien-dev/omega-mv/pull/814), MERGED 2026-10-26 as `77ebd3fd5910e16326e4f6990141c76fce1ee735` (head
+`f066f270cf23bfb07c458dd56504cf23c974d955`), adds library units, not
+language or compiler changes. Gates re-run on the reseeded `seed/out/omc` `189ada82…3b54`:
+`seed/net/http.om` (functions `h*`, constants `H*`) and `seed/json/{json,jsonw,jsonf}.om`
+(`js*`). They have no `om2` line, no globals and no `main`; the caller composes one OM-2 unit:
+
+```sh
+{ printf 'om2\n'; cat seed/json/json.om seed/json/jsonw.om seed/net/http.om app.om; } > app.full.om
+```
+
+- State is caller-owned arrays (`cs`, `io`, JSON `tape`, writer `ob`); globals cannot be passed,
+  so they are locals of the caller, inside the 4 MiB local-array limit.
+- HTTP is strict: CRLF only, no obs-fold, Content-Length with Transfer-Encoding or a duplicate
+  Content-Length is refused, only `chunked` coding, caps on head, header count, body (1 MiB
+  default) and chunk framing, idle/head/body deadlines from `waitio` and `monons`. TLS is not
+  included; a non-plain transport returns -95.
+- JSON numbers stay source lexemes; integers convert exactly; `jsonf.om` gives correctly rounded
+  binary64 on request. Duplicate keys are kept in order: the application decides.
+- Two compiler limits met while building them at this pin: any `const` blocks function-mode
+  compilation (tracked in omega-mv #806), and a `const` declared after a `fn` breaks later
+  signatures that use an earlier `const` as an array length. Declare constants before functions.
+- Gates (host only): `python3 seed/net/tests/check.py` → `HTTP-CHECK PASS`;
+  `sh seed/json/tests/gate-json.sh` → `JSONGATE PASS rows=8758 mutants=5`.
+
 ## 10. Wire serialization (only what the pin defines)
 
 - There is no byte-layout type. Encode and decode integers with shifts and masks into `uchar`
