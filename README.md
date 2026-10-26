@@ -11,6 +11,7 @@ Skills can't make agents flawless. What these do is turn the mistakes agents kee
 | [`omega-communication`](skills/omega-communication/SKILL.md) | Status labels, reports, PR text, agent handoffs, receipts, wire formats, corrections |
 | [`aien-repositories`](skills/aien-repositories/SKILL.md) | What AIEN builds, who decides what, and which repository owns a task |
 | [`crumb-protocol`](skills/crumb-protocol/SKILL.md) | Directory coordination: read and respect crumbs, claim and release locks, keep committed crumbs fresh, answer `CRUMB-VERIFY` and `crumb-doctor` |
+| [`wolfram-math`](skills/wolfram-math/SKILL.md) | Mandatory Wolfram for every computation: MCP setup an agent can do alone, verification calls, failure handling |
 
 The skills use the Agent Skills layout (`skills/<name>/SKILL.md` with `name` and `description` frontmatter), so any agent that reads that layout picks them up.
 
@@ -37,6 +38,13 @@ cp -R omega-harness/skills/* ~/.agents/skills/   # pick the directory for your a
 ## Conversion
 
 These skills cover working in Omega itself. Conversion between Omega and other languages belongs to [`omega-bridge`](https://github.com/aien-dev/omega-bridge). It converts a declared, checked subset and refuses to attempt universal conversion. You can run an MCP server in front of it if you want automated conversion, but that wrapper doesn't let it convert anything beyond that subset.
+
+The merged [omega-mv WebAssembly backend (#787)](https://github.com/aien-dev/omega-mv/pull/787)
+is a compiler backend for the existing scalar OSC IR v1 wire format, not a foreign-source
+converter. Its seeded Omega writer and read-only Node oracle boundary are documented in
+`omega-encoding` section 0 and `omega-harness` sections 2-3. Backend merge:
+`3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`; boolean IR prerequisite #786:
+`87489da90a1a7a750fd4a7f9eeb005b1221721f6`.
 
 ## Check the examples yourself
 

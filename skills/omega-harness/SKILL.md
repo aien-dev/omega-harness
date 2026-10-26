@@ -36,7 +36,14 @@ say so and stop rather than estimating.
 - Do not promote design ambitions into supported syntax. Check the keyword table, typing and lowering, and the fixtures of the compiler you will actually run. Compiler limits are implementation limits at a pin, not permanent properties of Omega.
 - Reuse the existing unit composition, error handling, buffer layouts and build patterns. Make bounds, types, ownership, effects and wire encodings explicit. Keep authorization and refusal paths working, not just the happy-path bytes.
 - Migrate the actual consumers before deleting a replaced implementation. Preserve history and immutable evidence. Matching a recorded hash does not prove parity with the current foreign reference; where the contract calls for it, run an independently built oracle.
-- Conversion between Omega and other languages is not this skill's job. Route it to `aien-dev/omega-bridge`, which implements checked conversion for a declared subset and refuses universal conversion. An MCP wrapper is optional tooling and does not widen what the bridge can convert.
+- Conversion between Omega and other languages is not this skill's job. Route it to `aien-dev/omega-bridge`, which implements checked conversion for a declared subset and refuses universal conversion. An MCP wrapper is optional tooling and does not widen what the bridge can convert. A native binding counts as working for a language only when its caller was built and executed by the bridge's native-call runner (section 3); a binding that was generated but never called is IMPLEMENTED, not EXERCISED.
+- The scalar IR-to-WebAssembly backend is owned by omega-mv, not a foreign-source import:
+  [#787](https://github.com/aien-dev/omega-mv/pull/787) merged as
+  `3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`, after boolean IR fix
+  [#786](https://github.com/aien-dev/omega-mv/pull/786) merged as
+  `87489da90a1a7a750fd4a7f9eeb005b1221721f6`. It is written in seeded Omega.
+  See `omega-encoding` section 0 for tested hashes, exact limits and refusal boundary.
+  Source merge status does not establish browser deployment.
 
 ## 3. Compile, execute, challenge
 
@@ -67,7 +74,27 @@ fi
 - Run a negative control: change an expected value or feed invalid input, and confirm the check fails. A verifier that also accepts its negative control has not established anything.
 - Qualification case files (`.cases` in omega-mv) are executed by a conductor, not run directly. More than one conductor exists under `seed/qualification/`, and picking the wrong one looks like a failing gate. Read the conductor's `main` for its argument count first. Observed 2026-10-25 with compiler `734f0a39319fbfa930bcc62cb30dbf06d47d78e126372b74f5baf478e6126b61`: `seed/qualification/om2/gate.om` takes four arguments (`omc pinhash casesfile scratchdir`) and summarises as `OM2GATE PASS cases=N pass=N fail=N invalid=N not_run=N`; `seed/qualification/security673/gate669.om` accepts at most one argument and exits 90 under a four-argument call. A usage status such as 90 from a conductor is INVALID setup, never a qualified refusal.
 - A benchmark can need a seekable stdin. A checker replay that seeks back over its input 101 times exits 90 when stdin is a pipe, and the same command exits 0 when stdin is an opened regular file. Supply a file, and do not count the setup-status exit as a control result.
+- Native callers of compiled Omega units are qualified per language, and only by execution. Since omega-bridge main `adb26cc654656926e76ab1839adae63e92909e88` (PR #18, merged 2026-10-26), `tests/native/run.sh` prints `NATIVE-CALL PASS` only after all seven required callers (`c`, `c-bti`, `cpp`, `python`, `rust`, `zig`, `go`) built and ran. A present toolchain whose build fails prints `NATIVE-CALL FAIL` and a missing toolchain prints `NATIVE-CALL NOT_RUN`; both exit nonzero. Check the refusal paths with `OMEGA_NATIVE_OMC=<pinned-omc> sh tests/native/test_build_failures.sh`: it injects failing Zig and Go toolchains, hides both for the missing-toolchain control, then requires the real Zig and Go callers to pass. It needs real Zig 0.13.0 and Go binaries (`ZIG`, `GO`) and prints `NOT_RUN` without them. The historical `evidence/native-call-v1/run.log` predates this runner and stays unchanged; do not cite it as a current all-caller PASS.
 - Compiler changes need the repository's referee and wrong-word-mutant checks, not just a self-fixpoint. Before running any gate, read its prerequisites, device requirements and whether it writes receipts.
+- For the merged IR/wasm backend above, run `nice -n 19 sh seed/wasm/gate-irwasm.sh`.
+  Node v24.21.0 is a read-only wasm validation/execution oracle only; never use Node to generate
+  IR or wasm. The production path is `.om -> omc ir -> irwasm.om -> wasm`, with no Node runtime
+  dependency. Observed at that source: `PASS parity cases=129 units=13 traps=29; every export exercised`,
+  byte-identical repeat translations, add-to-sub mutant rejected by the parity checker (exit 1),
+  and named parse/type refusals with empty stdout. Retained logs/artifacts live in
+  `evidence/IRWASM-20261026/`. That backend gate did not exercise a browser or GPU/Alpha qualification.
+  Compiler sha256 is `befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d`;
+  its om4-built and self-built fixpoint agrees. Re-exercised at tested head
+  `0e81d5a6f990000f1dca50f05f0c6050f7cdf9a5` before #787 merged: seed and om-units
+  gates passed and the independently pre-recorded compiler digest matched the rebuild.
+  The older pin/fixpoint above remains dated history.
+- The site integration merged through [aienos.com #109](https://github.com/aien-dev/aienos.com/pull/109),
+  merge `a6aec5e2628804abd27101ba184d7a319f95774e`; #108 closed as superseded.
+  `sh om/hive-page/gate-fresh.sh` exercises the native/wasm boundary table; the site check regenerates
+  wasm without Node and the existing x86_64 CI test only hashes the artifact. Earlier #108 Chromium
+  synthetic-feed fixtures exercised four wasm states and corrupt-module fallback to `js`; those
+  dated receipts remain on #108, not in the #109 main tree. The helper source and wasm artifact
+  were carried over byte-identically. Merge status does not establish deployment or trusted clocks.
 - Record the source revision, the compiler, source and binary hashes, the exact command, the platform, expected versus observed result, and the limits. A local smoke run is not repository qualification, not a merge and not a deployment.
 - Pending [omega-mv PR #789](https://github.com/aien-dev/omega-mv/pull/789), source `c18775f307befd88f427f140181289c31fee974e` (2026-10-26; base `ec07d25d`): build `build/omegese/omegese`, `build/omega_emit/omega_emit` and `build/checker2/checker2` before standalone `seed/host/check.sh`. A missing oracle returns `NOT_RUN` with status 3 before any rebuild, never host PASS. `tests/gates/run.sh seed` builds these oracles and runs the seed chain, IR comparison (including the mul-to-add mutant), native host tests and original-fixture comparison. Run host builds at `nice -n 19` with `MAKEFLAGS=-j2`.
 - The corrected original-fixture obligation is `seed/host/original-fixtures.tsv`: 62 exact paths and observed parent statuses, not a filtered list whose denominator may silently shrink. Missing, duplicate or malformed obligations and common compiler refusals must fail. Exercise `nice -n 19 python3 seed/host/test_gate_integrity.py` for the fail-closed controls.
