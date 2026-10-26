@@ -409,9 +409,9 @@ refreshes the authoritative pin only after its referee and compatibility gates.
 
 ### 9b. HTTP/1.1 and JSON library units (#788)
 
-[omega-mv PR #814](https://github.com/aien-dev/omega-mv/pull/814) (head
-`db029a71f8527100353d6f610a711d951f3c04c9`; status recorded in the PR) adds library units, not
-language or compiler changes, built with the committed `seed/out/omc` `befb8199…8a1d`:
+[omega-mv PR #814](https://github.com/aien-dev/omega-mv/pull/814), MERGED 2026-10-26 as `77ebd3fd5910e16326e4f6990141c76fce1ee735` (head
+`f066f270cf23bfb07c458dd56504cf23c974d955`), adds library units, not
+language or compiler changes. Gates re-run on the reseeded `seed/out/omc` `189ada82…3b54`:
 `seed/net/http.om` (functions `h*`, constants `H*`) and `seed/json/{json,jsonw,jsonf}.om`
 (`js*`). They have no `om2` line, no globals and no `main`; the caller composes one OM-2 unit:
 
