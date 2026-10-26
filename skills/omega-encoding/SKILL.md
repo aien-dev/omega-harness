@@ -354,7 +354,11 @@ it, or decode signed values arithmetically (section 8).
 ## 6. Names, scope, registers
 
 - Function names: up to 63 characters. Every other name (variable, parameter, global, text, const,
-  struct, field): **at most 8 characters**, else error 13 ([#L423](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L423), gate15 `e13_long_variable`).
+  struct, field): **at most 8 characters** on the pinned omc `2c824805`, else error 13 ([#L423](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L423), gate15 `e13_long_variable`).
+- PENDING, not merged or pinned: [omega-mv #837](https://github.com/aien-dev/omega-mv/pull/837) (batch 3
+  candidate `21d34e12`) raises every such name to 63 bytes, compared in full (`counter_a` and
+  `counter_b` are distinct). Error 13 then means over 63. IR-mode locals and parameters, `abstract`/`layout`
+  names and layout fields stay at 8, and so does om4. Until the batch-3 pin lands, keep names at 8.
 - A new name may not equal a visible name, a function or a struct (error 10). A name first written
   inside `if` / `else` / `while` / `for` dies at its `end`; assign it before the block to carry it out.
 - Reserved words cannot be names. Besides the obvious ones, the table reserves `len read write text
@@ -452,7 +456,7 @@ per code; the message format is `fn fail` ([omc.om#L122-L148](https://github.com
 
 | Code | Meaning | Code | Meaning |
 |---|---|---|---|
-| 1, 2 | compiler I/O | 13 | non-function name over 8 characters |
+| 1, 2 | compiler I/O | 13 | non-function name over 8 characters (over 63 once #837 is pinned) |
 | 3 | unknown name or field | 14 | capacity at `91b3c932`: 8192 names, 4096 functions, 512 nested blocks, 1024 nesting depth, 8 MiB input/output |
 | 4 | line ends too early | 15 | missing `end` |
 | 5 | extra words on the line | 16 | syntax / unknown word |
