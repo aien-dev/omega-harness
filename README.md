@@ -46,8 +46,18 @@ The examples run on Linux AArch64 hosts only:
 ```sh
 git clone https://github.com/aien-dev/omega-mv.git omega-src
 sha256sum omega-src/seed/out/omc   # 734f0a39319fbfa930bcc62cb30dbf06d47d78e126372b74f5baf478e6126b61 at the pin
-omega-src/seed/out/omc < skills/omega-encoding/examples/fnv1a32.om > fnv; echo "compile rc=$?"
-chmod +x fnv && printf abc | ./fnv | od -An -tx1   # 0b e9 47 1a
+omega-src/seed/out/omc < skills/omega-encoding/examples/fnv1a32.om > fnv 2> fnv.err
+compile_rc=$?
+printf 'compile rc=%s\n' "$compile_rc"
+cat fnv.err
+if [ "$compile_rc" -eq 0 ]; then
+    chmod +x fnv
+    printf abc > fnv.in
+    ./fnv < fnv.in > fnv.out
+    run_rc=$?
+    printf 'run rc=%s\n' "$run_rc"
+    if [ "$run_rc" -eq 0 ]; then od -An -tx1 fnv.out; fi  # 0b e9 47 1a
+fi
 ```
 
 The `omega-encoding` skill (section 13) records the full set of observed results and the negative controls.
