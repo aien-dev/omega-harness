@@ -165,6 +165,27 @@ returns now work: internal void return code 12 is distinct from f32 value type 1
 `gate8.sh` exercises f32 values and rejects void-as-value (7) and f32 fallthrough (18).
 Consumers must explicitly migrate and qualify their own pins; a main merge does not deploy them.
 
+### PENDING compiler batch 2 (omega-mv #816, not merged)
+
+Status: PROPOSED for main; EXERCISED on arm64 Linux on branch `integ/omc-batch2` (tested source
+`87f501ad980ca7406f8186612db30945a0bfd907`, PR head `4e76fd36b35beb5ef69e059e180c0d1ea8081d92`).
+Until #816 merges, main's pin is still `189ada82` above; do not cite this pin as main.
+
+| Item | Value |
+|---|---|
+| `seed/omc/omc.om` | 12,040 lines, 405 functions, sha256 `7703da00055fc0c7a91fcae43071df76a3f277dbe867cb284a3bdff3bedb7e1b` |
+| `seed/out/omc` | sha256 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f` |
+| Receipt | `evidence/BATCH-2c824805/README.md`, final run in `final-87f501ad/` |
+| Size ledger | `seed/omc/size-history.tsv`, row `RM-batch2` |
+
+Contents: function-mode `const` (#806, see draft #31), `flock` 197 (#805), `peercred` 220,
+`pollfds` 221, `sendmsg` 222 with the sockopt allowlist and getppid on syscall 173 (#808, draft
+#34), IR v1 validation (#810, draft #36), saturating float-to-integer casts by destination range
+and earlier consts staying visible after a `fn` signature (#815). Frozen C2 is 5870/5876; the six
+failures are exactly the declared rows in `manifest-c2-capacity.txt` and `manifest-c2-batch2.txt`.
+`om/units.sh`, the om/tls suites and `seed/json/tests/gate-json.sh` all pin this digest on the
+branch, and refuse `189ada82`. #775 (empty text to a `view`) is NOT fixed here; it is batch 3.
+
 
 Re-check recipe (read only, in a fresh clone, never in a shared working tree another agent may be using):
 
