@@ -31,6 +31,8 @@ Read that with the [canonical responsibility boundaries](https://github.com/aien
 
 The default-branch [Omega README](https://github.com/aien-dev/omega-mv/blob/main/README.md) and [instructions](https://github.com/aien-dev/omega-mv/blob/main/AGENTS.md) distinguish the merged seeded `.om` compiler from legacy OSC/C and candidate-only work. The earlier M6 fixed-output self-copy result is not general compiler self-hosting. Compiler fixpoint, diverse compilation, GPU launch and end-to-end model execution are separate claims. Discover the current supported language and pins before writing `.om`; never infer them from an old model answer or skill.
 
+Omega's language and toolchain path to 1.0 is [`docs/ROADMAP-1.0.md`](https://github.com/aien-dev/omega-mv/blob/19f014f2178ca9cd3473728fe00a475a2398c409/docs/ROADMAP-1.0.md) (merged in omega-mv #801, 2026-10-26). It has an audit at `3364a1dfd` and milestones RM1..RM11, each with acceptance gates and a tracking issue, [#790](https://github.com/aien-dev/omega-mv/issues/790) through [#800](https://github.com/aien-dev/omega-mv/issues/800). It owns only that acceptance contract. Milestone IDs, status and cross-project order stay with aien-architecture below, and the RM names exist so they are not confused with its `M` rows. Route language work to the RM issue that names it and to the existing owner issue it links. An open RM item is missing work, not something Omega cannot do, and nothing in the file is a readiness claim.
+
 ## Which authority answers which question?
 
 In [aien-architecture-mv](https://github.com/aien-dev/aien-architecture-mv):
@@ -110,7 +112,7 @@ Keep **proposed**, **implemented**, **verified**, **qualified** and **deployed**
 Observed contradictions to keep visible, not silently reconcile:
 
 - The AienOS README describes an older universal Spark-before-merge process. Its [newer repository instructions](https://github.com/aien-dev/aienix/blob/main/AGENTS.md) warn that historical README prose is not current merge policy.
-- Omega README's opening candidate wording coexists with its explicit statement that the seeded compiler landed from PR #696. Its source and current instructions determine availability, not the older introductory sentence.
+- Omega README's opening sentence used to say the seeded compiler was only on candidate branches while line 27 said it landed from PR #696. omega-mv #801 corrected the opening at main `19f014f21`. Source and current instructions still decide availability.
 - Architecture README acknowledges roadmap R15/R16 wording lagging candidate results. The execution plan contains dated corrections to older baselines. Read exact candidate receipts and exceptions before raising status.
 - [ADR 0038](https://github.com/aien-dev/aien-architecture-mv/blob/main/docs/adr/0038-names-aienux-kernel-aienos-system.md) establishes **AienOS system / Aienux kernel**, but its rename request is not proof both renames happened. Current system slug is **`aien-dev/aienix`**, kernel **`aien-dev/aienux`**. Do not rename `aienix` or reuse `aienos` as onboarding cleanup: redirects, signed repository identities, pins, judge consumers and receipt paths require a coordinated migration. Preserve historical evidence, cryptographic labels and identifiers exactly.
 

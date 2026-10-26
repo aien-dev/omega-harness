@@ -100,6 +100,71 @@ feeds, not production telemetry. The helper source and wasm artifact were carrie
 byte-identically. Production browser verification, deployment and GPU qualification
 remain NOT_RUN by this guide update.
 
+### Current main, OM-2 contract and the 1.0 roadmap (2026-10-26)
+
+omega-mv main `19f014f2178ca9cd3473728fe00a475a2398c409` (merge of
+[#801](https://github.com/aien-dev/omega-mv/pull/801)) changed no compiler file after `3364a1dfd`:
+`seed/out/omc` and its sidecar are still `befb8199...8a1d`, the backend pin above. Read only; not
+rebuilt for this note.
+
+- **OM-2 is merged.** The opt-in profile (first non-`note` line `om2`, `om2 diag` or `om2 fmt`)
+  landed through [#750](https://github.com/aien-dev/omega-mv/pull/750),
+  [#753](https://github.com/aien-dev/omega-mv/pull/753),
+  [#754](https://github.com/aien-dev/omega-mv/pull/754),
+  [#764](https://github.com/aien-dev/omega-mv/pull/764), the SHA-256 cutover
+  [#776](https://github.com/aien-dev/omega-mv/pull/776) and the qualification harness
+  [#752](https://github.com/aien-dev/omega-mv/pull/752). What `omc` implements is
+  [OMEGESE section 9.13](https://github.com/aien-dev/omega-mv/blob/19f014f2178ca9cd3473728fe00a475a2398c409/docs/one_layer/OMEGESE.md#L624).
+- **The normative OM-2 contract is on main since #801**, byte-identical to branch `om2/contract`
+  @ `23fc7f5c9`: `spec/omegese-om2.md` sha256 `245bb74e940c811ab325e6fabb33f0599ad46aaf6b9064fd2750c43980040881`,
+  `spec/omegese-om2-errata.md` (E1..E18) `7b8c1ea58738806cfc29a145a2d60ede5e1c399366a1665004859304bdd2d671`,
+  `spec/omegese-om2-measure.md` `507702d0e69ccc76cefb3675e2b22f7279497d362b42ee3043f3a1057aa17bad`.
+  Before #801 these files existed only on that branch; older notes that call the contract "missing"
+  or "draft only" are stale.
+- **Omega 1.0 roadmap:** [`docs/ROADMAP-1.0.md`](https://github.com/aien-dev/omega-mv/blob/19f014f2178ca9cd3473728fe00a475a2398c409/docs/ROADMAP-1.0.md),
+  milestones RM1..RM11 with acceptance gates, tracked in
+  [#790](https://github.com/aien-dev/omega-mv/issues/790) (gate coverage),
+  [#791](https://github.com/aien-dev/omega-mv/issues/791) (contracts),
+  [#792](https://github.com/aien-dev/omega-mv/issues/792) (efficiency),
+  [#793](https://github.com/aien-dev/omega-mv/issues/793) (memory model),
+  [#794](https://github.com/aien-dev/omega-mv/issues/794) (strings),
+  [#795](https://github.com/aien-dev/omega-mv/issues/795) (modules),
+  [#796](https://github.com/aien-dev/omega-mv/issues/796) (bridge FFI),
+  [#797](https://github.com/aien-dev/omega-mv/issues/797) (diagnostics),
+  [#798](https://github.com/aien-dev/omega-mv/issues/798) (targets),
+  [#799](https://github.com/aien-dev/omega-mv/issues/799) (compiler trust and C retirement),
+  [#800](https://github.com/aien-dev/omega-mv/issues/800) (stability). It is a plan, not a readiness
+  claim; a gap listed there is missing, not impossible.
+- **Gate coverage at main:** `seed/wasm/gate-irwasm.sh` and `seed/qualification/om2/gate.om` are
+  merged but no `tests/gates/*.gate` runs them (RM1, #790). `tests/gates/run.sh seed` passing says
+  nothing about OM-2 fixtures or irwasm; run those yourself and report them separately.
+- **Open OM-2 defect** [#775](https://github.com/aien-dev/omega-mv/issues/775): an empty `text`
+  passed to a `view uchar *` parameter was reported to see the next text's bytes (`len` 32, not 0).
+  Do not pass an empty text to an unsized view until it is closed.
+
+### Merged compiler batch: contracts, capacity and f32 returns
+
+Omega main `91b3c9326919faf1491e29ae9276929e8349b8c7` merges #768, including executable
+contracts #807 and f32 return repair #812. Status: MERGED and EXERCISED on arm64 Linux;
+not GPU qualification. The batch receipt is `evidence/BATCH-189ada82/README.md` at that commit.
+Host qualification with C oracles, gate5, contract checks and mutants, float and capacity
+boundaries and IR-trap mutants passed. Frozen C2 retains three expected failures from the
+intentional capacity expansion; `manifest-c2-capacity.txt` records those three newly accepted
+units separately. Do not claim the frozen manifest itself passes or rewrite it.
+
+| Item | Value |
+|---|---|
+| `seed/omc/omc.om` | 11,555 lines, sha256 `de7f5c8035608c244fb612ed5bf7691ae22d3b64735a5e7122fe9d0c67853d2b` |
+| `seed/out/omc` | sha256 `189ada82e00bb440cb41351bd252cc68c54a1b1050051cc42a1df700081c3b54` |
+| Language text | `docs/one_layer/OMEGESE.md` section 12, "Executable native contracts, version 1" |
+| Fixtures | `seed/omc/contracts/contracts.cases` (44 rows), `mutant.cases` (2 mutants, both must FAIL) |
+| Size ledger | `seed/omc/size-history.tsv`, row `RM2-capacity-f32` with that sha256 |
+
+The capacity is 4096 functions, 8192 names and 524288 call sites per unit. Native `to f32`
+returns now work: internal void return code 12 is distinct from f32 value type 10 and f64 11.
+`gate8.sh` exercises f32 values and rejects void-as-value (7) and f32 fallthrough (18).
+Consumers must explicitly migrate and qualify their own pins; a main merge does not deploy them.
+
 
 Re-check recipe (read only, in a fresh clone, never in a shared working tree another agent may be using):
 
@@ -121,14 +186,18 @@ deployed anywhere.
 
 | Thing | Where | Status |
 |---|---|---|
-| **Omegese**, the `.om` language | `docs/one_layer/OMEGESE.md`, sections 1-11 | current |
+| **Omegese**, the `.om` language | `docs/one_layer/OMEGESE.md`, sections 1-11 on main | current |
+| Profile **OM-2** (opt-in per unit) | contract `spec/omegese-om2.md` plus errata E1..E18 (normative, on main since #801); implemented subset in OMEGESE section 9.13 | current, merged; host evidence only |
+| WebAssembly MVP backend `seed/wasm/irwasm.om` | OMEGESE section 11.1; scalar OSC IR v1 only | merged; gate not in any manifest (#790) |
+| Executable contracts (`requires`, `ensures`, `invariant`, `result`) | OMEGESE section 12; section 11a here | merged in #768, including #807; host-exercised |
 | The seeded compiler `omc`, written in `.om` | `seed/omc/omc.om`, built `seed0 -> hex1 -> asm2 -> om4 -> omc` by `sh seed/omega-from-seed.sh` | on `main` since PR #696 ([README.md#L27](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L27)) |
 | Keyword table, the authority for reserved words | `fn kw` in `seed/omc/omc.om` ([#L375](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L375)); same list in `seed/omc/genkw.awk` ([#L16](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/genkw.awk#L16)), parity checked by `seed/omc/gate18.sh` | gated |
 | C translator `tools/omegese/omegese.c` and `omegese next` | OMEGESE sections 1-8 | legacy referee and token-mask tool, not the compiler |
 | `spec/omega-language-v0.md` (`let x: u8 = ...`, `fn f(x: T) -> T { }`, `//` comments) | Visor console line language, lowered by C in `src/language/` ([#L1-L13](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/spec/omega-language-v0.md#L1-L13)) | history; never write `.om` in that syntax |
 | C under `src/`, including `src/compiler/` | `main` | unfinished migration ([README.md#L50](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L50)) |
 
-OMEGESE sections 2-6 describe the C translator's rules; sections 9-11 describe `omc`. Where they
+OMEGESE sections 2-6 describe the C translator's rules; sections 9-12 describe `omc` at
+`91b3c932`. Where they
 disagree, `omc` is what compiles your program:
 
 - Calls: the C path allows calls to earlier functions only. `omc` reads every signature first, so a
@@ -384,7 +453,7 @@ per code; the message format is `fn fail` ([omc.om#L122-L148](https://github.com
 | Code | Meaning | Code | Meaning |
 |---|---|---|---|
 | 1, 2 | compiler I/O | 13 | non-function name over 8 characters |
-| 3 | unknown name or field | 14 | capacity: 1024 names, 512 functions, 512 nested blocks, 1024 nesting depth, 8 MiB input/output |
+| 3 | unknown name or field | 14 | capacity at `91b3c932`: 8192 names, 4096 functions, 512 nested blocks, 1024 nesting depth, 8 MiB input/output |
 | 4 | line ends too early | 15 | missing `end` |
 | 5 | extra words on the line | 16 | syntax / unknown word |
 | 6 | malformed number | 17 | line after `ret`/`break`/`continue`/`trap`/`exit` |
@@ -396,8 +465,121 @@ per code; the message format is `fn fail` ([omc.om#L122-L148](https://github.com
 | 12 | register pool exhausted | 23 | size capacity |
 
 A refused compile may still leave bytes on stdout. Never run output from a non-zero compile.
-Capacity boundaries are gated in `seed/omc/gate12.sh` (e.g. 1024 globals accepted, 1025 refused;
-511 functions plus `main` accepted, 512 plus `main` refused).
+Capacity boundaries are gated in `seed/omc/gate12.sh` (8192 globals accepted, 8193 refused;
+4095 helper functions plus `main` accepted, 4096 plus `main` refused).
+
+OM-2 units add or extend codes ([OMEGESE 9.13](https://github.com/aien-dev/omega-mv/blob/19f014f2178ca9cd3473728fe00a475a2398c409/docs/one_layer/OMEGESE.md#L624),
+[`spec/omegese-om2.md` section 8](https://github.com/aien-dev/omega-mv/blob/19f014f2178ca9cd3473728fe00a475a2398c409/spec/omegese-om2.md#L225)):
+27 initialization (`fresh`), 28 constructor discipline (`seal`, `holds`), 29 external `layout`;
+14 also covers expansion fuel (`obligation=growth`) and a 33rd `export`; 24 keeps its OM-1 meaning
+(branch displacement). gate15 pins only codes 3..23 (roadmap RM8, #797). Merged contracts
+(#807 through #768) add error **30**, diagnostic `obligation=contract` (section 11a).
+
+## 11a. Executable contracts (merged #807 through #768)
+
+Source: OMEGESE section 12 and `seed/omc/contracts/` at main
+`91b3c9326919faf1491e29ae9276929e8349b8c7`, compiler `189ada82...3b54` (section 0).
+The committed fixtures below were exercised by the batch host qualification:
+`evidence/BATCH-189ada82/qualification.log` records all 44 contract cases and the two mutants.
+Older compiler `befb8199` does not implement these contextual contract words.
+
+- **Opt-in and policy.** Only OM-2 units. The first non-`note` line selects the build policy:
+  `om2` or `om2 debug` checks contracts at run time; `om2 release` erases their evaluation after the
+  same syntax, scope, type and purity checks; `om2 diag debug` / `om2 diag release` add diagnostic
+  records; `om2 fmt` keeps its canonical output and still checks contracts. No environment variable
+  selects the policy. The words are contextual: OM-1 units and the keyword table are unchanged.
+- **Where clauses go.** `requires BOOL` and `ensures BOOL` form a function's prefix, before its first
+  executable statement (blank and `note` lines may separate them; at most 64). `invariant BOOL` forms
+  the prefix of a `while` or `for` body (at most 64 per loop). Anywhere else is error 30.
+- **When they run.** Preconditions in order on entry, inline calls included. Postconditions in order
+  on every normal return (`ret`, void fallthrough, inline return), never on `exit` or a trap; the
+  return value is computed once and `result` (value functions only) names it. A parameter in a
+  postcondition is its value at return: there is no `old`. Invariants run at the loop head before
+  the condition: on entry even for zero trips, on every backedge, after `continue` (a `for` increments
+  first) and before the final false test; `break` skips the next check.
+- **What a predicate may use.** Type `bool`; integer and bool literals and names, integer and bool
+  operations, checked conversions, grouping, `len`, ordinary checked array, struct and layout reads.
+  User calls (inline too), floats, abstract values, host and device words, allocation, writes and
+  ownership words are error 30, recursively, in release as well. `and`/`or` stay eager, so they do
+  not guard a bounds check.
+- **Failure.** False `requires` is trap 9 (exit 109); false `ensures` or `invariant` is trap 10 (exit
+  110); function-mode callers get the same codes through `OscRt.trap`. A trap raised while evaluating
+  a predicate keeps its own code (the `arithmetictrap` fixture expects 102). Note that 10 is also the
+  OM-2 `holds` check trap, so the trap site, not the code, identifies the failing clause.
+- **Erasure.** Only a predicate that folds to true without trapping is proved and erased in debug.
+  Release erases evaluation by policy, never uses a predicate as an optimizer assumption, and never
+  removes the body's own arithmetic, bounds, initialization, stack or loop-fuel checks. The fixtures
+  require byte-identical output for `release.om` against `erased.om` and for `proved.om` against
+  `plain.om`, not just equal exit statuses.
+- **Diagnostics.** With `om2 diag` (debug) or `om2 diag release`, every contract site gets a
+  `omc-check 1 kept|erased line=N rule=RULE kind=KIND` record on stderr: rule `runtime` for a kept
+  check, `constant-true` for a proved one, `release` for policy erasure; kind `requires`, `ensures` or
+  `invariant`. Postconditions are reported at their return sites. Error 30 carries
+  `obligation=contract` in the `omc-diag` record. Fixture expectations: `diagproof.om`
+  (`requires eq add uint 1 2 3`) gives `omc-check 1 erased line=3 rule=constant-true kind=requires`;
+  `diagrelease.om` (`om2 diag release`, `requires false`) gives
+  `omc-check 1 erased line=3 rule=release kind=requires`.
+
+`seed/omc/contracts/ok.om` (expected exit 0):
+
+```
+om2
+fn step x uint to uint
+requires lt x 10
+ensures eq result add x 1
+ret add x 1
+end
+fn main to int
+i = uint 0
+while lt i 3
+invariant le i 3
+i = step i
+end
+ret int sub i 3
+end
+```
+
+`seed/omc/contracts/requires.om` (expected exit 109; the precondition fails on entry):
+
+```
+om2 debug
+fn f x int to int
+requires gt x 0
+ret x
+end
+fn main to int
+ret f 0
+end
+```
+
+`seed/omc/contracts/release.om` (expected exit 0, and byte-identical to `erased.om`, which is the
+same program without the three contract lines and with `om2` in place of `om2 release`):
+
+```
+om2 release
+fn f x int to int
+requires gt x 0
+ensures eq result add x 1
+ret x
+end
+fn main to int
+while false
+invariant false
+end
+ret f 0
+end
+```
+
+Refusals pinned by `contracts.cases`: a user call, host word, float (also through a float constant
+or float array), misplaced clause, late `invariant`, `result` in a `requires` or in a void function
+are error 30; a non-bool predicate is 7; a name declared later in the body is 3; reading an
+unwritten `fresh` element is 27. The cases run through the existing OM-2 conductor
+`seed/qualification/om2/gate.om`. `mutant.cases` builds two broken compilers: one with enforcement
+disabled (`requires.om` must still exit 109) and one whose prover treats any constant predicate as
+proved (`false.om`, `requires false`, must exit 109). Both run to exit 0, so the suite must end
+`OM2GATE FAIL cases=2 pass=0 fail=2 invalid=0 not_run=0` (conductor exit 1), which
+`seed/host/check.sh` requires with the exact `VERDICT` lines. A passing mutant suite would mean the
+check proves nothing.
 
 ## 12. Before any claim
 
@@ -418,8 +600,8 @@ Capacity boundaries are gated in `seed/omc/gate12.sh` (e.g. 1024 globals accepte
    ([#L66-L68](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/host/MAPPING.md#L66-L68)) still calls the device words a proposal not
    on `main`, while `omc.om` reserves `devctl mapnew ... mapbind` (ids 166-177) and README
    ([#L27](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L27)) says they are on `main`. GPU launch and model execution through
-   them are not qualified. README line 5 also still says the seeded compiler is only on candidate
-   branches.
+   them are not qualified. (README line 5's old "candidate branches" wording was corrected on main by
+   #801.)
 
 ## 13. Examples
 
