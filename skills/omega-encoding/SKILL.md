@@ -145,11 +145,21 @@ remain are unfinished migration, not exemptions ([README.md#L50](https://github.
 
 ```sh
 OMC=omega-src/seed/out/omc                 # after checking its sha256 against section 0
-"$OMC" < prog.om > prog 2> prog.err; echo "compile rc=$?"; cat prog.err
-chmod +x prog && ./prog; echo "run rc=$?"
+"$OMC" < prog.om > prog 2> prog.err
+compile_rc=$?
+printf 'compile rc=%s\n' "$compile_rc"
+cat prog.err
+if [ "$compile_rc" -eq 0 ]; then
+    chmod +x prog
+    ./prog
+    run_rc=$?
+    printf 'run rc=%s\n' "$run_rc"
+fi
 ```
 
-Compile rc 0 with empty stderr is acceptance; any other rc is the error number of section 11.
+Only compile status 0 permits running the new output. Check the runtime status
+separately: a program may intentionally return nonzero (modulo 256), and a trap
+has its own status. Empty compiler stderr alone is not a successful compile.
 To rebuild the compiler from the seed instead, run `sh seed/omega-from-seed.sh` from the root of a
 disposable clone (prints `PASS ...` lines and `RC=0`). It writes `build/seed/`, rewrites the tracked
 `seed/rung4/om4.s` size word and `seed/rung4/om4.bin` (`seed/rung4/mk4.sh`), and rewrites
