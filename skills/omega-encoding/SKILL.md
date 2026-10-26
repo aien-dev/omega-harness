@@ -244,10 +244,10 @@ Full host qualification is `sh seed/host/check.sh` (author-verified on 2026-10-2
 
 Status: EXERCISED on host only (Linux AArch64, 2026-10-26) at
 [omega-mv #838](https://github.com/aien-dev/omega-mv/pull/838) head
-`df23dc7b12ed6a26f8e0e84eb62c309ec4a02f17`, compiler `seed/out/omc`
+`f1e4c6170d6bdae804c99a7e709b0857b5da7c91`, compiler `seed/out/omc`
 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`, `omq` sha256
-`4cca33bce462d83354975ad8dcb0f6b7c18fb5edf72b4a6442aedc1cce3f0a4d`: `sh seed/query/check.sh` printed
-`SEED QUERY PASS 39 checks`. The PR is a draft and not merged, so `seed/query/` is absent from
+`b7fcd8a43ef6c1dc5db2d5e3b2172635a4c567c19f0f2b122985e186ab88489b`: `sh seed/query/check.sh` printed
+`SEED QUERY PASS 45 checks`. The PR is a draft and not merged, so `seed/query/` is absent from
 main until it lands. Source of every rule below: `seed/query/README.md` at that head.
 
 `omq` (`seed/query/omq.om`, seeded Omega) reads a program with one hole `??` and prints one JSON
@@ -276,8 +276,10 @@ seed/out/omc < seed/query/omq.om > omq && chmod +x omq
   `VALID-UNPROVEN` (no hole and `omc` accepts: well formed only, contracts become run-time traps,
   no behaviour proven); `UNKNOWN` (the error lies after the hole, in the witness's added closing
   lines, and may depend on what the hole holds).
-- `scope`: names visible at the hole, typed by probing `omc` (`T[]` for an array; `writable` when
-  `put` into it compiles). Names from closed blocks are absent.
+- `scope`: names visible at the hole, typed by probing `omc` (`T[]` for an array; `struct` when
+  `get NAME F` compiles for a declared struct's first field; `writable` when `put` into it
+  compiles). Candidates are parameters, `=` bindings, `for` variables and bare `NAME VALUE`
+  bindings. Names from closed blocks are absent.
 - `fns`: function signatures. `next`: forms that compiled at the hole; `<T>` is a slot for a value
   of type T. At a value hole `expect` lists the expected types. A user-function call appears with a
   concrete argument list.
@@ -322,7 +324,7 @@ rc=2
 
 Prefix mode: `omq OMC prefix` reads requests on fd 0, each a 4-byte little-endian length then that
 many bytes of program prefix, and writes one line `V CODE` per request: whether the prefix can still
-be completed to a program `omc` accepts, and the `omc` exit code. `V` per `omq.om` lines 2394-2396:
+be completed to a program `omc` accepts, and the `omc` exit code. `V` per `omq.om` lines 2518-2520:
 0 whole unit accepted, 1 prefix still completable, 2 dead, 3 compiler did not run. Requests
 `fn main to int` + `x = add`; the same with `x = add int 1 2` / `ret x` / `end`; and
 `fn main to int` + `abcdefghij = 1` gave:
@@ -336,7 +338,21 @@ be completed to a program `omc` accepts, and the `omc` exit code. `V` per `omq.o
 Limits: one hole per request; a call with several array parameters gives every array parameter the
 same candidate rank, so a call needing two different arrays of one element type may be missing from
 `next`; struct-typed parameters are not filled; the text after the hole is not checked (it is the
-part still to be written). Each answer costs tens to a few hundred compiles.
+part still to be written); an abstract value appears in `scope` with an empty type; scope order is
+first mention, so a loop variable reused after a closed loop of the same name can precede names
+declared between the loops; a hole inside an `inline` function whose caller passes a `fresh` array
+gives `check` code 27. Each answer costs tens to a few hundred compiles.
+
+- PENDING [omega-mv #843](https://github.com/aien-dev/omega-mv/pull/843) (draft, not merged,
+  `seed/out/omc` not reseeded; source OMEGESE 9.13 at head `3f6579b449a5a3a4458dc2bc443bd2a9e51773ff`):
+  stage 2 is `om2 query`, a lead line at byte 0 of the input to `omc` itself. Under it `omc` prints
+  one JSON line and never writes a program. No hole and the rest compiles:
+  `{"check":{"code":0,"status":"VALID-UNPROVEN"}}`, exit 0. Any `omc` error:
+  `{"check":{"code":C,"line":L,"status":"INVALID"}}`, exit 1 (code, line and status only, no
+  repairs). A statement `??` hole: `hole`, `scope`, `fns`, `obligations` in `omq`'s key shape, exit 0.
+  A value hole read as an unknown name: `"status":"UNKNOWN","why":"value holes: use omq (stage 1)"`,
+  exit 1. Without the lead line `??` keeps its old refusal. NOT_RUN here: the pinned `omc` above has
+  no `om2 query`, so no output is shown.
 
 ## 2. Program shape
 
