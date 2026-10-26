@@ -244,9 +244,9 @@ Full host qualification is `sh seed/host/check.sh` (author-verified on 2026-10-2
 
 Status: EXERCISED on host only (Linux AArch64, 2026-10-26) at
 [omega-mv #838](https://github.com/aien-dev/omega-mv/pull/838) head
-`f1e4c6170d6bdae804c99a7e709b0857b5da7c91`, compiler `seed/out/omc`
+`3d8619e58ecb4ef26b92fa9cf8fd12340617aae4`, compiler `seed/out/omc`
 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`, `omq` sha256
-`b7fcd8a43ef6c1dc5db2d5e3b2172635a4c567c19f0f2b122985e186ab88489b`: `sh seed/query/check.sh` printed
+`62a21f4462e217f4efcc3eaf1495ca65a0b51a7d47cb1dac25e54a92e1877f9c`: `sh seed/query/check.sh` printed
 `SEED QUERY PASS 45 checks`. The PR is a draft and not merged, so `seed/query/` is absent from
 main until it lands. Source of every rule below: `seed/query/README.md` at that head.
 
@@ -324,8 +324,11 @@ rc=2
 
 Prefix mode: `omq OMC prefix` reads requests on fd 0, each a 4-byte little-endian length then that
 many bytes of program prefix, and writes one line `V CODE` per request: whether the prefix can still
-be completed to a program `omc` accepts, and the `omc` exit code. `V` per `omq.om` lines 2518-2520:
-0 whole unit accepted, 1 prefix still completable, 2 dead, 3 compiler did not run. Requests
+be completed to a program `omc` accepts, and the `omc` exit code. `V` per `omq.om` lines 2522-2524:
+0 whole unit accepted, 1 prefix still completable, 2 dead, 3 compiler did not run. An open word at
+the prefix end longer than any word `omc` accepts (a name over 8 bytes, 63 after omega-mv #837; a
+number over 20 bytes) is answered `2`; note lines, text literals and prefixes of `invariant` are
+exempt (README lines 94-99 at that head). Requests
 `fn main to int` + `x = add`; the same with `x = add int 1 2` / `ret x` / `end`; and
 `fn main to int` + `abcdefghij = 1` gave:
 
