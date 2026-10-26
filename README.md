@@ -46,6 +46,12 @@ converter. Its seeded Omega writer and read-only Node oracle boundary are docume
 `3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`; boolean IR prerequisite #786:
 `87489da90a1a7a750fd4a7f9eeb005b1221721f6`.
 
+The [SPIR-V backend candidate (#804)](https://github.com/aien-dev/omega-mv/pull/804)
+adds an Omega-written OpenCL Kernel emitter, a PoCL CPU parity gate and a minimal
+OpenCL IL demo. `omega-harness` section 3 records the exact exercised source,
+toolchain, ABI, refusal boundary and evidence. The guide PR remains pending until
+the backend merges; CPU execution is not GPU or DPC++ qualification.
+
 ## Check the examples yourself
 
 The examples run on Linux AArch64 hosts only:
