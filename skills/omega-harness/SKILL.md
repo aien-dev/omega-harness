@@ -62,6 +62,7 @@ chmod +x prog && ./prog; echo "run rc=$?"
 - Hardware and live services need the operator's current authorization procedure. Host and emulator checks never qualify hardware. Machine-specific operator rules belong in that machine's local instructions, not in public guidance.
 - Escalate to an independent reviewer for hard-to-reverse changes to authority, protocols or gates, for contradictory evidence, or when two distinct fixes have failed. A model review is not an execution receipt.
 
+- **Fix it, don't file it** (Drake, 2026-10-25). A defect you can reproduce is a defect you chase in the same piece of work, including one you found while reviewing someone else's lane: read the code, build the smallest reproduction, change it, prove it, ship it. Reporting a blocker you have not tried to fix, or handing a reproduced bug to an "owner", is unfinished work. Stop only for a real external gate (authorization, a user decision, an exhausted check) and name it after the attempt.
 ## 5. Communicate and learn
 
 Follow `omega-communication`. Keep proposed, implemented, exercised, qualified, merged and deployed separate. A receiver needs the minimum sufficient definitions, inputs, constraints, evidence and open uncertainty, not the whole conversation. Never drop a prerequisite just to make a handoff shorter.
