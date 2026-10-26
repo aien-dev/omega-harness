@@ -404,8 +404,12 @@ From OMEGESE section 3 and 4 ([#L58-L60](https://github.com/aien-dev/omega-mv/bl
   1000000-pass guard.
 - **Pending, not pinned (omega-mv #848, draft):** an explicit `bound N` may be 1..9223372036854775807
   (a number or a `ulong` const). The 1000000 default and trap 4 stay. Until #848 is pinned, a loop
-  that needs more than 999999 passes must be split into nested loops. For a `for` with a computed
-  count above 1000000, write `while lt i n bound N`.
+  that needs more than 999999 passes must be split into nested loops.
+- **Pending, not pinned (omega-mv #857, draft, stacked on #848):** `for i T K bound N` takes the same N
+  (1..2^63-1, a number or integer const; 0 and 2^63 are error 8); more than N passes trap 4. Exercised
+  2026-10-26 on candidate compiler 8d2f0706 (gate16, C2 5870/5876, 811 .om differ=0). Until it is
+  pinned, a `for` with a computed count above 1000000 must be written `while lt i n bound N`.
+  The same PR makes IR-mode `for` with a value count carry the guard (before, checker2 rejected it).
 - `break` and `continue` (`omc` only, gate7); `continue` in a `while` re-runs the condition and bound.
 - Choose N from a proof, not a guess. Example: a read loop where every pass adds at least one byte to
   a 65536-byte buffer needs at most 65536 passes. Write that reasoning in a `note`.
