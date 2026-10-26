@@ -129,9 +129,9 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
   for exactly one mismatch. API/setup faults use exit 2 and cannot satisfy it.
   Full logs, per-case tables, raw artifacts and toolchain ledger are retained in
   `evidence/IRSPIRV/20261026-4ad014ed3/`. Host controls also prove inherited
-  discovery is ignored and missing/unconfigured libraries fail closed. A file
-  access trace shows no GPU devices, system OpenCL vendor/layer directories, or
-  inherited nonexistent probe paths accessed; its public copy redacts home paths.
+  discovery is ignored and missing/unconfigured libraries fail closed. A separate
+  file access trace of the demo host shows no GPU device or system OpenCL
+  vendor/layer directory accessed; its public copy redacts home paths.
 - Exercised oracle versions: PoCL 7.2 at
   `888c9774b94590fff1afef003154ca2c0ea66605`, LLVM/clang 18.1.3,
   SPIRV-LLVM-Translator 18.1.8, SPIRV-Tools v2025.1, ocl-icd 2.3.2.
