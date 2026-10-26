@@ -194,6 +194,13 @@ end
 - A unit with `fn main` is a static AArch64 Linux ELF (program mode). Without `fn main` the output is
   bare function words (function mode): it compiles with exit 0 but is **not runnable**. Host words
   and `global` are error 9 there, and `text` is program-mode only ([#L400-L407](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L400-L407), [#L454-L459](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L454-L459), [#L629](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L629)).
+  `const` is also error 9 in function mode (observed 2026-10-26 at omega-mv `19f014f2`, omc
+  `befb8199…8a1d`: `omc: line <last+1>: error 9`, because the end-of-input check counts every
+  top-level name). **Pending**, not on `main`:
+  [omega-mv #806](https://github.com/aien-dev/omega-mv/pull/806) (source `2a9113cf`) accepts `const` in
+  function mode, folding each read so the words equal the literal-only unit byte for byte, while a
+  `global`, a `text` and host words stay error 9. Until #806 lands and OmegaNext publishes the reseeded
+  pin, write literals with a `note` in function-mode units.
 - Program exit status = `main`'s value mod 256 (0 for void main). `exit v` (v `int`) ends at once.
   A runtime trap exits **100 + code**. Keep your own exit codes below 100, or a result is
   indistinguishable from a trap ([#L404-L407](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L404-L407), [#L484](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L484)).
@@ -250,6 +257,7 @@ bound in an outer `if`, then load inside it.
   decimal-to-binary rounding; overflow to infinity is error 8 ([#L555-L563](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L555-L563)).
 - Named constants: `const NAME TYPE LITERAL` at top level, visible only after their definition, also
   usable as array lengths, `trap` codes and `while` bounds ([#L602-L622](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L602-L622)).
+  Program mode only on `main` (observed at `19f014f2`); function mode is pending omega-mv #806 (section 2).
 
 ## 5. Arithmetic, conversions and traps
 
