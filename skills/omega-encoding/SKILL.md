@@ -10,8 +10,9 @@ cannot express, and before encoding bytes, integers or host I/O in Omega.
 
 ## 0. Pin and how to re-check it
 
-The general-language citations below retain their dated historical pin. The newer,
-scope-specific pin immediately below is the tested and merged IR/wasm backend.
+The general-language citations below retain their dated historical pin. The current main compiler
+pin is "Merged compiler batch 2" below (`2c824805`, main `0b77e6ea`); the dated sections between
+record how it got there.
 
 | Item | Value |
 |---|---|
@@ -165,11 +166,13 @@ returns now work: internal void return code 12 is distinct from f32 value type 1
 `gate8.sh` exercises f32 values and rejects void-as-value (7) and f32 fallthrough (18).
 Consumers must explicitly migrate and qualify their own pins; a main merge does not deploy them.
 
-### PENDING compiler batch 2 (omega-mv #816, not merged)
+### Merged compiler batch 2: current main pin (2026-10-26)
 
-Status: PROPOSED for main; EXERCISED on arm64 Linux on branch `integ/omc-batch2` (tested source
-`87f501ad980ca7406f8186612db30945a0bfd907`, PR head `4e76fd36b35beb5ef69e059e180c0d1ea8081d92`).
-Until #816 merges, main's pin is still `189ada82` above; do not cite this pin as main.
+omega-mv main `0b77e6ea294aa3d69ccbdb86b9c14d133abea689` merges #816 (`integ/omc-batch2`, head
+`4e76fd36b35beb5ef69e059e180c0d1ea8081d92`, tree identical to the merge). Status: MERGED and
+EXERCISED on arm64 Linux, re-run in a fresh clone of main; not GPU qualification, not deployed.
+This supersedes `189ada82` above as main's pin. Consumers still pinning an older digest must
+migrate and re-qualify themselves.
 
 | Item | Value |
 |---|---|
@@ -178,13 +181,14 @@ Until #816 merges, main's pin is still `189ada82` above; do not cite this pin as
 | Receipt | `evidence/BATCH-2c824805/README.md`, final run in `final-87f501ad/` |
 | Size ledger | `seed/omc/size-history.tsv`, row `RM-batch2` |
 
-Contents: function-mode `const` (#806, see draft #31), `flock` 197 (#805), `peercred` 220,
-`pollfds` 221, `sendmsg` 222 with the sockopt allowlist and getppid on syscall 173 (#808, draft
-#34), IR v1 validation (#810, draft #36), saturating float-to-integer casts by destination range
-and earlier consts staying visible after a `fn` signature (#815). Frozen C2 is 5870/5876; the six
-failures are exactly the declared rows in `manifest-c2-capacity.txt` and `manifest-c2-batch2.txt`.
-`om/units.sh`, the om/tls suites and `seed/json/tests/gate-json.sh` all pin this digest on the
-branch, and refuse `189ada82`. #775 (empty text to a `view`) is NOT fixed here; it is batch 3.
+Contents: function-mode `const` (#806), `flock` 197 (#805), `peercred` 220, `pollfds` 221,
+`sendmsg` 222 with the sockopt allowlist and getppid on syscall 173 (#808, section 9a), IR v1
+validation (#810, below), saturating float-to-integer casts by destination range and earlier
+consts staying visible after a `fn` signature (#815). Frozen C2 is 5870/5876; the six failures
+are exactly the declared rows in `manifest-c2-capacity.txt` and `manifest-c2-batch2.txt`, and
+`189ada82` scores 0/3 on the batch 2 manifest. `om/units.sh`, the om/tls suites and
+`seed/json/tests/gate-json.sh` pin this digest and refuse `189ada82`. #775 (empty text to a
+`view`) is NOT fixed; it is batch 3 (`integ/omc-batch3`, integrator OmegaNext).
 
 
 Re-check recipe (read only, in a fresh clone, never in a shared working tree another agent may be using):
@@ -203,11 +207,11 @@ or fixture checks it), **author-verified** (the repository records a run; not re
 **proposed** (described, not on `main`). Nothing here is hardware qualification, and nothing here is
 deployed anywhere.
 
-### Pending scalar IR validation repair (2026-10-26)
+### Scalar IR validation repair (merged in batch 2)
 
-This note is pending [omega-mv #810](https://github.com/aien-dev/omega-mv/pull/810),
-source head `b77c07e41`. It does not replace the published compiler pin above.
-The candidate rejects discarded trailing words, missing operands, stale
+[omega-mv #810](https://github.com/aien-dev/omega-mv/pull/810) (source head `b77c07e41`) is
+MERGED on main through batch 2 (#816) and is in the `2c824805` pin.
+The compiler rejects discarded trailing words, missing operands, stale
 untyped values, out-of-scope locals, duplicate loop counters, non-void
 fallthrough and unsupported float signatures before serializing IR.
 Local/parameter names remain at most eight bytes; function names retain
@@ -218,15 +222,12 @@ bare left operand whose type is inferred from the right must not parse
 that right operand again: the valid `shl 1 sh` regression is exercised by
 the existing C-oracle dev corpus.
 
-Host-only commands exercised on the candidate source, with `nice -n 19
-ionice -c3` and builds limited to `-j2`: `sh seed/omc/gate-ir.sh` exited 0;
+Host-only commands, with `nice -n 19 ionice -c3` and builds limited to `-j2`, first on the
+candidate and again on the batch 2 promotion head (`final-87f501ad/ir-trap.log`):
 `python3 seed/omc/gate-ir-trap.py` reported `CHECKS=67 FAILURES=0`;
-`python3 seed/omc/mutants-ir-trap.py` reported
-`COMPILED_MUTANTS=5 CAUGHT=5 RC=0`. The temporary om4-built/self-built
-fixpoint was `c8f38317fb272a936f3b3d395174c29aaab353c3de0710ac5f8d06df1d178f30`.
-That is a candidate test artifact, not a committed seed or downstream pin.
-The integration owner must publish the batch reseed before downstream
-consumers adopt the change.
+`python3 seed/omc/mutants-ir-trap.py` reported `COMPILED_MUTANTS=5 CAUGHT=5 RC=0`.
+`sh seed/omc/gate-ir.sh` exited 0 on the candidate. The candidate's temporary fixpoint
+`c8f38317…0f30` was a test artifact; the committed pin is `2c824805`.
 
 The separate [memory-profile specification #809](https://github.com/aien-dev/omega-mv/pull/809)
 uses the milestone label “IR v2” but reserves **OSC wire v7**, preserving
@@ -315,13 +316,11 @@ end
 - A unit with `fn main` is a static AArch64 Linux ELF (program mode). Without `fn main` the output is
   bare function words (function mode): it compiles with exit 0 but is **not runnable**. Host words
   and `global` are error 9 there, and `text` is program-mode only ([#L400-L407](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L400-L407), [#L454-L459](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L454-L459), [#L629](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L629)).
-  `const` is also error 9 in function mode (observed 2026-10-26 at omega-mv `19f014f2`, omc
-  `befb8199…8a1d`: `omc: line <last+1>: error 9`, because the end-of-input check counts every
-  top-level name). **Pending**, not on `main`:
-  [omega-mv #806](https://github.com/aien-dev/omega-mv/pull/806) (source `2a9113cf`) accepts `const` in
-  function mode, folding each read so the words equal the literal-only unit byte for byte, while a
-  `global`, a `text` and host words stay error 9. Until #806 lands and OmegaNext publishes the reseeded
-  pin, write literals with a `note` in function-mode units.
+  `const` is accepted in function mode from pin `2c824805` ([omega-mv #806](https://github.com/aien-dev/omega-mv/pull/806),
+  merged in batch 2): each read is folded, so the words equal the literal-only unit byte for byte,
+  while a `global`, a `text` and host words stay error 9. `gate16` exercises it (9 function-mode
+  units, `final-87f501ad/qualification.log`). Older pins (`189ada82`, `befb8199`) still refuse it
+  with `omc: line <last+1>: error 9`; there, write literals with a `note`.
 - Program exit status = `main`'s value mod 256 (0 for void main). `exit v` (v `int`) ends at once.
   A runtime trap exits **100 + code**. Keep your own exit codes below 100, or a result is
   indistinguishable from a trap ([#L404-L407](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L404-L407), [#L484](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L484)).
@@ -378,7 +377,8 @@ bound in an outer `if`, then load inside it.
   decimal-to-binary rounding; overflow to infinity is error 8 ([#L555-L563](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L555-L563)).
 - Named constants: `const NAME TYPE LITERAL` at top level, visible only after their definition, also
   usable as array lengths, `trap` codes and `while` bounds ([#L602-L622](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L602-L622)).
-  Program mode only on `main` (observed at `19f014f2`); function mode is pending omega-mv #806 (section 2).
+  Function mode too from `2c824805` (#806); a `const` declared after a `fn` no longer breaks later
+  signatures that use an earlier `const` as an array length (#815, `gate16` const_order).
 
 ## 5. Arithmetic, conversions and traps
 
@@ -488,9 +488,9 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
 - Evidence for any host claim: compiler sha256, source sha256, output binary sha256, exact command,
   exit status, and the observed bytes. A program that ignores a negative result is not evidence.
 
-### 9a. Pending bounded networking batch (#788)
+### 9a. Bounded networking host words (#788, merged in batch 2)
 
-**Pending, not a current compiler pin.** On 2026-10-26,
+MERGED on main through batch 2 (#816, pin `2c824805`).
 [omega-mv PR #808](https://github.com/aien-dev/omega-mv/pull/808), source
 `58d6fb6a2f72b1ab02c0eb0c01afe141303c968d`, adds these Linux-arm64 host words:
 
@@ -500,7 +500,7 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
 | `pollfds A off n interval` | Writable packed eight-byte `pollfd` records, byte length multiple of eight and at most 8192; returns ready-entry count, zero timeout, or negative errno. Interval is nanoseconds; negative is infinite. |
 | `sendmsg fd A off n flags` | One checked payload, private single `iovec`, no ancillary data; adds `MSG_NOSIGNAL`, returns partial count or negative errno. |
 
-The same pending source narrows `sockopt` to four-byte scalar values:
+The same source narrows `sockopt` to four-byte scalar values:
 `SOL_SOCKET` options `SO_REUSEADDR`, `SO_REUSEPORT`, `SO_KEEPALIVE`, `SO_SNDBUF`,
 `SO_RCVBUF`, and `IPPROTO_TCP/TCP_NODELAY`. Unknown options return `-92`
 (`ENOPROTOOPT`); incorrect scalar length returns `-22` (`EINVAL`). Ordinary
@@ -511,8 +511,8 @@ Sockets, `accept4` (`accept`), connection establishment, `send`/`recv`,
 a missing socket interface. Callers own partial-I/O loops, monotonic deadlines,
 EINTR/EAGAIN handling, framing and descriptor lifecycle. Do not retry `fclose`
 after an error. Public TLS termination and tailnet encryption do not make
-Omega a TLS client: outbound GitHub consumers stay host dependencies until
-the separate `.om` TLS implementation is qualified.
+Omega a TLS client. The `.om` TLS library (`om/tls`, omega-mv #813) is merged
+and host-exercised on `2c824805`; it is not hardware or third-party qualified.
 
 Author-exercised candidate only: bootstrap compiler
 `befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d`;
@@ -532,15 +532,17 @@ The distinct parent/child peer-credential fixture also exposed an older
 The earlier fixture accepted negative errors. Earlier candidate host-gate
 logs used the committed compiler for two paths and are mixed-compiler evidence,
 not full qualification of that candidate. Preserve those logs as history.
-These checks do not establish a reseed/fixpoint, merged state, or hardware
-qualification. The compiler integration owner performs the batch reseed and
-refreshes the authoritative pin only after its referee and compatibility gates.
+Those candidate checks did not establish a reseed. The batch 2 reseed did:
+on `2c824805`, `seed/host/check.sh` with `gate5.sh` passed with 53 host negative
+controls, including sockopt, flock and network (`final-87f501ad/qualification.log`).
+Not hardware qualification.
 
 ### 9b. HTTP/1.1 and JSON library units (#788)
 
 [omega-mv PR #814](https://github.com/aien-dev/omega-mv/pull/814), MERGED 2026-10-26 as `77ebd3fd5910e16326e4f6990141c76fce1ee735` (head
 `f066f270cf23bfb07c458dd56504cf23c974d955`), adds library units, not
-language or compiler changes. Gates re-run on the reseeded `seed/out/omc` `189ada82…3b54`:
+language or compiler changes. Gates first ran on `189ada82…3b54` and were re-run on batch 2 `2c824805`
+(the JSON gate now pins `2c824805`):
 `seed/net/http.om` (functions `h*`, constants `H*`) and `seed/json/{json,jsonw,jsonf}.om`
 (`js*`). They have no `om2` line, no globals and no `main`; the caller composes one OM-2 unit:
 
@@ -556,9 +558,10 @@ language or compiler changes. Gates re-run on the reseeded `seed/out/omc` `189ad
   included; a non-plain transport returns -95.
 - JSON numbers stay source lexemes; integers convert exactly; `jsonf.om` gives correctly rounded
   binary64 on request. Duplicate keys are kept in order: the application decides.
-- Two compiler limits met while building them at this pin: any `const` blocks function-mode
-  compilation (tracked in omega-mv #806), and a `const` declared after a `fn` breaks later
-  signatures that use an earlier `const` as an array length. Declare constants before functions.
+- Two compiler limits met while building them at `189ada82`, both fixed in `2c824805`: `const`
+  blocked function-mode compilation (#806), and a `const` declared after a `fn` broke later
+  signatures that use an earlier `const` as an array length (#815). On older pins, declare
+  constants before functions.
 - Gates (host only): `python3 seed/net/tests/check.py` → `HTTP-CHECK PASS`;
   `sh seed/json/tests/gate-json.sh` → `JSONGATE PASS rows=8758 mutants=5`.
 
