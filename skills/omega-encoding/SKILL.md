@@ -11,7 +11,7 @@ cannot express, and before encoding bytes, integers or host I/O in Omega.
 ## 0. Pin and how to re-check it
 
 The general-language citations below retain their dated historical pin. The newer,
-scope-specific pin immediately below is the tested IR/wasm candidate, not main.
+scope-specific pin immediately below is the tested and merged IR/wasm backend.
 
 | Item | Value |
 |---|---|
@@ -24,26 +24,26 @@ scope-specific pin immediately below is the tested IR/wasm candidate, not main.
 
 Every citation links to that commit: `https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/<path>#L<n>`.
 
-### Pending IR/wasm candidate (2026-10-26)
+### Merged IR/wasm backend (2026-10-26)
 
-Source: omega-mv `8e083692ae1f597966c8d2eb6a92292bb278eb41`,
-[draft #787](https://github.com/aien-dev/omega-mv/pull/787), stacked on the separate
-boolean IR fix [draft #786](https://github.com/aien-dev/omega-mv/pull/786).
-Pending until both changes land; do not describe this backend as available on main.
+Source: omega-mv main `3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`,
+[#787](https://github.com/aien-dev/omega-mv/pull/787), after the separate boolean IR
+fix [#786](https://github.com/aien-dev/omega-mv/pull/786), merge
+`87489da90a1a7a750fd4a7f9eeb005b1221721f6`. Source merge is not deployment.
 
-| Candidate item | Verified value |
+| Backend item | Verified value |
 |---|---|
 | `seed/omc/omc.om` | sha256 `bd64bb6f20952818e155328f429ab6cd36bba213e3e00b60d796336f9d0c9343` |
 | `seed/out/omc` | sha256 `befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d` |
 | Prior main compiler at `ec07d25d5506d33567adbd4d9b518177b7933bad` | sha256 `499236398aabc652e2dae27fe4bdc4c5db3d3726314356e0dbef23e3345803ec` |
 | `seed/wasm/irwasm.om` | sha256 `8dc7bf602eb882e26a18b9e2dc4cacdd3ad68827215e71874b14c4acb237ccf8` |
 
-The candidate corrects IR-mode boolean AND/OR/XOR typing: all three previously
+The compiler corrects IR-mode boolean AND/OR/XOR typing: all three previously
 exited 7 and now compile to bytes identical to the C encoder, accepted by checker2.
 Boolean arithmetic and shifts remain refused. The om4-built compiler and two
 self-rebuilds are byte-identical; the full compiler referee/wrong-word-mutant gate
 ended `GATE5 PASS`. Retained evidence:
-`evidence/IR-BOOL-20261026/` in draft #786.
+`evidence/IR-BOOL-20261026/` from merged #786.
 
 `seed/wasm/irwasm.om` is a seeded Omega backend for **scalar OSC IR v1**, not an
 arbitrary foreign-source converter. It writes an import-free WebAssembly MVP module
@@ -53,7 +53,7 @@ width and signedness; signed overflow, invalid shifts/casts/division, explicit t
 and lowered loop guards become wasm runtime traps. Wasm does not expose Omega's
 numeric trap code. Supported instructions: CONST/MOV/BIN/UN/CMP/CAST/CALL/TRAP/BR/CBR/RET.
 Limits and exact mappings:
-[`OMEGESE.md` section 11.1](https://github.com/aien-dev/omega-mv/blob/8e083692ae1f597966c8d2eb6a92292bb278eb41/docs/one_layer/OMEGESE.md#L914).
+[`OMEGESE.md` section 11.1](https://github.com/aien-dev/omega-mv/blob/3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9/docs/one_layer/OMEGESE.md#L914).
 Versions other than 1, memory/reference/arena/pool/slice tags and operations refuse.
 The module is buffered so parse/type/capacity refusals have empty stdout.
 
@@ -62,17 +62,18 @@ Observed on Linux AArch64, Node v24.21.0 used **only as a read-only oracle**:
 `PASS parity cases=129 units=13 traps=29; every export exercised`.
 The parity checker rejected an add-to-sub IR-byte mutant with exit 1; two translations
 of every unit were identical, and named refusal exits were pinned with empty stdout.
-Source-bound full logs/artifacts: `evidence/IRWASM-20261026/` in draft #787.
-That backend gate did not run browser integration, GPU qualification, merge or deployment.
+Source-bound full logs/artifacts: `evidence/IRWASM-20261026/` from merged #787.
+Re-exercised at head `0e81d5a6f990000f1dca50f05f0c6050f7cdf9a5` before merge;
+the backend gate did not run browser integration or GPU qualification.
 
-Existing guide examples were rerun with this candidate compiler: FNV `abc` emitted
+Existing guide examples were rerun with this compiler: FNV `abc` emitted
 `0b e9 47 1a`, compile/run exit 0; `trap_narrow.om` compiled with exit 0 and ran with
 exit 105. Removing only the unmasked store (negative control) changed the run exit
 to 44. The historical examples and their old measured evidence below remain intact.
 
-Downstream browser integration is separately **implemented and exercised, not deployed**:
-[aienos.com draft #108](https://github.com/aien-dev/aienos.com/pull/108), implementation
-source `85062b8a4eacd115d15cf3532aa05ede1c306218`, stacked on draft #105.
+Downstream browser integration is separately **merged**, not qualified as deployed here:
+[aienos.com #109](https://github.com/aien-dev/aienos.com/pull/109), merge
+`a6aec5e2628804abd27101ba184d7a319f95774e`; #108 closed as superseded.
 Its existing OM-1 compiler pin `734f0a39319fbfa930bcc62cb30dbf06d47d78e126372b74f5baf478e6126b61`
 compiled the same upstream `irwasm.om` to **identical** backend bytes
 `2d235a70c39ac1461a09c41e10e058d962b767ae83893cdcfc693ef6c47182e6`.
@@ -93,9 +94,11 @@ AArch64 execution and read-only Node wasm execution. Real Chromium poll fixtures
 exercised all four wasm states, incorrect-MIME arrayBuffer loading, and one-byte
 module corruption falling back to JS. Corrupting that byte on disk made the
 x86_64-compatible asset hash test fail with exit 101; original bytes were restored.
-Evidence/fixtures/results: `om/hive-page/fresh-evidence.log` and sibling `fresh-*`
-files in draft #108. These were synthetic acceptance feeds, not production telemetry.
-Production browser verification, merge, deployment and GPU qualification remain NOT_RUN.
+Historical evidence/fixtures/results remain `om/hive-page/fresh-evidence.log` and sibling
+`fresh-*` files on closed #108, not in the #109 main tree. These were synthetic acceptance
+feeds, not production telemetry. The helper source and wasm artifact were carried over
+byte-identically. Production browser verification, deployment and GPU qualification
+remain NOT_RUN by this guide update.
 
 
 Re-check recipe (read only, in a fresh clone, never in a shared working tree another agent may be using):
