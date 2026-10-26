@@ -83,12 +83,13 @@ fi
   `evidence/IRWASM-20261026/`. That backend gate did not exercise a browser or GPU/Alpha qualification.
   Candidate compiler sha256 is `befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d`;
   its om4-built and self-built fixpoint agrees. The older pin/fixpoint above remains dated history.
-- The separate pending site integration is [aienos.com draft #108](https://github.com/aien-dev/aienos.com/pull/108).
-  `sh om/hive-page/gate-fresh.sh` exercises its native/wasm boundary table; the site check regenerates
-  wasm without Node and the existing x86_64 CI test only hashes the artifact. Real Chromium synthetic
-  feed fixtures exercised four states with `data-fresh-engine="wasm"` and corrupt-module fallback
-  with engine `js`. This proves the tested browser path, not production deployment or trusted clocks.
-  See `omega-encoding` section 0 and the site's `om/hive-page/fresh-evidence.log` for pins and commands.
+- The site integration merged through [aienos.com #109](https://github.com/aien-dev/aienos.com/pull/109),
+  merge `a6aec5e2628804abd27101ba184d7a319f95774e`; #108 closed as superseded.
+  `sh om/hive-page/gate-fresh.sh` exercises the native/wasm boundary table; the site check regenerates
+  wasm without Node and the existing x86_64 CI test only hashes the artifact. Earlier #108 Chromium
+  synthetic-feed fixtures exercised four wasm states and corrupt-module fallback to `js`; those
+  dated receipts remain on #108, not in the #109 main tree. The helper source and wasm artifact
+  were carried over byte-identically. Merge status does not establish deployment or trusted clocks.
 - Record the source revision, the compiler, source and binary hashes, the exact command, the platform, expected versus observed result, and the limits. A local smoke run is not repository qualification, not a merge and not a deployment.
 - Pinned `aien-test` verifier sources must be built from a trusted directory outside the candidate tree (`RUNNER_TEMP` in GitHub Actions), with an explicit separate target directory. Cargo loads configuration from its current directory and ancestors even with `--manifest-path`; source pins alone do not exclude a candidate `.cargo/config.toml`. Cache dependency registries/git only, never the compiled verifier target from a candidate run. Challenge both PR and Alpha commands with a candidate rustc-wrapper and a trusted-source negative control. This workflow correction is merged in [sovereign-core #771](https://github.com/aien-dev/aien-sovereign-core-mv/pull/771), merge `2369d7c8`; that source status does not assert deployment of local verifier services.
 
