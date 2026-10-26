@@ -408,9 +408,16 @@ Capacity boundaries are gated in `seed/omc/gate12.sh` (e.g. 1024 globals accepte
    changes.
 4. No silent fallback. If `omc` cannot express something, do not write it in C, Rust, shell or
    Python and call the result Omega. Say exactly which word or capacity is missing.
-5. Missing is not impossible. Omega is meant to be extended. State the gap as an extension proposal:
-   the hardware or OS need, the proposed word and types, refusal codes, and the gate that would test
-   it. Known decision-blocked gaps at this pin ([OM_COMPLETION.md#L62-L72](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OM_COMPLETION.md#L62-L72)):
+5. Missing is not impossible, and it is not a stopping point. Drake's standing rule (2026-10-26):
+   "If .om doesn't have a feature, you need to make that feature." Build it in Omega as an omega-mv
+   pull request, coordinated with whoever owns the compiler lane at the time. The PR names the
+   hardware or OS need, the word and its types, refusal codes and a new error code if one is needed,
+   gates with a negative control, parity against an independent oracle, and the matching update to
+   this skill. Host code is a last resort only. When it is used, record it with its Omega successor
+   and the omega-mv PR that will replace it. Decision-blocked gaps at this pin
+   ([OM_COMPLETION.md#L62-L72](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OM_COMPLETION.md#L62-L72)) still need
+   Drake's decision before they are built (roadmap RM4 heap, RM6 imports;
+   [omega-mv#793](https://github.com/aien-dev/omega-mv/issues/793), [#795](https://github.com/aien-dev/omega-mv/issues/795)):
    packed structs (FR-2), imports (FR-3, units concatenate), threads/atomics (FR-6), C ABI/shared
    objects (FR-7), x86-64 (FR-9), heap (decision 24).
 6. Documents disagree with the code at this pin; trust the code and name the conflict:
