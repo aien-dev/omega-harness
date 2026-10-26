@@ -203,6 +203,37 @@ or fixture checks it), **author-verified** (the repository records a run; not re
 **proposed** (described, not on `main`). Nothing here is hardware qualification, and nothing here is
 deployed anywhere.
 
+### Pending scalar IR validation repair (2026-10-26)
+
+This note is pending [omega-mv #810](https://github.com/aien-dev/omega-mv/pull/810),
+source head `b77c07e41`. It does not replace the published compiler pin above.
+The candidate rejects discarded trailing words, missing operands, stale
+untyped values, out-of-scope locals, duplicate loop counters, non-void
+fallthrough and unsupported float signatures before serializing IR.
+Local/parameter names remain at most eight bytes; function names retain
+full matching up to 63 bytes. `continue` remains refused with error 3.
+
+The IR parser must consume each operand exactly once. In particular, a
+bare left operand whose type is inferred from the right must not parse
+that right operand again: the valid `shl 1 sh` regression is exercised by
+the existing C-oracle dev corpus.
+
+Host-only commands exercised on the candidate source, with `nice -n 19
+ionice -c3` and builds limited to `-j2`: `sh seed/omc/gate-ir.sh` exited 0;
+`python3 seed/omc/gate-ir-trap.py` reported `CHECKS=67 FAILURES=0`;
+`python3 seed/omc/mutants-ir-trap.py` reported
+`COMPILED_MUTANTS=5 CAUGHT=5 RC=0`. The temporary om4-built/self-built
+fixpoint was `c8f38317fb272a936f3b3d395174c29aaab353c3de0710ac5f8d06df1d178f30`.
+That is a candidate test artifact, not a committed seed or downstream pin.
+The integration owner must publish the batch reseed before downstream
+consumers adopt the change.
+
+The separate [memory-profile specification #809](https://github.com/aien-dev/omega-mv/pull/809)
+uses the milestone label “IR v2” but reserves **OSC wire v7**, preserving
+existing wire v2 and draft #525's v6 reservation. Specification approval
+does not mean omc or irwasm implements memory. The scalar backend refusal
+boundary above remains the implemented boundary until separately qualified.
+
 ## 1. Which language is which
 
 | Thing | Where | Status |
