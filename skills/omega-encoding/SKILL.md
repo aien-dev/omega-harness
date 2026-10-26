@@ -141,6 +141,12 @@ rebuilt for this note.
 - **Open OM-2 defect** [#775](https://github.com/aien-dev/omega-mv/issues/775): an empty `text`
   passed to a `view uchar *` parameter was reported to see the next text's bytes (`len` 32, not 0).
   Do not pass an empty text to an unsized view until it is closed.
+- **Pending semantic tools (draft PRs, not merged, not gated):**
+  [#830](https://github.com/aien-dev/omega-mv/pull/830) `seed/semhash` is a per-function meaning
+  hash plus `diff` that ignores local/parameter renames, notes, layout and function order; it is checked
+  against omc (`omc(canon(x)) == omc(x)`). [#820](https://github.com/aien-dev/omega-mv/pull/820)
+  `seed/effects` is described in section 9. Both build by concatenation and do not change the
+  compiler. `om2 fmt` remains the only merged canonical form, and it is layout-only.
 
 ### Merged compiler batch: contracts, capacity and f32 returns
 
@@ -425,6 +431,11 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
   SIGPIPE behaviour [INFERENCE from Linux semantics; not gated here].
 - These words carry the process's permissions; they are not a sandbox. Linux ARM64 is the only
   qualified host ([#L739-L743](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L739-L743)).
+- PENDING, not merged: [omega-mv #820](https://github.com/aien-dev/omega-mv/pull/820) adds
+  `seed/effects`, which lists the host words a unit uses with their Linux syscalls, checks that the
+  omc binary issues no others, and emits a seccomp filter for `bwrap --seccomp`. It works at syscall
+  granularity only and gives no filesystem isolation. Until it merges, use it from that branch and
+  cite its head.
 - Evidence for any host claim: compiler sha256, source sha256, output binary sha256, exact command,
   exit status, and the observed bytes. A program that ignores a negative result is not evidence.
 
