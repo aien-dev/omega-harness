@@ -402,6 +402,10 @@ From OMEGESE section 3 and 4 ([#L58-L60](https://github.com/aien-dev/omega-mv/bl
   limit is 1000000 passes. One more pass traps 4. The condition is recomputed before every pass.
 - `for i T K` runs i = 0..K-1. A literal K needs no hidden guard; a name or expression K gets the
   1000000-pass guard.
+- **Pending, not pinned (omega-mv #848, draft):** an explicit `bound N` may be 1..9223372036854775807
+  (a number or a `ulong` const). The 1000000 default and trap 4 stay. Until #848 is pinned, a loop
+  that needs more than 999999 passes must be split into nested loops. For a `for` with a computed
+  count above 1000000, write `while lt i n bound N`.
 - `break` and `continue` (`omc` only, gate7); `continue` in a `while` re-runs the condition and bound.
 - Choose N from a proof, not a guess. Example: a read loop where every pass adds at least one byte to
   a 65536-byte buffer needs at most 65536 passes. Write that reasoning in a `note`.
