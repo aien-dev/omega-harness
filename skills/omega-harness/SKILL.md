@@ -98,6 +98,50 @@ fi
 - Record the source revision, the compiler, source and binary hashes, the exact command, the platform, expected versus observed result, and the limits. A local smoke run is not repository qualification, not a merge and not a deployment.
 - Pinned `aien-test` verifier sources must be built from a trusted directory outside the candidate tree (`RUNNER_TEMP` in GitHub Actions), with an explicit separate target directory. Cargo loads configuration from its current directory and ancestors even with `--manifest-path`; source pins alone do not exclude a candidate `.cargo/config.toml`. Cache dependency registries/git only, never the compiled verifier target from a candidate run. Challenge both PR and Alpha commands with a candidate rustc-wrapper and a trusted-source negative control. This workflow correction is merged in [sovereign-core #771](https://github.com/aien-dev/aien-sovereign-core-mv/pull/771), merge `2369d7c8`; that source status does not assert deployment of local verifier services.
 
+### SPIR-V OpenCL Kernel backend
+
+`seed/spirv/irspirv.om` in [omega-mv #804](https://github.com/aien-dev/omega-mv/pull/804)
+is a handwritten Omega backend for the same OSC IR v1 scalar subset as irwasm.
+Source exercised on 2026-10-26:
+`4ad014ed3342e202e4fdb1d31b38b8e6f2e0a117`, compiler
+`befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d`.
+Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
+
+- Read `docs/SPIRV.md` before using the ABI. The output is SPIR-V 1.0, Kernel
+  execution model, Physical64/OpenCL memory model, not Vulkan Shader SPIR-V.
+  Each original function is a kernel with two global ulong pointers: input
+  scalar slots and output `[canonical_result_bits, native_status]`.
+  Launch one work item; success status is zero, traps retain `100 + trap`.
+- Run `nice -n 19 ionice -c3 sh seed/spirv/gate-irspirv.sh` with
+  `SPIRV_VAL` and `POCL_LIBRARY` (absolute trusted PoCL shared-library path).
+  The library selection is compiled into the C host, which overwrites inherited
+  vendor settings and disables layer discovery before any OpenCL call. It does
+  not inspect and reopen an environment-selected ICD manifest.
+  The C host is the explicitly requested verification/demo interface to OpenCL,
+  never a translator dependency. LLVM is inside the PoCL oracle, not the Omega
+  emission path. Validate before executing: the external reader can abort on
+  malformed IL, and a nonzero host exit must remain an oracle failure.
+- Source-bound CPU evidence: 129 original native/PoCL exact matches, including
+  29 traps; 8 supplemental nested-call cases; 3 demo cases; reordered CFG
+  regression; 16 byte-identical repeat translations; 17 spirv-val acceptances
+  including the valid arithmetic mutant; 16 named refusals with empty stdout.
+  The add-to-sub mutant completes successfully but the parity checker exits 1
+  for exactly one mismatch. API/setup faults use exit 2 and cannot satisfy it.
+  Full logs, per-case tables, raw artifacts and toolchain ledger are retained in
+  `evidence/IRSPIRV/20261026-4ad014ed3/`. Host controls also prove inherited
+  discovery is ignored and missing/unconfigured libraries fail closed. A separate
+  file access trace of the demo host shows no GPU device or system OpenCL
+  vendor/layer directory accessed; its public copy redacts home paths.
+- Exercised oracle versions: PoCL 7.2 at
+  `888c9774b94590fff1afef003154ca2c0ea66605`, LLVM/clang 18.1.3,
+  SPIRV-LLVM-Translator 18.1.8, SPIRV-Tools v2025.1, ocl-icd 2.3.2.
+  The gate uses `spirv-val --target-env opencl2.1`. Ubuntu PoCL 5.0 lacked IL;
+  a user-space SPIR-V-enabled PoCL build was required.
+- Non-v1 IR, floats, arrays/memory, vectors, atomics, barriers and host/device
+  words are explicit refusals. Contract strings remain metadata, not runtime
+  contract checks. No DPC++, Level Zero, GPU or Alpha qualification is implied.
+  The standalone acceptance gate is not wired into protected gate manifests.
+
 ## 4. Effects and authority
 
 - A proposed program or effect description does not authorize running it. Confirm capability and privilege at the execution boundary. Model confidence and semantic identity grant no authority.
