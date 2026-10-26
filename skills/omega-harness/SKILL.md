@@ -105,7 +105,7 @@ is a handwritten Omega backend for the same OSC IR v1 scalar subset as irwasm.
 Source exercised on 2026-10-26:
 `4ad014ed3342e202e4fdb1d31b38b8e6f2e0a117`, compiler
 `befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d`.
-This guide change is pending that PR's merge; it is not a main-branch claim yet.
+Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
 
 - Read `docs/SPIRV.md` before using the ABI. The output is SPIR-V 1.0, Kernel
   execution model, Physical64/OpenCL memory model, not Vulkan Shader SPIR-V.
