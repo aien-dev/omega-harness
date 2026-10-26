@@ -359,6 +359,24 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
 - Evidence for any host claim: compiler sha256, source sha256, output binary sha256, exact command,
   exit status, and the observed bytes. A program that ignores a negative result is not evidence.
 
+Verified on 2026-10-26 with omc `befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d`
+(omega-mv `3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`) while building the AienOS alpha wizard
+(aien-dev/AienOS-nv `installer/wizard/`, about 2,600 lines in one OM-2 unit):
+
+- `fopen` flags are the Linux **arm64** values: `O_DIRECTORY` is 16384 and `O_NOFOLLOW` 32768;
+  65536 is `O_DIRECT` there (the x86-64 `O_DIRECTORY`), and `getdnts` on such a descriptor finds
+  nothing. A directory read used `540672` (`O_DIRECTORY | O_CLOEXEC`).
+- A `text` must appear before its first use, like a `const` (error 3 otherwise). In a unit built by
+  concatenating files, put every shared `text` in an earlier file.
+- A parameter or local may not reuse a global's name (error 10), and a local in an included unit
+  collides with a function of the same name elsewhere in the unit (error 16 at the local).
+- `export fn` is refused in program mode (error 9), so an OM-2 library unit such as
+  `om/sha256/sha256-om2.om` cannot be concatenated with a `fn main` unit unchanged; the wizard
+  vendors a copy with `export fn` made `fn` and checks that derivation in its build.
+- `devctl` accepts only FIONREAD and the NVRM requests, so terminal size (`TIOCGWINSZ`), raw mode
+  and `statfs` have no Omega word yet; the wizard runs `stty size` and `df` through `execprog`
+  (recorded as host dependencies). `execprog` passes an empty environment.
+
 ## 10. Wire serialization (only what the pin defines)
 
 - There is no byte-layout type. Encode and decode integers with shifts and masks into `uchar`
