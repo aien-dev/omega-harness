@@ -407,6 +407,32 @@ These checks do not establish a reseed/fixpoint, merged state, or hardware
 qualification. The compiler integration owner performs the batch reseed and
 refreshes the authoritative pin only after its referee and compatibility gates.
 
+### 9b. HTTP/1.1 and JSON library units (#788)
+
+[omega-mv PR #814](https://github.com/aien-dev/omega-mv/pull/814) (head
+`db029a71f8527100353d6f610a711d951f3c04c9`; status recorded in the PR) adds library units, not
+language or compiler changes, built with the committed `seed/out/omc` `befb8199…8a1d`:
+`seed/net/http.om` (functions `h*`, constants `H*`) and `seed/json/{json,jsonw,jsonf}.om`
+(`js*`). They have no `om2` line, no globals and no `main`; the caller composes one OM-2 unit:
+
+```sh
+{ printf 'om2\n'; cat seed/json/json.om seed/json/jsonw.om seed/net/http.om app.om; } > app.full.om
+```
+
+- State is caller-owned arrays (`cs`, `io`, JSON `tape`, writer `ob`); globals cannot be passed,
+  so they are locals of the caller, inside the 4 MiB local-array limit.
+- HTTP is strict: CRLF only, no obs-fold, Content-Length with Transfer-Encoding or a duplicate
+  Content-Length is refused, only `chunked` coding, caps on head, header count, body (1 MiB
+  default) and chunk framing, idle/head/body deadlines from `waitio` and `monons`. TLS is not
+  included; a non-plain transport returns -95.
+- JSON numbers stay source lexemes; integers convert exactly; `jsonf.om` gives correctly rounded
+  binary64 on request. Duplicate keys are kept in order: the application decides.
+- Two compiler limits met while building them at this pin: any `const` blocks function-mode
+  compilation (tracked in omega-mv #806), and a `const` declared after a `fn` breaks later
+  signatures that use an earlier `const` as an array length. Declare constants before functions.
+- Gates (host only): `python3 seed/net/tests/check.py` → `HTTP-CHECK PASS`;
+  `sh seed/json/tests/gate-json.sh` → `JSONGATE PASS rows=8758 mutants=5`.
+
 ## 10. Wire serialization (only what the pin defines)
 
 - There is no byte-layout type. Encode and decode integers with shifts and masks into `uchar`
