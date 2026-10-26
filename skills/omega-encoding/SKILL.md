@@ -10,7 +10,8 @@ cannot express, and before encoding bytes, integers or host I/O in Omega.
 
 ## 0. Pin and how to re-check it
 
-Everything below was read from one pin. Re-check before relying on it; the compiler changes.
+The general-language citations below retain their dated historical pin. The newer,
+scope-specific pin immediately below is the tested and merged IR/wasm backend.
 
 | Item | Value |
 |---|---|
@@ -22,6 +23,83 @@ Everything below was read from one pin. Re-check before relying on it; the compi
 | Language document `docs/one_layer/OMEGESE.md` | blob `89a27d2e68519eb45c103abb23dfe05a68d8ad69` |
 
 Every citation links to that commit: `https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/<path>#L<n>`.
+
+### Merged IR/wasm backend (2026-10-26)
+
+Source: omega-mv main `3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`,
+[#787](https://github.com/aien-dev/omega-mv/pull/787), after the separate boolean IR
+fix [#786](https://github.com/aien-dev/omega-mv/pull/786), merge
+`87489da90a1a7a750fd4a7f9eeb005b1221721f6`. Source merge is not deployment.
+
+| Backend item | Verified value |
+|---|---|
+| `seed/omc/omc.om` | sha256 `bd64bb6f20952818e155328f429ab6cd36bba213e3e00b60d796336f9d0c9343` |
+| `seed/out/omc` | sha256 `befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d` |
+| Prior main compiler at `ec07d25d5506d33567adbd4d9b518177b7933bad` | sha256 `499236398aabc652e2dae27fe4bdc4c5db3d3726314356e0dbef23e3345803ec` |
+| `seed/wasm/irwasm.om` | sha256 `8dc7bf602eb882e26a18b9e2dc4cacdd3ad68827215e71874b14c4acb237ccf8` |
+
+The compiler corrects IR-mode boolean AND/OR/XOR typing: all three previously
+exited 7 and now compile to bytes identical to the C encoder, accepted by checker2.
+Boolean arithmetic and shifts remain refused. The om4-built compiler and two
+self-rebuilds are byte-identical; the full compiler referee/wrong-word-mutant gate
+ended `GATE5 PASS`. Retained evidence:
+`evidence/IR-BOOL-20261026/` from merged #786.
+
+`seed/wasm/irwasm.om` is a seeded Omega backend for **scalar OSC IR v1**, not an
+arbitrary foreign-source converter. It writes an import-free WebAssembly MVP module
+and exports each function under its ASCII IR name. ABI tags bool/u8/u16/u32/i8/i16/i32
+map to i32, u64/i64 to i64, void to no result. Internal canonical i64 locals preserve
+width and signedness; signed overflow, invalid shifts/casts/division, explicit traps
+and lowered loop guards become wasm runtime traps. Wasm does not expose Omega's
+numeric trap code. Supported instructions: CONST/MOV/BIN/UN/CMP/CAST/CALL/TRAP/BR/CBR/RET.
+Limits and exact mappings:
+[`OMEGESE.md` section 11.1](https://github.com/aien-dev/omega-mv/blob/3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9/docs/one_layer/OMEGESE.md#L914).
+Versions other than 1, memory/reference/arena/pool/slice tags and operations refuse.
+The module is buffered so parse/type/capacity refusals have empty stdout.
+
+Host command: `nice -n 19 sh seed/wasm/gate-irwasm.sh`.
+Observed on Linux AArch64, Node v24.21.0 used **only as a read-only oracle**:
+`PASS parity cases=129 units=13 traps=29; every export exercised`.
+The parity checker rejected an add-to-sub IR-byte mutant with exit 1; two translations
+of every unit were identical, and named refusal exits were pinned with empty stdout.
+Source-bound full logs/artifacts: `evidence/IRWASM-20261026/` from merged #787.
+Re-exercised at head `0e81d5a6f990000f1dca50f05f0c6050f7cdf9a5` before merge;
+the backend gate did not run browser integration or GPU qualification.
+
+Existing guide examples were rerun with this compiler: FNV `abc` emitted
+`0b e9 47 1a`, compile/run exit 0; `trap_narrow.om` compiled with exit 0 and ran with
+exit 105. Removing only the unmasked store (negative control) changed the run exit
+to 44. The historical examples and their old measured evidence below remain intact.
+
+Downstream browser integration is separately **merged**, not qualified as deployed here:
+[aienos.com #109](https://github.com/aien-dev/aienos.com/pull/109), merge
+`a6aec5e2628804abd27101ba184d7a319f95774e`; #108 closed as superseded.
+Its existing OM-1 compiler pin `734f0a39319fbfa930bcc62cb30dbf06d47d78e126372b74f5baf478e6126b61`
+compiled the same upstream `irwasm.om` to **identical** backend bytes
+`2d235a70c39ac1461a09c41e10e058d962b767ae83893cdcfc693ef6c47182e6`.
+No site compiler pin bump was necessary. `irwasm.provenance` records the source and build.
+The site unit `om/hive-page/fresh.om` accepts clock/timestamps, the caller's stale
+threshold and fetch status; `check.sh` uses an `ir` header and the pinned backend to
+produce `public/wasm/hive-fresh.wasm`, sha256
+`af9e1fb0d9e736949b2aa83c0bf978ac2d98f37428a8507176abaa1dd50b777b`.
+
+`freshness-js.om` emits the loader and explicit JS load-failure fallback.
+`data-fresh-engine="wasm|js"` discloses the engine; the four state codes are
+0 fresh, 1 stale (strictly past the supplied threshold), 2 backwards timestamp,
+3 interrupted fetch. Source-clock trust gating remains separate. Browser-supplied
+fractional elapsed age is rounded upward only at the integer wasm boundary,
+preserving a strict comparison against the validated integer threshold.
+`sh om/hive-page/gate-fresh.sh` compared ten boundary cases with actual native
+AArch64 execution and read-only Node wasm execution. Real Chromium poll fixtures
+exercised all four wasm states, incorrect-MIME arrayBuffer loading, and one-byte
+module corruption falling back to JS. Corrupting that byte on disk made the
+x86_64-compatible asset hash test fail with exit 101; original bytes were restored.
+Historical evidence/fixtures/results remain `om/hive-page/fresh-evidence.log` and sibling
+`fresh-*` files on closed #108, not in the #109 main tree. These were synthetic acceptance
+feeds, not production telemetry. The helper source and wasm artifact were carried over
+byte-identically. Production browser verification, deployment and GPU qualification
+remain NOT_RUN by this guide update.
+
 
 Re-check recipe (read only, in a fresh clone, never in a shared working tree another agent may be using):
 
