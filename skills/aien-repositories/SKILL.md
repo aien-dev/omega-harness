@@ -53,7 +53,7 @@ Names below are current catalog slugs under `https://github.com/aien-dev/`. Use 
 | Language, seed/compiler, semantics, reaction composition, native GPU engine | [omega-mv](https://github.com/aien-dev/omega-mv) | Separate seeded `.om`, legacy C, host references and chip-qualified work. |
 | Machine realization, FORGE providers, native GB10 submission and historical boot artifacts | [physics-mv](https://github.com/aien-dev/physics-mv) | Current subsystem name is FORGE; old `PHYSICS_*` identifiers and receipts stay unchanged. |
 | Small boot root | [atlas](https://github.com/aien-dev/atlas) | Read its actual default branch (`master` in this snapshot); QEMU qualification is not native hardware qualification. |
-| GPU machine-code toolchain/runtime/driver-client work | [CUDApp](https://github.com/aien-dev/CUDApp) | Check target support and remaining driver/OS dependencies; do not imply a complete driver replacement. |
+| GPU machine-code toolchain/runtime/driver-client work | [CUDApp](https://github.com/aien-dev/CUDApp) | Check target support and remaining driver/OS dependencies; do not imply a complete driver replacement. Qualified on hardware 2026-10-26: 3 rounds x 16 chip gates over the inference path PASS on a DGX Spark (`evidence/QUALIFICATION-20261026/`). It removes NVIDIA's **user-space** stack only: `nvidia.ko` + `nvidia-uvm.ko` 580.173.02 and the GSP firmware are still required and `make doctor` says so. AIEN's own module (L332, aienux `/dev/aien-gpu`) has a backend at the same seam (`src/omega_gpu_platform_aien.c`) that refuses the queue service that module does not have yet; that path is NOT_RUN on chip. |
 
 ### Runtime and learning
 
