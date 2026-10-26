@@ -197,7 +197,9 @@ end
 - Program exit status = `main`'s value mod 256 (0 for void main). `exit v` (v `int`) ends at once.
   A runtime trap exits **100 + code**. Keep your own exit codes below 100, or a result is
   indistinguishable from a trap ([#L404-L407](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L404-L407), [#L484](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L484)).
-- A value-returning function used as a statement is error 7. Bind the result: `w = write 1 buf 0 n`.
+- A value-returning function used as a statement is error 7; a bare host word used as a statement
+  (`write 1 m 0 3` on its own line) is error 16 (observed 2026-10-26, omc `befb8199...a1d` at omega-mv
+  `19f014f2`). Bind the result either way: `w = write 1 buf 0 n`.
 - A function with a return type whose `end` is reachable is error 18. `ret`, `break`, `continue`,
   `trap` and `exit` end the path; a line after them in the same block is error 17.
 
@@ -242,8 +244,10 @@ bound in an outer `if`, then load inside it.
   (`x = 5` for a new `x`), is error 11: write `x = uint 5` ([#L94-L100](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L94-L100), gate15 `e11_ambiguous`).
 - Integer literals: decimal only, optional leading `-`, at most 20 digits, and the value must fit the
   type it takes (error 8), e.g. `long` -2^63..2^63-1, `ulong` 0..2^64-1. A non-digit (`12a`,
-  `0x10`) is error 6 ([#L443-L446](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L443-L446)). No hex, no octal,
-  no character literals: write byte 65, not `'A'`. `true` / `false` are the bools.
+  `0x10`) is error 6 ([#L443-L446](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L443-L446)). In an OM-1 unit: no hex, no octal,
+  no character literals: write byte 65, not `'A'`. An `om2` unit accepts hex (`x = uint 0x10` compiled
+  and the program exited 16; the same line without `om2` is error 6; omc `befb8199...a1d`, 2026-10-26).
+  `true` / `false` are the bools.
 - Shift with a bare left operand takes the shift amount's type: `shl 1 sh` with `sh` a `uchar` shifts
   a `uchar`. Write `shl ulong 1 sh` when you mean 64 bits ([#L97-L99](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L97-L99)).
 - Float literals: `digits.digits[e[+|-]digits][f32|f64]`, a digit on both sides of the dot; exact
@@ -313,8 +317,11 @@ From OMEGESE 9.4 and 9.7 ([#L449-L474](https://github.com/aien-dev/omega-mv/blob
   integer `const`**; a variable length is error 16 (gate16 `len_varname`), so there are no
   run-time-sized arrays. No heap and no `free` (decision 24; `free` is error 9).
 - Array parameters state type and length exactly: `a view uchar 64` / `a edit uchar 64` (error 7 for
-  any other length), so there are no length-generic array parameters; use fixed sizes, an integer
-  `const`, or a global. A view or a `text` is read-only (error 20 on `put` or `read` into it).
+  any other length), so OM-1 has no length-generic array parameters; use fixed sizes, an integer
+  `const`, or a global. OM-2 (`om2` first line) adds unsized views, `a view T *`: one function took
+  arrays of 5 and 9 bytes and `len a` returned each length (exit 14; omc `befb8199...a1d`, 2026-10-26;
+  also `examples/om2-tour.om` at omega-mv `19f014f2`). A view or a `text` is read-only (error 20 on
+  `put` or `read` into it).
 - `get A i`, `put A i v`, `len A`. A constant index outside the array is error 21; any other index is
   checked at run time (trap 3). No word yields an address or adds to one.
 - `text NAME "bytes"`: read-only `uchar` array; escapes only `\n \t \\ \"` (error 22 otherwise).
