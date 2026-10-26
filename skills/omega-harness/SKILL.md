@@ -71,9 +71,15 @@ chmod +x prog && ./prog; echo "run rc=$?"
   dependency. Observed at that source: `PASS parity cases=129 units=13 traps=29; every export exercised`,
   byte-identical repeat translations, add-to-sub mutant rejected by the parity checker (exit 1),
   and named parse/type refusals with empty stdout. Retained logs/artifacts live in
-  `evidence/IRWASM-20261026/`. Browser integration and GPU/Alpha qualification are NOT_RUN.
+  `evidence/IRWASM-20261026/`. That backend gate did not exercise a browser or GPU/Alpha qualification.
   Candidate compiler sha256 is `befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d`;
   its om4-built and self-built fixpoint agrees. The older pin/fixpoint above remains dated history.
+- The separate pending site integration is [aienos.com draft #108](https://github.com/aien-dev/aienos.com/pull/108).
+  `sh om/hive-page/gate-fresh.sh` exercises its native/wasm boundary table; the site check regenerates
+  wasm without Node and the existing x86_64 CI test only hashes the artifact. Real Chromium synthetic
+  feed fixtures exercised four states with `data-fresh-engine="wasm"` and corrupt-module fallback
+  with engine `js`. This proves the tested browser path, not production deployment or trusted clocks.
+  See `omega-encoding` section 0 and the site's `om/hive-page/fresh-evidence.log` for pins and commands.
 - Record the source revision, the compiler, source and binary hashes, the exact command, the platform, expected versus observed result, and the limits. A local smoke run is not repository qualification, not a merge and not a deployment.
 
 ## 4. Effects and authority

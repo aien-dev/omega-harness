@@ -63,12 +63,39 @@ Observed on Linux AArch64, Node v24.21.0 used **only as a read-only oracle**:
 The parity checker rejected an add-to-sub IR-byte mutant with exit 1; two translations
 of every unit were identical, and named refusal exits were pinned with empty stdout.
 Source-bound full logs/artifacts: `evidence/IRWASM-20261026/` in draft #787.
-No browser integration, GPU qualification, merge or deployment was run.
+That backend gate did not run browser integration, GPU qualification, merge or deployment.
 
 Existing guide examples were rerun with this candidate compiler: FNV `abc` emitted
 `0b e9 47 1a`, compile/run exit 0; `trap_narrow.om` compiled with exit 0 and ran with
 exit 105. Removing only the unmasked store (negative control) changed the run exit
 to 44. The historical examples and their old measured evidence below remain intact.
+
+Downstream browser integration is separately **implemented and exercised, not deployed**:
+[aienos.com draft #108](https://github.com/aien-dev/aienos.com/pull/108), implementation
+source `85062b8a4eacd115d15cf3532aa05ede1c306218`, stacked on draft #105.
+Its existing OM-1 compiler pin `734f0a39319fbfa930bcc62cb30dbf06d47d78e126372b74f5baf478e6126b61`
+compiled the same upstream `irwasm.om` to **identical** backend bytes
+`2d235a70c39ac1461a09c41e10e058d962b767ae83893cdcfc693ef6c47182e6`.
+No site compiler pin bump was necessary. `irwasm.provenance` records the source and build.
+The site unit `om/hive-page/fresh.om` accepts clock/timestamps, the caller's stale
+threshold and fetch status; `check.sh` uses an `ir` header and the pinned backend to
+produce `public/wasm/hive-fresh.wasm`, sha256
+`af9e1fb0d9e736949b2aa83c0bf978ac2d98f37428a8507176abaa1dd50b777b`.
+
+`freshness-js.om` emits the loader and explicit JS load-failure fallback.
+`data-fresh-engine="wasm|js"` discloses the engine; the four state codes are
+0 fresh, 1 stale (strictly past the supplied threshold), 2 backwards timestamp,
+3 interrupted fetch. Source-clock trust gating remains separate. Browser-supplied
+fractional elapsed age is rounded upward only at the integer wasm boundary,
+preserving a strict comparison against the validated integer threshold.
+`sh om/hive-page/gate-fresh.sh` compared ten boundary cases with actual native
+AArch64 execution and read-only Node wasm execution. Real Chromium poll fixtures
+exercised all four wasm states, incorrect-MIME arrayBuffer loading, and one-byte
+module corruption falling back to JS. Corrupting that byte on disk made the
+x86_64-compatible asset hash test fail with exit 101; original bytes were restored.
+Evidence/fixtures/results: `om/hive-page/fresh-evidence.log` and sibling `fresh-*`
+files in draft #108. These were synthetic acceptance feeds, not production telemetry.
+Production browser verification, merge, deployment and GPU qualification remain NOT_RUN.
 
 
 Re-check recipe (read only, in a fresh clone, never in a shared working tree another agent may be using):
