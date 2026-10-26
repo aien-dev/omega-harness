@@ -363,7 +363,7 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
 
 **Pending, not a current compiler pin.** On 2026-10-26,
 [omega-mv PR #808](https://github.com/aien-dev/omega-mv/pull/808), source
-`4f62cb67e6d1002ea48d85b0b59602db784e1866`, adds these Linux-arm64 host words:
+`58d6fb6a2f72b1ab02c0eb0c01afe141303c968d`, adds these Linux-arm64 host words:
 
 | Word | Contract |
 |---|---|
@@ -387,12 +387,22 @@ the separate `.om` TLS implementation is qualified.
 
 Author-exercised candidate only: bootstrap compiler
 `befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d`;
-one-stage candidate `c1f89c1ef92c6d1c252bc48f176aa7a437d7e14360686a2814d00d55979fc43e`.
-`OMC=<candidate> sh seed/host/gate.sh` and `sh seed/omc/gate18.sh` exited zero.
+one-stage candidate `b3159185ac433884184c83e573ae2397a72ce3d3bfb98fdd9c7838e4b2f98c3c`.
+`OMC=<candidate> sh seed/host/gate.sh` and `OMC=<candidate> sh seed/host/negative.sh`
+exited zero; all compiler invocations in the corrected host gate use `OMC`,
+including its nested refusal driver and generated identity fixtures.
+`python3 seed/host/net-mutant.py` caught the wrong-syscall and ignored-error
+mutants via assertion exit 1 while the original fixtures exited zero.
 Expanded `seed/host/tests/netdata.om` exercised short sends, EPIPE without
 SIGPIPE, repeated descriptor reuse and monotonic timeout, exiting zero;
 the three bounds controls exited 103. Source fixture SHA256
 `6762de311b8b1cb4f1f9220bc3837b29733fcf382ac3c2cd19e8096c02789f88`.
+The distinct parent/child peer-credential fixture also exposed an older
+`getppid` lowering defect: Linux-arm64 syscall 110 is `timer_settime`, whereas
+`getppid` is 173. This source corrects it and requires a positive parent PID.
+The earlier fixture accepted negative errors. Earlier candidate host-gate
+logs used the committed compiler for two paths and are mixed-compiler evidence,
+not full qualification of that candidate. Preserve those logs as history.
 These checks do not establish a reseed/fixpoint, merged state, or hardware
 qualification. The compiler integration owner performs the batch reseed and
 refreshes the authoritative pin only after its referee and compatibility gates.
