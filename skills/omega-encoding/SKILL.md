@@ -244,10 +244,10 @@ Full host qualification is `sh seed/host/check.sh` (author-verified on 2026-10-2
 
 Status: EXERCISED on host only (Linux AArch64, 2026-10-26) at
 [omega-mv #838](https://github.com/aien-dev/omega-mv/pull/838) head
-`8cb5d2de821acd251387e359e782f3ee319d5ae6`, compiler `seed/out/omc`
+`df23dc7b12ed6a26f8e0e84eb62c309ec4a02f17`, compiler `seed/out/omc`
 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`, `omq` sha256
-`6d5db676adb0ee3776097b9430f703e0f94d20246e37b810df44c7b2756e1ce8`: `sh seed/query/check.sh` printed
-`SEED QUERY PASS 36 checks`. The PR is a draft and not merged, so `seed/query/` is absent from
+`4cca33bce462d83354975ad8dcb0f6b7c18fb5edf72b4a6442aedc1cce3f0a4d`: `sh seed/query/check.sh` printed
+`SEED QUERY PASS 39 checks`. The PR is a draft and not merged, so `seed/query/` is absent from
 main until it lands. Source of every rule below: `seed/query/README.md` at that head.
 
 `omq` (`seed/query/omq.om`, seeded Omega) reads a program with one hole `??` and prints one JSON
@@ -322,7 +322,7 @@ rc=2
 
 Prefix mode: `omq OMC prefix` reads requests on fd 0, each a 4-byte little-endian length then that
 many bytes of program prefix, and writes one line `V CODE` per request: whether the prefix can still
-be completed to a program `omc` accepts, and the `omc` exit code. `V` per `omq.om` lines 2390-2392:
+be completed to a program `omc` accepts, and the `omc` exit code. `V` per `omq.om` lines 2394-2396:
 0 whole unit accepted, 1 prefix still completable, 2 dead, 3 compiler did not run. Requests
 `fn main to int` + `x = add`; the same with `x = add int 1 2` / `ret x` / `end`; and
 `fn main to int` + `abcdefghij = 1` gave:
