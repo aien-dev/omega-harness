@@ -60,6 +60,7 @@ Names below are current catalog slugs under `https://github.com/aien-dev/`. Use 
 | Machine realization, FORGE providers, native GB10 submission and historical boot artifacts | [physics-mv](https://github.com/aien-dev/physics-mv) | Current subsystem name is FORGE; old `PHYSICS_*` identifiers and receipts stay unchanged. |
 | Small boot root | [atlas](https://github.com/aien-dev/atlas) | Read its actual default branch (`master` in this snapshot); QEMU qualification is not native hardware qualification. |
 | GPU machine-code toolchain/runtime/driver-client work | [CUDApp](https://github.com/aien-dev/CUDApp) | Check target support and remaining driver/OS dependencies; do not imply a complete driver replacement. |
+| Deep-learning primitives (norms, activations, RoPE, MatMul, attention, conv, pooling) written in seeded `.om` | [omega-dnn](https://github.com/aien-dev/omega-dnn) | The `.om` ops are host code (AArch64, through the omega-bridge ABI), not GPU kernels. Main `ca6b59ef` cites a `tests/` directory and a tolerance doc that it does not contain. Draft PR #1, pending review, publishes them with a host receipt, and adds a GB10 tier: CUDApp's native kernels, gated against the `.om` host result. Quote GPU coverage only from that PR's receipts and its "Not on the GPU" list. There is no oneDNN speed comparison (NOT_RUN). |
 
 ### Runtime and learning
 
