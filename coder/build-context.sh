@@ -1,5 +1,5 @@
 #!/bin/sh
-# Build the Omega-only context pack read by `aien-code --omega` (harness config, not product code).
+# Build the Omega-only context pack read by `aien --omega` (harness config, not product code).
 # usage: OMEGA_MV=/path/to/omega-mv OMC=/path/to/pinned/omc sh coder/build-context.sh OUTDIR
 # Writes OUTDIR/OMEGA.md (system prompt: rules + language reference + compiled examples) and
 # OUTDIR/CONTROL.md (rules only, for the no-context eval arm). Every example must compile with OMC.

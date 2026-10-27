@@ -1,5 +1,5 @@
 #!/bin/sh
-# Held-out eval for `aien-code --omega` (harness tooling, not product code).
+# Held-out eval for `aien --omega` (harness tooling, not product code).
 # usage: sh run.sh ARM OUTDIR TASKDIR [TASK_ID...]
 #   ARM     omega   - Omega context pack as the system prompt, pack readable
 #           control - same model, tools, guard and check loop; rules-only prompt, no readable pack
@@ -17,6 +17,7 @@ home=${OMEGA_HOME:-$HOME/.local/share/aien-omega}
 omc="$home/omc"
 sha=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
 [ "$(sha256sum "$omc" | cut -d' ' -f1)" = "$sha" ] || { echo "pinned omc mismatch" >&2; exit 2; }
+command -v aien > /dev/null || { echo "aien not on PATH" >&2; exit 2; }
 case $arm in
 omega) prompt_file="$home/context/OMEGA.md"; context="$home/context" ;;
 control) prompt_file="$home/context/CONTROL.md" ;;
@@ -48,9 +49,15 @@ Write the program to main.om in the working directory, check it with omega_run, 
 	start=$(date +%s)
 	(cd "$d/work" && OMEGA_HOME="$home" OMEGA_PROMPT="$prompt_file" OMEGA_CONTEXT="$context" \
 		OMEGA_CASES="$d/cases.txt" OMEGA_STOP_LIMIT=5 OMEGA_LOG="$d/guard.log" \
-		timeout 900 aien-code --omega -p --mode json --max-time 600 --no-session "$prompt" \
+		timeout 900 aien --omega -p --mode json --max-time 600 --no-session "$prompt" \
 		> "$d/transcript.jsonl" 2> "$d/stderr")
 	src=$?
+	# 126/127: the session never started (not executable / not found). Scoring that as compile-fail would
+	# count an infrastructure failure against the model; stop without writing a row so a rerun retries it.
+	if [ "$src" -eq 126 ] || [ "$src" -eq 127 ]; then
+		echo "$id: session did not start (rc $src), see $d/stderr; no row written" >&2
+		exit 3
+	fi
 	wall=$(($(date +%s) - start))
 	orc=NA
 	grc=NA

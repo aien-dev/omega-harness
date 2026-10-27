@@ -1,4 +1,4 @@
-// omega-guard: omp extension for `aien-code --omega`. Harness configuration, not product code: omp
+// omega-guard: omp extension for `aien --omega`. Harness configuration, not product code: omp
 // extensions are TypeScript, so this file is the smallest shim between the omp tool loop and the
 // pinned seeded Omega compiler. All checking of programs is done by Omega itself: `omc` compiles,
 // and the OM-2 qualification conductor `seed/qualification/om2/gate.om` (built by the pinned omc)
