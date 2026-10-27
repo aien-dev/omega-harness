@@ -79,6 +79,38 @@ end
   `layout`, `abstract`, `holds` and `export fn`. `struct` and `layout` lines come before the first
   `fn` (error 9 after it). A `const` is visible only after its line.
 
+Every declaration and statement form at the pin (OMEGESE sections 9 to 12 are the full rules):
+
+| Form | Where | Notes |
+|---|---|---|
+| `note ANY TEXT` | any line | a comment line |
+| `om2`, `om2 debug`, `om2 release`, `om2 diag`, `om2 diag debug`, `om2 diag release` | first line that is not blank or `note` | opts the unit into OM-2 (section 9); `release` erases contract checks, `diag` adds a machine-readable stderr record |
+| `om2 fmt` | the first line, at byte 0 | prints the canonical text of the rest of the input instead of compiling it |
+| `text NAME "bytes"` | top level | a read-only `uchar` array |
+| `global NAME T N` | top level, program mode | zero-filled array, never an argument |
+| `const NAME T LITERAL` | top level | an integer or float value, visible after its line |
+| `struct S f1 T1 f2 T2 ... end` | top level, before the first `fn` | one line; a field `f T N` is an array of 1..64 |
+| `layout NAME SIZE`, `field F T [COUNT] at OFF little`/`big` lines, `end` | OM-2, top level, before the first `fn` | an external byte layout of SIZE 1..4096 bytes |
+| `abstract NAME T [ops W ...]`, `holds NAME dup32` | OM-2, top level, before the first `fn` | T `uint` or `ulong`; W from `rotr rotl and or xor` |
+| `fn NAME p1 T1 ... to R` ... `end` | top level | `inline` after R in OM-2; `export fn` marks an OM-2 function-mode entry |
+| parameter `p T` | `fn` line | a scalar |
+| parameter `a view T N` / `a edit T N` | `fn` line | a sized array, read-only or writable |
+| parameter `a view T *` / `a edit T *` | `fn` line, OM-2 | an array of any length |
+| parameter `s edit T N fresh` | `fn` line, OM-2 | scratch: every element written before it is read |
+| parameter `p view S` / `p edit S` | `fn` line | a struct, or an OM-2 layout |
+| parameter `o out T N` | `fn` line, OM-2 | written by the unit; the calling host copies it out after status 0 |
+| `name = value` | function body | the first assignment creates the name |
+| `put A i v`, `put p f v` | function body | store into an array element or a field |
+| `f v1 v2 ...` | function body | a call to a `void` function |
+| `if C` ... `else` ... `end` | function body | `else` is optional; no `else if` |
+| `while C bound N` ... `end` | function body | N 1..999999 |
+| `for i T K` ... `end` | function body | `unroll` after K in OM-2, K 1..64 |
+| `break`, `continue` | inside a loop | |
+| `ret`, `ret v` | function body | `ret v` in a function with a result |
+| `exit N`, `trap N` | function body | exit status N; trap N 1..14 exits 100+N |
+| `requires C`, `ensures C` | OM-2, the first lines of a function | `result` names the returned value |
+| `invariant C` | OM-2, the first line of a loop body | |
+
 ## 3. Types and values
 
 | Type | Meaning |
@@ -114,7 +146,7 @@ end
 | structs | `new S v1 v2 ...`, `get p f`, `put p f v` |
 | control | `if` / `else` / `end`, `while COND bound N`, `for i T K`, `break`, `continue`, `ret`, `exit`, `trap N` |
 | conversion | the type words, `bitcast T v` |
-| I/O | `read fd A off n`, `write fd A off n`, `pread` / `pwrite fd A off n pos`, and the host words of OMEGESE section 10 (`fopen`, `fclose`, `argcnt`, `argread`, `envcnt`, `envread`, `monons`, `random`, `socknew`, `fork`, and more) |
+| I/O | `read fd A off n`, `write fd A off n`, `pread` / `pwrite fd A off n pos`, and the 67 host words of section 10 |
 
 - `and`, `or`, `xor` on integers of any width are bitwise, not logical: `and ulong 12 ulong 10` is 8
   ([`examples/int_bits_and.om`](../../examples/int_bits_and.om)). Compare first when you want a bool.
@@ -234,28 +266,76 @@ Examples: [`om2_tour.om`](../../examples/om2_tour.om), [`om2_views.om`](../../ex
   `envread` ([`examples/env_read.om`](../../examples/env_read.om)). Short capacity returns -105.
 - Host words carry the process's own permissions; they are not a sandbox.
 
+The 67 host words at the pin, with their values (OMEGESE section 10 has each one's exact contract).
+`A` and `B` are `uchar` arrays, `off`, `n` and `capacity` are `ulong`, and descriptors, flags, modes
+and ids are `int`. A path is the slice `A off n`; a packed list is a `u16` count, then `u16`-length
+records. Each word is reserved: using it as a name is error 16 at the pin, while an unreserved name
+in the same program compiles.
+
+| Area | Words |
+|---|---|
+| files | `fopen A off n flags mode`, `fclose fd`, `fsync fd`, `fdsync fd`, `syncfs fd`, `memfd A off n flags`, `fseek fd offset whence`, `ftrunc fd length`, `flock fd op`, `fstat fd A off n`, `getdnts fd A off n` |
+| paths | `chmod A off n mode`, `fchmod fd mode`, `chown A off n uid gid`, `faccess A off n mode`, `truncate A off n length`, `unlink A off n`, `makedir A off n mode`, `rmdir A off n`, `cwd A off capacity`, `chdir A off n`, `fchdir fd`, `readlnk A off n B off capacity`, `stat A off n B off capacity`, `lstat A off n B off capacity`, `renames A off n flags`, `link A off n`, `symlnk A off n`, `umask mask` |
+| processes | `getpid`, `getppid`, `getuid`, `geteuid`, `getgid`, `getegid`, `setsid`, `getpgid pid`, `getsid pid`, `setpgid pid pgid`, `fork`, `killpid pid signal`, `waitpid pid A off n options`, `pipefds A off n flags`, `dupfd fd target flags`, `execprog A off n` |
+| arguments, environment, randomness | `argcnt`, `argread index A off capacity`, `envcnt`, `envread index A off capacity`, `random A off n flags` |
+| time | `monons`, `realns`, `sleepns interval` |
+| sockets | `socknew domain kind protocol`, `bind fd A off n`, `connect fd A off n`, `listen fd backlog`, `accept fd flags`, `sockname fd A off n`, `sockopt fd level option A off n`, `recv fd A off n flags`, `send fd A off n flags`, `sendmsg fd A off n flags`, `shutdown fd how`, `waitio fd events interval`, `pollfds A off n interval`, `peercred fd A off capacity` |
+
 ## 11. Compiler errors
 
-Exit status = error number; stderr `omc: line N: error K`. One refusal per code is in
-`examples/errNN_*.om` with its exact stderr line in the matching `.expect`.
+Exit status = error number. The only message is the one stderr line `omc: line N: error K`, where N
+is the line being read (0 when no line was read). One refusal per code is in `examples/errNN_*.om`
+with its exact stderr line in the matching `.expect`, except 24, which needs a generated program.
 
-| Code | Meaning | Code | Meaning |
+| Code | Meaning | Example | Fix |
 |---|---|---|---|
-| 1 | could not read input | 16 | syntax: unknown word or misplaced form |
-| 2 | could not write output | 17 | a line after `ret`, `break`, `continue`, `trap` or `exit` |
-| 3 | unknown name or field | 18 | a result function whose `end` is reachable |
-| 4 | line ends too early | 19 | a global as an argument, or one array twice in a call |
-| 5 | extra words on the line | 20 | writing to a text or view |
-| 6 | malformed number | 21 | literal index out of range |
-| 7 | type mismatch | 22 | bad text escape |
-| 8 | number out of range | 23 | array or pool size limit |
-| 9 | word in a disallowed place | 24 | branch displacement (not reproduced at the pin) |
-| 10 | duplicate name | 25, 26 | not emitted at the pin |
-| 11 | number with no type | 27 | OM-2 `fresh` element read before written |
-| 12 | register pool exhausted | 28 | OM-2 `seal` outside the constructor |
-| 13 | name too long | 29 | OM-2 `layout` field out of size or overlapping |
-| 14 | compiler capacity (names, functions, exports, expansion) | 30 | OM-2 contract clause not allowed |
-| 15 | missing `end` | | |
+| 1 | omc could not read its input | `err01_input` (stdin is a directory) | give omc a readable file on stdin |
+| 2 | omc could not write its output | `err02_output` (stdout is `/dev/full`) | send stdout to a writable file with space |
+| 3 | unknown name, field or function | `err03_unknown_name` | assign the name before use; check the spelling |
+| 4 | the line ends before the statement is complete | `err04_line_ends` | give every word all of its values |
+| 5 | words left after a complete statement | `err05_extra_words` | count each word's values; there is no infix |
+| 6 | malformed number | `err06_bad_number` | decimal digits; hex only in OM-2, lowercase |
+| 7 | type mismatch | `err07_type_mismatch` | convert with a type word: `add int 1 int u` |
+| 8 | number out of range | `err08_out_of_range` | a literal that fits its type; a bound 1..999999; a trap code 1..14 |
+| 9 | a word in a place where it is not allowed | `err09_disallowed` | move it: `new` only in a function's outermost block, `struct` before the first `fn` |
+| 10 | duplicate name | `err10_duplicate` | choose a name that is not visible, not a function, not a struct |
+| 11 | a number with nothing to give it a type | `err11_ambiguous` | `x = uint 5` |
+| 12 | register pool exhausted (16 per function) | `err12_registers` | fewer live names, a helper function, shorter expressions (section 8) |
+| 13 | name too long | `err13_long_name` | at most 8 characters (function names 63) |
+| 14 | compiler capacity: names, functions, exports, expansion | `err14_capacity` | split the function or the unit |
+| 15 | the input ends inside an open block | `err15_missing_end` | close every block with `end` |
+| 16 | syntax: unknown word or misplaced form | `err16_syntax` | start each line with a statement word; comments are `note` lines |
+| 17 | a line after `ret`, `break`, `continue`, `trap` or `exit` in the same block | `err17_after_path` | delete the line or move it above |
+| 18 | a function with a result whose `end` is reachable | `err18_missing_ret` | end every path with `ret v` |
+| 19 | a global as an argument, or one array twice in a call | `err19_global_arg` | name the global inside the function; pass distinct arrays |
+| 20 | writing to a text or a view | `err20_readonly` | an `edit` parameter, or a local copy |
+| 21 | a literal index outside the array | `err21_const_index` | an index 0..N-1 |
+| 22 | a text escape other than `\n \t \\ \"` | `err22_text_escape` | build other bytes with `put` |
+| 23 | array or pool size limit | `err23_size` | smaller arrays (section 8 limits) |
+| 24 | a conditional branch farther than 1 MiB of code | generated, below | move long bodies into functions |
+| 25, 26 | never emitted at the pin | none | none |
+| 27 | OM-2 `fresh` element read before it is written | `err27_fresh` | `put` every element before the `get` |
+| 28 | OM-2 `seal` outside the constructor | `err28_seal` | `seal` only as the whole body of `fn NAMEmk ... to NAME` |
+| 29 | OM-2 `layout` field past the size or overlapping | `err29_layout` | keep every field inside SIZE and apart |
+| 30 | OM-2 contract clause not allowed | `err30_contract` | integer words on parameters only (and `result` in `ensures`); no calls, floats or host words |
+
+How the emitted set was established at the pin: in `seed/omc/omc.om`, `fn fail` (line 293) writes
+the stderr line and exits with the code (`exit int code`, line 322). The only other exits are
+`exit int 0` and `exit 0`, so every refusal goes through `fail`. Its callers pass the literals 1..24
+and 27..30, or forward a literal 3, 4, 6, 8, 13 or 16 through `lenval`, `nfail` and `unkfail`. No
+caller passes 25 or 26, so those two codes are never emitted. A trap inside omc itself would exit
+100 + N, which is not an error code.
+
+Error 24 needs more than 1 MiB of code inside one loop. This program, with 270000 copies of the
+line `x = add x 1` (4 bytes of code each), was refused with `omc: line 270006: error 24`, the line
+of the loop's `end`; with 140000 copies it compiled:
+
+```sh
+{ printf 'fn main to int\nx = ulong 0\nc = true\nwhile c bound 1\n'
+  yes 'x = add x 1' | head -n 270000
+  printf 'c = false\nend\nret int and x 1\nend\n'; } > e24.om
+seed/out/omc < e24.om > e24; echo "compile $?"   # compile 24
+```
 
 ## 12. Common mistakes
 
