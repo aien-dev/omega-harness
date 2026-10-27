@@ -86,8 +86,11 @@ Changes and confirmations against the rules below, each observed with a program:
   `omc: line 0: error 1`; stdout on `/dev/full` gives exit 2 with the line after the last input line
   (`omc: line 5: error 2` for a 4-line unit). A 33rd `export fn` in an OM-2 unit is error 14; exports
   are function mode, so an `export` beside `fn main` is error 9.
-- **Error 24 was not reproduced.** 40 functions of 4,000 checked `add` lines each compiled and ran,
-  because trap branches stay short; the check (`disp19`, omc.om line 2465) is defensive. Codes 25 and
+- **Error 24 needs more than 1 MiB of code inside one loop.** 40 functions of 4,000 checked `add`
+  lines each compiled and ran, because each function's branches stay short. One `while` loop with
+  270000 copies of `x = add x 1` was refused with `omc: line 270006: error 24` (the loop's `end`);
+  with 140000 copies it compiled. The check is `disp19` (omc.om line 2465): a conditional branch
+  reaches at most 2^18 - 1 words forward. The recipe is in `writing-omega` section 11. Codes 25 and
   26 are not emitted by any `fail` call at this pin.
 - **Bitcast defect, observed in omc `2c824805`; fix in draft omega-mv #896 (lane OmcCanon), not in
   the pin.** After `u = uint 4294967295` and `v = bitcast int u`, `eq v -1` is false, `lt v 0` is
@@ -280,7 +283,7 @@ deployed anywhere.
 | WebAssembly MVP backend `seed/wasm/irwasm.om` | OMEGESE section 11.1; scalar OSC IR v1 only | merged; gate not in any manifest (#790) |
 | Executable contracts (`requires`, `ensures`, `invariant`, `result`) | OMEGESE section 12; section 11a here | merged in #768, including #807; host-exercised |
 | The seeded compiler `omc`, written in `.om` | `seed/omc/omc.om`, built `seed0 -> hex1 -> asm2 -> om4 -> omc` by `sh seed/omega-from-seed.sh` | on `main` since PR #696 ([README.md#L27](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L27)) |
-| Keyword table, the authority for reserved words | `fn kw` in `seed/omc/omc.om` ([#L375](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L375)); same list in `seed/omc/genkw.awk` ([#L16](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/genkw.awk#L16)), parity checked by `seed/omc/gate18.sh` | gated |
+| Keyword table, the authority for reserved words | `fn kw` in `seed/omc/omc.om` ([#L375](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L375) at `55f9b0af`, [#L765](https://github.com/aien-dev/omega-mv/blob/e5b32567a7aff3ce594e3254a622a846a6cd190b/seed/omc/omc.om#L765) at `e5b32567`); same list in `seed/omc/genkw.awk` ([#L16](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/genkw.awk#L16) at `55f9b0af`; [#L16-L18](https://github.com/aien-dev/omega-mv/blob/e5b32567a7aff3ce594e3254a622a846a6cd190b/seed/omc/genkw.awk#L16-L18) at `e5b32567`, which adds `flock` 197 and a second list for `peercred`, `pollfds`, `sendmsg`), parity checked by `seed/omc/gate18.sh` | gated |
 | C translator `tools/omegese/omegese.c` and `omegese next` | OMEGESE sections 1-8 | legacy referee and token-mask tool, not the compiler |
 | `spec/omega-language-v0.md` (`let x: u8 = ...`, `fn f(x: T) -> T { }`, `//` comments) | Visor console line language, lowered by C in `src/language/` ([#L1-L13](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/spec/omega-language-v0.md#L1-L13)) | history; never write `.om` in that syntax |
 | C under `src/`, including `src/compiler/` | `main` | unfinished migration ([README.md#L50](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L50)) |
@@ -549,7 +552,9 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
 ## 11. Compiler errors (exit code = error number, stderr `omc: line N: error K`)
 
 From `seed/omc/gate15.sh` ([#L29-L75](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/gate15.sh#L29-L75)), one minimal program
-per code; the message format is `fn fail` ([omc.om#L122-L148](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L122-L148)).
+per code; the message format is `fn fail` ([omc.om#L122-L148](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L122-L148) at
+`55f9b0af`; at `e5b32567` it is [omc.om#L292-L322](https://github.com/aien-dev/omega-mv/blob/e5b32567a7aff3ce594e3254a622a846a6cd190b/seed/omc/omc.om#L292-L322), the only
+non-zero `exit` in the compiler). Rows 24..30 were checked at `e5b32567` (omc `2c824805`).
 
 | Code | Meaning | Code | Meaning |
 |---|---|---|---|
@@ -564,6 +569,9 @@ per code; the message format is `fn fail` ([omc.om#L122-L148](https://github.com
 | 10 | duplicate name | 21 | constant index out of range |
 | 11 | ambiguous bare number | 22 | bad text literal |
 | 12 | register pool exhausted | 23 | size capacity |
+| 24 | conditional branch farther than 1 MiB of code (`disp19`, [omc.om#L2465](https://github.com/aien-dev/omega-mv/blob/e5b32567a7aff3ce594e3254a622a846a6cd190b/seed/omc/omc.om#L2465)) | 27 | OM-2 `fresh` element read before it is written |
+| 25, 26 | never emitted (no `fail` caller passes them) | 28 | OM-2 `seal` outside the type's constructor |
+| 29 | OM-2 `layout` field past the size, or overlapping | 30 | OM-2 contract clause not allowed (`obligation=contract`) |
 
 A refused compile may still leave bytes on stdout. Never run output from a non-zero compile.
 Capacity boundaries are gated in `seed/omc/gate12.sh` (8192 globals accepted, 8193 refused;
@@ -578,7 +586,8 @@ OM-2 units add or extend codes ([OMEGESE 9.13](https://github.com/aien-dev/omega
 
 One minimal refusal per code is in `examples/errNN_*.om` of this repository, with its exact stderr
 line in `errNN_*.expect`, and `examples/gate.sh` runs them: codes 1..23 and 27..30, observed at
-`e5b32567`. Code 24 has no reproduction (section 0), and 25 and 26 are unused at that pin.
+`e5b32567`. Code 24 needs a generated program of more than 1 MiB (recipe in `writing-omega`
+section 11; observed at `e5b32567`), and 25 and 26 are unused at that pin.
 
 ## 11a. Executable contracts (merged #807 through #768)
 
