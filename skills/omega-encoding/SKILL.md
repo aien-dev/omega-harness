@@ -165,6 +165,17 @@ returns now work: internal void return code 12 is distinct from f32 value type 1
 `gate8.sh` exercises f32 values and rejects void-as-value (7) and f32 fallthrough (18).
 Consumers must explicitly migrate and qualify their own pins; a main merge does not deploy them.
 
+### Pending compiler batch 3 (PROPOSED, not merged)
+
+Draft [omega-mv#904](https://github.com/aien-dev/omega-mv/pull/904) (2026-10-27) merges #896
+(integer `bitcast` re-extension), #897 (empty `text` sized `nm_len 0`, view count 0; closes the
+#775 defect above), #898 (function names that start with a keyword) and #903 (`pread`/`pwrite`
+destination writable check) and reseeds `seed/out/omc` to sha256
+`397346de169d78e8a5ce53dce6cf9f0ca56a8f527128165bbfb4fb62a335f93e` (12,072 source lines, 407
+functions, size-history row `RM-batch3`). Status: EXERCISED on the arm64 host only
+(`evidence/BATCH-397346de/README.md` on that branch). Until it merges, main's pin is unchanged:
+keep avoiding empty texts in unsized views and do not cite 397346de as main.
+
 
 Re-check recipe (read only, in a fresh clone, never in a shared working tree another agent may be using):
 
