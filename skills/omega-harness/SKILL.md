@@ -163,10 +163,21 @@ It is unmerged; check the PR state before relying on it.
   later code anyway, so a fault below the true boundary can be an artifact; check branch targets.
 - ABI 8 cubins (CUDA 13 style) failed `cuModuleLoadData` with 200 `CUDA_ERROR_INVALID_IMAGE`
   on 535 and 580 drivers. #864 adds `.note.nv.tkinfo` and the cuinfo link to it, drops
-  `EIATTR_SW2861232_WAR`, and at sm_90+ writes nvcc's `.text`/cuinfo `sh_info`. Whether that
-  fixes loading is NOT_RUN until a retest; ABI 7 vecadd at sm_80/86/89 is the only loading form
-  with a PASS receipt. Those runs exercised the encoding via NVIDIA libcuda (interop oracle),
-  not CUDA++.
+  `EIATTR_SW2861232_WAR`, and at sm_90+ writes nvcc's `.text`/cuinfo `sh_info`. On RTX_4090-002933
+  (driver 615.71.09) vecadd v8 with tkinfo PASS and the same image without it LOAD_FAIL 200
+  (EXERCISED on chip, sm_89 only). Those runs exercised the encoding via NVIDIA libcuda (interop
+  oracle), not CUDA++.
+- Scoreboards arm 2 cycles after the setting instruction issues (Mesa NAK `calc_instr_deps.rs`,
+  `bars[bar] + 2`). A variable-latency instruction that sets a scoreboard with stall 1, followed
+  by an instruction that waits on it, lets the wait pass early: hand-written alu on sm_89 read a
+  stale pointer and wrote 33 to 289 wrong words or faulted (700/716/717), varying run to run, on
+  four RTX 4090 rentals. Write stall 2 there. The cubin.om in
+  [omega-gpu-bench #6](https://github.com/aien-dev/omega-gpu-bench/pull/6) refuses the pattern
+  with exit 7 (and stall 0 on any setter); it still has to be carried into #864. The fixed images
+  are host-built only; their chip re-run is NOT_RUN.
+- `omega-gpu-bench/kernels/src/oracle.sh` checks any cubin against nvdisasm/cuobjdump/readelf as
+  read-only oracles (header, tkinfo, decode, registers ≥ highest + 3, set-to-wait ≥ 2). It needs a
+  CUDA toolkit, so it runs on the Spark, not in CI.
 
 ## 4. Effects and authority
 
