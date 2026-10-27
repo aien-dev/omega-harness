@@ -348,8 +348,11 @@ Conversions are **checked**, not truncating. `uchar x` with x = 300 traps 5. Mas
 `bitcast T v` reinterprets bits of the same width; `bool` and different widths are error 7, a bare
 number is error 11 ([omc.om#L4640-L4662](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L4640-L4662)). Every fixture
 uses it between floats and unsigned integers. The code also accepts integer-to-integer of equal
-width (`bitcast int u`), but no fixture covers that; prove it with your own fixture before relying on
-it, or decode signed values arithmetically (section 8).
+width (`bitcast int u`), but on omc 189ada82 and 2c824805 a bitcast between a signed and an
+unsigned (or f32) type at 8, 16 or 32 bits keeps the source's extension: with `u = uint 4294967295`,
+`v = bitcast int u` compares unequal to -1 and `add v 2` traps 1 (exit 101). 64-bit `ulong`/`long`
+is correct. Fixed in source by [omega-mv#896](https://github.com/aien-dev/omega-mv/pull/896) (draft,
+for batch 3); until a pin that includes it merges, decode signed values arithmetically (section 8).
 
 ## 6. Names, scope, registers
 
@@ -435,7 +438,7 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
   `put b 0 uchar and h 255`, `put b 1 uchar and shr h 8 255`, ... `shr h 24`.
 - Little-endian `uint` load: `or or or uint get b 0 shl uint get b 1 8 shl uint get b 2 16 shl uint get b 3 24`.
   Split it over lines if it hits error 12.
-- Signed decode without relying on integer `bitcast`: with `u` the loaded `uint`, write
+- Signed decode without integer `bitcast` (required up to omc 2c824805, section 5): with `u` the loaded `uint`, write
   `v = long u`, then `if ge u 2147483648` / `v = sub v 4294967296` / `end`, then use `int v`
   (`v` is assigned before the block so it survives the block's `end`).
 - Formats the pin itself defines: packed lists are a little-endian `u16` count (1..64) then records
