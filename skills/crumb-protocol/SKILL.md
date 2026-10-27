@@ -20,6 +20,8 @@ The schema sets `additionalProperties: false`, so anything custom goes inside `e
 
 Two writers, one file. Humans and agents own the semantic kernel: `purpose`, `layer`, `invariants`, `exports`, `above`, `below`. `crumb compile` owns `extensions.generated` and that block is never edited by hand. `crumb propose` owns `extensions.proposed`. `crumb seed` owns `extensions.seed`.
 
+A repository's root crumb names where the repository hangs in the org graph under `extensions.map` (PENDING with `synapse-map`, 2026-10-27): `{"parent": "owner/repo@<sha>" or null, "parent_status": "CONFIRMED"}`, next to the ordinary top-level `purpose` and `layer`. The parent cannot be a top-level key because of `additionalProperties: false`. `synapse-map import` treats a parent without this crumb entry as INFERRED. `crumb claim` locks directories inside one checkout's shared store; leases that must be visible across repositories, sessions and outside targets (PRs, branches, email recipients) go through `synapse-claims`.
+
 Inside a git repository, live coordination no longer lives in `.crumb.local`: new writes go to the shared store under `<git-common-dir>/crumb/v1/{dirs,agents,continuations,ledger}`. The old file is a read path, merged in with provenance when present. So do not write `.crumb.local` by hand, and never delete or edit the store to clear a state you do not like; the tool keeps it transactionally consistent for a reason.
 
 Legacy warning: the older Rust implementation wrote `version`, `dir_path`, `history` and `whispers` into `.crumb`. Those files still exist in some repositories. The tool leaves them untouched and reports them as legacy. Do not copy that shape into a new crumb.
