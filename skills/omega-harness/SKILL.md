@@ -146,8 +146,8 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
   contract checks. No DPC++, Level Zero, GPU or Alpha qualification is implied.
   The standalone acceptance gate is not wired into protected gate manifests.
 - Pending, not merged: the E1 open-math SPIR-V tier
-  ([omega-mv #889](https://github.com/aien-dev/omega-mv/pull/889) plus branch
-  `e1open/eleven-ops-three-tiers`) adds an NDRange ABI: work item `g` reads
+  ([omega-mv #889](https://github.com/aien-dev/omega-mv/pull/889) plus the
+  stacked [omega-mv #901](https://github.com/aien-dev/omega-mv/pull/901)) adds an NDRange ABI: work item `g` reads
   `inputs[g*P + j]` and writes `outputs[2g]`, `outputs[2g+1]`; `g = 0` is the
   single-call ABI above. `opencl-host --sweep MODULE.spv KERNEL START COUNT`
   launches a one-parameter kernel over `START..START+COUNT-1` and prints the low
