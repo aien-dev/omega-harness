@@ -361,6 +361,10 @@ it, or decode signed values arithmetically (section 8).
   new free own view edit global note exit const bound` and every host word, including `stat link bind
   send recv random fork cwd chdir umask accept listen connect waitio memfd mapget mapset`. `bits min
   max abs sqrt` are deliberately **not** reserved (gate11). Check the keyword table, not memory.
+  A reserved word used as a name is **error 16** (unknown word), not error 10, so the message does
+  not say "reserved". Observed on omc `2c824805…` (omega-mv `e5b32567`), host only: `fn f len ulong
+  to ulong` gives `omc: line 1: error 16`, and a local `len = ulong 3` gives `omc: line 2: error 16`.
+  The same program with the parameter renamed to `n` compiles (exit 0). Use `n`, `cnt` or `size`.
 - **16 registers per function** (pool x0-x6, x8-x15, x17; [omc.om#L82-L91](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L82-L91)).
   Parameters, every live name, the hidden counter of each open `while` / value-count `for`, and the
   temporaries of the current statement all draw from it; error 12 when the next one is not available
