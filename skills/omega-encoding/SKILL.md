@@ -443,6 +443,19 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
   at its offset; flags must include READ and MMAP. Read with `mapget`, release with `mapdrop`;
   `mapset` through it traps. Exercised on host fixtures and in QEMU against real `vfio-pci`
   ([omega-gpu-driver qemu/w0-edu.log](https://github.com/aien-dev/omega-gpu-driver/blob/main/qemu/w0-edu.log)); not qualified on GB10.
+- **VFIO DMA and writable BAR: PENDING, stacked on #878.** Draft
+  [omega-mv#890](https://github.com/aien-dev/omega-mv/pull/890) (head `397e6704`, omc sha256
+  `bcfa5828...f0f6`) adds keyword id 180 `vfiomapw fd A off 32 -> handle`: as `vfiomap`, but the
+  region flags must include READ, WRITE and MMAP and the map is shared read/write, so `mapget`/`mapset`
+  drive registers (one aligned access each, DSB SY on both sides)
+  ([MAPPING.md#L20](https://github.com/aien-dev/omega-mv/blob/397e67040fb74853c6814097fe02ae4e1ebd6f66/seed/host/MAPPING.md#L20)).
+  It also allows IOMMU_MAP_DMA 15217/32 and IOMMU_UNMAP_DMA 15218/24 in `vfioctl`
+  ([#L84-L98](https://github.com/aien-dev/omega-mv/blob/397e67040fb74853c6814097fe02ae4e1ebd6f66/seed/host/MAPPING.md#L84-L98)):
+  Omega code never supplies an address. Write a mapping handle into bytes 8..15 and the IOVA into
+  16..23; the compiler checks the handle like `mapget`, requires a read/write mapping and flags exactly
+  3, then stores the mapping's own base and whole length; any failed check traps 3 (exit 103).
+  UNMAP_DMA requires flags 0. Unmap before `mapdrop`: a dropped mapping that is still DMA-mapped
+  stays pinned until the container closes. Exercised on host fixtures only (`seed/host/tests/vfio.om`).
 
 ## 10. Wire serialization (only what the pin defines)
 
