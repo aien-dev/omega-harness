@@ -146,6 +146,27 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
   contract checks. No DPC++, Level Zero, GPU or Alpha qualification is implied.
   The standalone acceptance gate is not wired into protected gate manifests.
 
+### Omegese GPU kernels (sm_121), PENDING omega-mv #885
+
+This section stays pending until [omega-mv #885](https://github.com/aien-dev/omega-mv/pull/885) merges. It was exercised on its branch `c1/chip-fix` at
+`e83c740c75ec3b534eef97ce3118c13f0fa65338` plus the evidence commit `8c66c1853`.
+
+- Read `docs/omegese/GPU.md` before writing a kernel. It covers the kernel form, words, float rules,
+  MUFU, shared memory and `sync`, the checker2 rules, and the launch checks in s11. The one encoder is
+  `src/omega_blackwell_codegen.h`, and the launcher is `src/omega_osc_launch.c`.
+- MUFU (`exp`, `inv`, `inv root`, `root`) is deterministic, but its results are not correctly rounded.
+  A denormal input counts as zero. A result that should be denormal becomes a zero of the same sign,
+  measured on the GB10 on 2026-10-22. A host reference has to state its tolerance before the run.
+- Host: `make test-osc-gpu`. checker2 accepts 13 kernels and refuses 15 broken ones, each for its
+  expected reason. The run has 1308 checks, and all 8 backend mutants are caught.
+- Chip: `make test-osc-gpu-chip`, under the GB10 lock and the operator's GPU procedure. The green
+  run at 2026-10-27T02:55:39Z was 645 checks with 0 failed, `om_vadd`/`om_gate`/`om_gemm`/`om_attn`
+  included. The red control, `OSC_GPU_MUTANT=1`, fails 8 checks. Logs are in
+  `evidence/omegese-gpu/chip-20261027/`.
+- The 35B gate swap (omega-mv #886, `AIEN_OMEGA_Q36_OMEGESE_GATE=1`) is NOT_RUN. It needs golden
+  tokens on a test server in an exclusive window. Its gate bytes match the #885 build (code sha256
+  `fabdfc55…`), but that is not a token-identity receipt.
+
 ## 4. Effects and authority
 
 - A proposed program or effect description does not authorize running it. Confirm capability and privilege at the execution boundary. Model confidence and semantic identity grant no authority.
