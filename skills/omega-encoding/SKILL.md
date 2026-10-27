@@ -383,7 +383,8 @@ From OMEGESE 9.4 and 9.7 ([#L449-L474](https://github.com/aien-dev/omega-mv/blob
   run-time-sized arrays. No heap and no `free` (decision 24; `free` is error 9).
 - Array parameters state type and length exactly: `a view uchar 64` / `a edit uchar 64` (error 7 for
   any other length), so there are no length-generic array parameters; use fixed sizes, an integer
-  `const`, or a global. A view or a `text` is read-only (error 20 on `put` or `read` into it).
+  `const`, or a global. A view or a `text` is read-only (error 20 on `put` or `read` into it; `pread`
+  too once omega-mv#903 is in the pin, see section 9).
 - `get A i`, `put A i v`, `len A`. A constant index outside the array is error 21; any other index is
   checked at run time (trap 3). No word yields an address or adds to one.
 - `text NAME "bytes"`: read-only `uchar` array; escapes only `\n \t \\ \"` (error 22 otherwise).
@@ -409,6 +410,14 @@ From OMEGESE section 3 and 4 ([#L58-L60](https://github.com/aien-dev/omega-mv/bl
 Base words ([#L476-L486](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L476-L486)): `read fd A off n`,
 `write fd A off n`, `pread`/`pwrite fd A off n pos`. Native host words ([#L624-L747](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L624-L747)):
 files, directories, clocks, sockets, poll, processes, arguments, environment, random.
+
+**pread/pwrite writability (pending [omega-mv#903](https://github.com/aien-dev/omega-mv/pull/903)).**
+OMEGESE says `pread` needs a writable array like `read` (error 20). Up to omc `2c824805…` (omega-mv
+`e5b32567`) the check is on the wrong word: `pwrite` from a `text` is refused with error 20, and
+`pread` into a `text` or an unsized `view` compiles and returns `-EFAULT` (negative) at run time.
+Until #903 is reseeded into the pin: copy a text into a `new` array before `pwrite`, and never `pread`
+into a text or a view. With #903 (candidate omc `861d59aa…`), `pwrite` takes a text and `pread` into
+one is error 20.
 
 - Types: `fd`, flags, modes, pids are `int`; offsets, counts, capacities `ulong`; file positions and
   intervals `long`; buffers are `uchar` arrays. Every result is `long`.
