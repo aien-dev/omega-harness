@@ -59,7 +59,7 @@ Names below are current catalog slugs under `https://github.com/aien-dev/`. Use 
 | Language, seed/compiler, semantics, reaction composition, native GPU engine | [omega-mv](https://github.com/aien-dev/omega-mv) | Separate seeded `.om`, legacy C, host references and chip-qualified work. |
 | Machine realization, FORGE providers, native GB10 submission and historical boot artifacts | [physics-mv](https://github.com/aien-dev/physics-mv) | Current subsystem name is FORGE; old `PHYSICS_*` identifiers and receipts stay unchanged. |
 | Small boot root | [atlas](https://github.com/aien-dev/atlas) | Read its actual default branch (`master` in this snapshot); QEMU qualification is not native hardware qualification. |
-| GPU machine-code toolchain/runtime/driver-client work | [CUDApp](https://github.com/aien-dev/CUDApp) | Check target support and remaining driver/OS dependencies; do not imply a complete driver replacement. |
+| GPU machine-code toolchain/runtime/driver-client work | [CUDApp](https://github.com/aien-dev/CUDApp) | Check target support and remaining driver/OS dependencies; do not imply a complete driver replacement. CUDApp is still mostly C. Draft [#143](https://github.com/aien-dev/CUDApp/pull/143) (PENDING, not merged) runs the sm_121 encoder and cubin writer as `.om` units through an omega-bridge binding in the default hosted build; freestanding builds keep C. Do not call CUDApp "written in Omega". |
 
 ### Runtime and learning
 
