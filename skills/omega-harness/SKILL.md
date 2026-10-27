@@ -154,6 +154,18 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
 - Hardware and live services need the operator's current authorization procedure. Host and emulator checks never qualify hardware. Machine-specific operator rules belong in that machine's local instructions, not in public guidance.
 - Escalate to an independent reviewer for hard-to-reverse changes to authority, protocols or gates, for contradictory evidence, or when two distinct fixes have failed. A model review is not an execution receipt.
 
+### NVIDIA tools and licensed inputs (provenance)
+
+Hardware facts for NVIDIA back ends follow `PROVENANCE.md` in aien-dev/CUDApp (#110) and aien-dev/omega-mv (#874), which quote the clauses (CUDA Toolkit EULA, January 2025 revision, §1.2(1), §1.2(8), §1.1.2(4), §2.1; NVIDIA driver licence §2.1, §2.2; MAX License §1.4, October 21, 2026). Engineering rule, not legal advice:
+
+- Cite public documentation (PTX ISA, CUDA Binary Utilities, open-gpu-doc), permissively licensed source (NVIDIA open kernel module headers, Mesa NAK/NVK, LLVM `ELF.h`, CUTLASS) or a chip receipt for each fact.
+- `nvcc`, `ptxas`, `cuobjdump` and `nvdisasm` are proprietary, internal-use SDK tools. Run them only on inputs we wrote (our probe kernels, our encoder's bytes), only for NVIDIA targets, and record the version and command. Never ship or wrap them.
+- Never disassemble, extract or read the machine code of an NVIDIA binary: libcuda, cuBLAS, cuDNN, TensorRT, NCCL, driver, firmware, or cubins inside NVIDIA libraries, on any machine including rentals.
+- Never carry a fact learned from NVIDIA tool output into a non-NVIDIA back end.
+- Never give MAX source to an AI system to build a substitute for MAX; reading it to interoperate is allowed.
+- Record every stored NVIDIA-tool listing in the repository's `PROVENANCE.md`. A golden copied from tool output is a regression pin, not independent evidence.
+- In public text, describe the work as independently implemented from public documentation and open source, checked with NVIDIA's tools on my own code. Avoid "reverse-engineered NVIDIA's compiler/driver", "CUDA clone" and an unqualified "byte-identical to nvcc".
+
 ## 5. Communicate and learn
 
 Follow `omega-communication`. Keep proposed, implemented, exercised, qualified, merged and deployed separate. A receiver needs the minimum sufficient definitions, inputs, constraints, evidence and open uncertainty, not the whole conversation. Never drop a prerequisite just to make a handoff shorter.
@@ -183,6 +195,7 @@ Before you finish, check whether your change touched any of these, and update th
 | Status vocabulary, receipts, report or handoff conventions, wire formats | `omega-communication` |
 | Repository purpose, ownership, names, archive state, plan authority, merge or Alpha policy, a resolved or new contradiction | `aien-repositories` |
 | Any aien-dev repository's purpose, status or links, or a new repository | that repository's entry in [aien-dev/sovereign-intelligence](https://github.com/aien-dev/sovereign-intelligence) `index/curated.yml` (layer, evidence, one-line purpose), in the same piece of work |
+| A new source of hardware facts, a new use of an NVIDIA SDK tool, or stored NVIDIA-tool output | that repository's `PROVENANCE.md`, and section 4 here if the rule changed |
 | These skills, their install method or their layout | the README and the affected skill |
 
 How to do it:
