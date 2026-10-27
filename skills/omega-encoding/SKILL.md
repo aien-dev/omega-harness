@@ -352,7 +352,7 @@ width (`bitcast int u`), but on omc 189ada82 and 2c824805 a bitcast between a si
 unsigned (or f32) type at 8, 16 or 32 bits keeps the source's extension: with `u = uint 4294967295`,
 `v = bitcast int u` compares unequal to -1 and `add v 2` traps 1 (exit 101). 64-bit `ulong`/`long`
 is correct. Fixed in source by [omega-mv#896](https://github.com/aien-dev/omega-mv/pull/896) (draft,
-for batch 3); until a pin that includes it merges, decode signed values arithmetically (section 8).
+for batch 3); until a pin that includes it merges, decode signed values arithmetically (section 10).
 
 ## 6. Names, scope, registers
 
