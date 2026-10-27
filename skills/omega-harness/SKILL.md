@@ -149,7 +149,8 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
 ### Omegese GPU kernels (sm_121), PENDING omega-mv #885
 
 This section stays pending until [omega-mv #885](https://github.com/aien-dev/omega-mv/pull/885) merges. It was exercised on its branch `c1/chip-fix` at
-`e83c740c75ec3b534eef97ce3118c13f0fa65338` plus the evidence commit `8c66c1853`.
+`e83c740c75ec3b534eef97ce3118c13f0fa65338` plus the evidence commit `8c66c1853`, and again at
+`67d228d265439be346c85aca28bf753f0bc05241` (evidence and docs in `a9835368f`).
 
 - Read `docs/omegese/GPU.md` before writing a kernel. It covers the kernel form, words, float rules,
   MUFU, shared memory and `sync`, the checker2 rules, and the launch checks in s11. The one encoder is
@@ -163,9 +164,24 @@ This section stays pending until [omega-mv #885](https://github.com/aien-dev/ome
   run at 2026-10-27T02:55:39Z was 645 checks with 0 failed, `om_vadd`/`om_gate`/`om_gemm`/`om_attn`
   included. The red control, `OSC_GPU_MUTANT=1`, fails 8 checks. Logs are in
   `evidence/omegese-gpu/chip-20261027/`.
-- The 35B gate swap (omega-mv #886, `AIEN_OMEGA_Q36_OMEGESE_GATE=1`) is NOT_RUN. It needs golden
-  tokens on a test server in an exclusive window. Its gate bytes match the #885 build (code sha256
-  `fabdfc55…`), but that is not a token-identity receipt.
+- Wire format: GPU kernel units are OSC IR version 8, with kernel opcodes 40..46 (GPU..MAD). 30..39 are
+  refused and ATOM is 47 (Determinism lane). #525 keeps v6, and v7 is the memory profile. Tags 13/14/15
+  (F32/GVIEW/GEDIT) depend on the version: tag 14 is GVIEW in v8 and f64 in v7.
+- Seeded `.om` ports in `seed/oscgpu/` (`oscir.om`, `gpu*.om`, `c2*.om`, built with the pinned
+  `seed/out/omc`) stop at BlackwellIR. Register allocation and encoding stay in C, and the C stays the
+  production path and oracle. Host: `make test-om-ports`. Run it once per tree, because two makes clobber
+  `build/osc_gpu/om`. At 67d228d26: oscir n=6054 diff=0, checker2 21627 cases differ=0, lowering
+  n=26556 diff=0, OMBYTES 119/0. `OSC_GPU_OM_DIR=<dir>` (from `tests/osc_gpu/om_build_all.sh`) makes
+  the chip test launch the `.om` bytes. The GB10 run on 2026-10-27T16:30:40Z had 645 checks, 0 failed,
+  OMBYTES 13/0, and the red control failed 8 (`evidence/omegese-gpu/chip-20261027T1630Z-om/`).
+- The 35B gate swap (omega-mv #886, `AIEN_OMEGA_Q36_OMEGESE_GATE=1`) was EXERCISED on the GB10 in an
+  authorized exclusive window on 2026-10-27T16:34Z (`evidence/omegese-gate-lever/golden-20261027T1634Z/`).
+  Green: 8/8 cells PASS with `omegese gate on (code sha256 fabdfc55)`. Red, with the gate mutated to
+  a*sigmoid(-g): 6/6 RED-OK. It is a draft, not merged. q36-extra loads only when the owner-only marker
+  `~/.local/state/aien-coordinator/q36-live-down-for-tests` (mode 600) exists. That marker is the
+  coordinator's to create, and a refused load is NOT_RUN, not FAIL.
+- `make test-checker2-owner-receipt` fails with UNTRUSTED_CHECKER on #885 because checker2's identity
+  changed. Drake's YubiKey re-sign is needed (BLOCKED_OPERATOR).
 
 ## 4. Effects and authority
 
