@@ -138,9 +138,21 @@ rebuilt for this note.
 - **Gate coverage at main:** `seed/wasm/gate-irwasm.sh` and `seed/qualification/om2/gate.om` are
   merged but no `tests/gates/*.gate` runs them (RM1, #790). `tests/gates/run.sh seed` passing says
   nothing about OM-2 fixtures or irwasm; run those yourself and report them separately.
-- **Open OM-2 defect** [#775](https://github.com/aien-dev/omega-mv/issues/775): an empty `text`
-  passed to a `view uchar *` parameter was reported to see the next text's bytes (`len` 32, not 0).
-  Do not pass an empty text to an unsized view until it is closed.
+- **Open OM-2 defect** [#775](https://github.com/aien-dev/omega-mv/issues/775), present up to omc
+  `2c824805`: an empty `text e ""` has name length 0, the marker of an unsized view, so its count is
+  read from an unset register (x0). As a `view` argument the callee gets a garbage count (a loop
+  `for i ulong len s` with `get s i` ran off the image, SIGSEGV); `len e` returns x0; `get`, `part` and
+  `write` on it are bounds checked against x0, not 0. Do not use an empty text at all until it is
+  fixed. Two fixes are pending, only one will land: [omega-mv#897](https://github.com/aien-dev/omega-mv/pull/897)
+  (empty text is sized, length 0; index traps 3, constant index error 21) and
+  [omega-mv#835](https://github.com/aien-dev/omega-mv/pull/835) (empty text refused, error 8).
+- **Open compiler defect, fix pending** [omega-mv#898](https://github.com/aien-dev/omega-mv/pull/898), up to omc
+  `2c824805`: a function name of 9..63 bytes whose first 8 bytes spell an 8-byte keyword
+  (`continue_x`, `truncate_number`) is refused error 16, because only the first 8 bytes are compared
+  with the keyword table. Until it lands, do not start a function name longer than 8 bytes with one
+  of the eight 8-byte keywords `continue`, `execprog`, `mapwrite`, `offsetof`, `peercred`,
+  `shutdown`, `sockname`, `truncate`. A struct field name over 8 bytes with such a prefix is error 16
+  on `2c824805` and error 13 (too long) with the fix.
 
 ### Merged compiler batch: contracts, capacity and f32 returns
 
