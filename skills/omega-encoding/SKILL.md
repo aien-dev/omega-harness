@@ -428,15 +428,17 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
 - Evidence for any host claim: compiler sha256, source sha256, output binary sha256, exact command,
   exit status, and the observed bytes. A program that ignores a negative result is not evidence.
 - **VFIO device words: PENDING, not on `main`.** Draft
-  [omega-mv#878](https://github.com/aien-dev/omega-mv/pull/878) (head `2a3bd6fb`, omc sha256
-  `5103a672...887e`) adds keyword ids 178/179 ([MAPPING.md#L18-L19](https://github.com/aien-dev/omega-mv/blob/2a3bd6fb4a2dbc46f63bbc1a3a16799cbef21588/seed/host/MAPPING.md#L18-L19),
-  allowlist [#L66](https://github.com/aien-dev/omega-mv/blob/2a3bd6fb4a2dbc46f63bbc1a3a16799cbef21588/seed/host/MAPPING.md#L66)):
+  [omega-mv#878](https://github.com/aien-dev/omega-mv/pull/878) (head `24b4cd6f`, omc sha256
+  `5dac7543...f04c`) adds keyword ids 178/179 ([MAPPING.md#L18-L19](https://github.com/aien-dev/omega-mv/blob/24b4cd6fc69063ace6fe1d8b02c90400ffd6c93f/seed/host/MAPPING.md#L18-L19),
+  allowlist [#L66](https://github.com/aien-dev/omega-mv/blob/24b4cd6fc69063ace6fe1d8b02c90400ffd6c93f/seed/host/MAPPING.md#L66)):
   `vfioctl fd req A off n -> long` takes only a **literal** request from the allowlist at its exact
   `n` (GET_API_VERSION 15204/0, CHECK_EXTENSION 15205/4, SET_IOMMU 15206/4 value 3 only,
   GROUP_GET_STATUS 15207/8, GROUP_SET_CONTAINER 15208/4, GROUP_GET_DEVICE_FD 15210 nonempty name
-  without zero bytes, DEVICE_GET_INFO 15211/24, DEVICE_GET_REGION_INFO 15212/32, DEVICE_RESET
-  15215/0), writes `argsz = n` when `n >= 8`, returns the result or -errno. A non-literal or
-  unlisted request is a compile error; wrong sizes or values trap 103 at run time.
+  without zero bytes, DEVICE_GET_INFO 15211/24, DEVICE_GET_REGION_INFO 15212/32), writes
+  `argsz = n` when `n >= 8`, returns the result or -errno. A non-literal or unlisted request
+  (including DEVICE_RESET 15215) is a compile error; wrong sizes or values trap 103 at run time.
+  Not calling DEVICE_RESET does not avoid a reset: Linux vfio-pci FLRs on device open when a reset
+  method is enabled and calls `pci_reset_bus` (SBR) on release even with `reset_method` empty.
   `vfiomap fd A off 32 -> handle` maps one `vfio_region_info` read-only and shared, exactly its size
   at its offset; flags must include READ and MMAP. Read with `mapget`, release with `mapdrop`;
   `mapset` through it traps. Exercised on host fixtures and in QEMU against real `vfio-pci`
