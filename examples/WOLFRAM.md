@@ -57,3 +57,13 @@ Reading notes:
   `0b e9 47 1a` in `fnv1a32.stdout`.
 - `env_read`: the `LONG=` entry is 75 bytes, over the 63-byte capacity, so `envread` returns -105 and
   the program prints an empty line for it.
+
+Second call, for `int_bits_and` (exit status 8 is the value checked), query and result verbatim:
+
+```wolfram
+BitAnd[12, 10]
+```
+
+```
+8
+```

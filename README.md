@@ -55,7 +55,7 @@ and evidence. CPU execution is not GPU or DPC++ qualification.
 
 ## Check the examples yourself
 
-The examples run on Linux AArch64 hosts only. [`examples/`](examples/) holds 94 programs, each
+The examples run on Linux AArch64 hosts only. [`examples/`](examples/) holds 96 programs, each
 `NAME.om` with `NAME.expect` (and `NAME.stdout` when it prints): every trap, one refusal per error
 code, the common mistakes and the known defects. `examples/gate.sh` refuses any compiler but the
 pinned one, then compiles and runs every program here and in `skills/*/examples/`:
@@ -68,7 +68,7 @@ examples/gate.sh omega-src/seed/out/omc
 ```
 
 It prints `PASS name` or `FAIL name: reason` per program and ends with
-`GATE PASS examples=96 pass=96 fail=0 omc=2c8248...` (exit 0), `GATE FAIL ...` (exit 1), or a hash
+`GATE PASS examples=98 pass=98 fail=0 omc=2c8248...` (exit 0), `GATE FAIL ...` (exit 1), or a hash
 refusal (exit 2). The `omega-encoding` skill (section 0 and section 13) records the observed results
 and the negative controls; [`examples/WOLFRAM.md`](examples/WOLFRAM.md) records the Wolfram checks of
 the arithmetic expectations.

@@ -39,9 +39,9 @@ with this list, this list is what the newer compiler does.
 | `docs/one_layer/OMEGESE.md` | blob `119c559557e4f227dee348c0e0e1240c71a42df3` |
 
 The executable record is [`examples/gate.sh`](../../examples/gate.sh): it refuses any other compiler
-hash, then compiles and runs 96 programs (`examples/*.om` and this skill's `examples/*.om`) against
+hash, then compiles and runs 98 programs (`examples/*.om` and this skill's `examples/*.om`) against
 exact expected stdout bytes, exit statuses and compiler stderr lines. Observed:
-`GATE PASS examples=96 pass=96 fail=0`. Negative controls on a copy each ended `GATE FAIL` with
+`GATE PASS examples=98 pass=98 fail=0`. Negative controls on a copy each ended `GATE FAIL` with
 exit 1: one changed digit in an expected stdout, an expected exit 105 changed to 104, an expected
 stderr line number changed, a removed `.expect` file, and a changed program body; a compiler with one
 appended byte was refused with exit 2. Arithmetic expectations were checked with Wolfram
@@ -715,7 +715,7 @@ check proves nothing.
 - `examples/trap_narrow.om`: a masked narrowing succeeds, an unmasked one traps 5 (exit 105).
 
 Both carry `.expect` (and for `fnv1a32`, `.stdin` `abc` and the 4 expected bytes in `.stdout`) and
-run in [`examples/gate.sh`](../../examples/gate.sh) with the 94 programs in the repository's
+run in [`examples/gate.sh`](../../examples/gate.sh) with the 96 programs in the repository's
 `examples/` directory; section 0 records the `e5b32567` rerun of every row below. The portable guide
 for writing a first program is [`skills/writing-omega/SKILL.md`](../writing-omega/SKILL.md).
 

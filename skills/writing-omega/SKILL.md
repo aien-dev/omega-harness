@@ -116,6 +116,8 @@ end
 | conversion | the type words, `bitcast T v` |
 | I/O | `read fd A off n`, `write fd A off n`, `pread` / `pwrite fd A off n pos`, and the host words of OMEGESE section 10 (`fopen`, `fclose`, `argcnt`, `argread`, `envcnt`, `envread`, `monons`, `random`, `socknew`, `fork`, and more) |
 
+- `and`, `or`, `xor` on integers of any width are bitwise, not logical: `and ulong 12 ulong 10` is 8
+  ([`examples/int_bits_and.om`](../../examples/int_bits_and.om)). Compare first when you want a bool.
 - `and` / `or` on bools evaluate **both** sides; there is no short circuit
   ([`examples/mistake_short_circuit.om`](../../examples/mistake_short_circuit.om) traps 3 on the
   index the C reader would expect to be skipped). Test the index in an outer `if`.
@@ -191,8 +193,9 @@ A trap ends the process with exit status 100 + N. Output already written stays w
   name is error 16, `free` is error 9.
 - 16 registers per function hold parameters, live names, loop counters and the temporaries of the
   current statement. The 17th is error 12 (`examples/err12_registers.om`). The fix is structural:
-  move part of the work into a helper function that takes a few scalars and returns one value, and
-  end the life of names you no longer need by computing them inside a block.
+  move part of the work into a helper function that takes a few scalars and returns one value, end
+  the life of names you no longer need by computing them inside a block, and split a long nested
+  expression into several assignments of one or two words each.
 - Size limits: an array up to 16777216 elements, 4 MiB of local arrays per function, 1 GiB of
   globals (error 23).
 
@@ -274,6 +277,7 @@ Each row is a program in `examples/` with its observed refusal.
 | `a = new uchar n 0` | a literal or `const` length | error 16 | `mistake_new_var_len.om` |
 | `free a` | nothing: no heap | error 9 | `mistake_free.om` |
 | `len = ...` | another name | error 16 | `mistake_reserved_name.om` |
+| `neg = ...` or `text neg "a"` | another name: `neg` is the negation word | error 16 | `mistake_neg_name.om` |
 | a bare call `f 1` with a result | `v = f 1` | error 7 | `mistake_value_stmt.om` |
 | a 7th parameter | a struct or an array | error 9 | `mistake_seven_params.om` |
 | 2 `view T *` plus 3 scalars (7 slots) | a sized view, a struct, or fewer scalars | error 9 | `mistake_om2_param_slots.om` |
@@ -321,7 +325,8 @@ or stderr line) and, when it prints, `NAME.stdout` with the exact bytes. Wolfram
 arithmetic expectations are in [`examples/WOLFRAM.md`](../../examples/WOLFRAM.md).
 
 - Start here: `hello`, `exit_status`, `print_decimal`, `functions`, `loops`, `arrays`, `text`.
-- Arithmetic: `int_arith`, `unsigned_wrap`, `checked_conv`, `float_arith`, `float_to_int`, `consts`.
+- Arithmetic: `int_arith`, `int_bits_and`, `unsigned_wrap`, `checked_conv`, `float_arith`,
+  `float_to_int`, `consts`.
 - Data: `globals`, `structs`, `wire_le`.
 - I/O: `stdin_count`, `echo_args`, `env_read`, `tmp_files`.
 - Traps: `trap1_overflow` .. `trap7_shift`, `trap_code`.
