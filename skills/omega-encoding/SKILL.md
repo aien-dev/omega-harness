@@ -260,6 +260,13 @@ end
   indentation. `note` is the only comment form; the rest of its line is not read
   ([omc.om#L4873](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L4873)).
 - `fn NAME (PARAM TYPE)* to TYPE|void` ... `end`. At most 6 parameters (error 9). `main` takes none.
+  The real limit is **6 argument slots**: a scalar or a sized array (`view uchar 8`) takes one slot,
+  an unsized array (`view uchar *`, `edit ulong *`) takes two (base and length), so
+  `fn f a view uchar * b view uchar * c ulong d ulong e ulong` (5 parameters, 7 slots) is error 9
+  while the same with `view uchar 8` arrays compiles. `part B OFF LEN` is an argument form only:
+  binding it to a local (`r = part b 0 4`) is error 9; pass `part` directly in the call. Probed with
+  minimal units on omc sha256 `2c82480596bb…` (omega-mv `audit/tls-integration` 9472e9615); the
+  om/tls TLS helpers split functions along these two limits and the 16-register pool below.
 - A unit with `fn main` is a static AArch64 Linux ELF (program mode). Without `fn main` the output is
   bare function words (function mode): it compiles with exit 0 but is **not runnable**. Host words
   and `global` are error 9 there, and `text` is program-mode only ([#L400-L407](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L400-L407), [#L454-L459](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L454-L459), [#L629](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L629)).
