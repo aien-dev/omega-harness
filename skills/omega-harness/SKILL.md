@@ -24,6 +24,7 @@ Companion skills in this package:
    - `synapse-claims who <target>`, then `synapse-claims claim --agent <id> --session <id> --target <target> --intent "<one line>"` for every repository branch (`branch:aien-dev/r#b`), path glob (`path:aien-dev/r:dir/**`), PR (`pr:aien-dev/r#N`) or outside target (`ext:email:<address>`) you will write to. Exit 2 means another agent holds an overlapping lease and names it: do not edit, message the holder. Renew at half the TTL; release with the final state word and evidence.
    - The ledger is append-only, hash-chained and Ed25519-signed; never edit it by hand. `synapse-pulse` reconciles it against GitHub and live sessions and raises one `COORD-DRIFT:` watchdog line for unclaimed PRs on claimed paths, expired leases, contradicted status and duplicate work. The human board is rendered by `synapse-board`; do not hand-append to it once the cutover lands.
    - The same commands are exposed as MCP tools (`coord_where`, `coord_claim`, `coord_who`, ...) by `synapse-mcp`. A lease is coordination, not authority and not a verification verdict.
+   - Scope messages: never write to `agent://all`, which wakes parked agents (on 2026-10-27 one broadcast woke eight finished lanes, including a GPU-renting one). Get a lane's recipients with `synapse-claims list --agent-prefix <Lane>` (MCP `coord_lane`) and message each id.
 
 ## Mathematics goes through Wolfram (mandatory)
 
