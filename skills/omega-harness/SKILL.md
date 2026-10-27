@@ -10,6 +10,8 @@ These skills are operating guidance for coding agents. They are not a compiler a
 Companion skills in this package:
 
 - `omega-encoding`: the language the seeded compiler actually accepts, with verified examples.
+- `writing-omega`: the portable guide for writing a first correct `.om` program, backed by the tested
+  programs in `examples/` and `examples/gate.sh`.
 - `omega-communication`: status labels, reports, handoffs and corrections.
 - `aien-repositories`: what AIEN builds and which repository owns a task.
 
@@ -177,7 +179,7 @@ Before you finish, check whether your change touched any of these, and update th
 
 | You changed | Update |
 |---|---|
-| Omega syntax, keywords, types, traps, limits, error codes, host or device words, the compiler or its pin | `omega-encoding`, plus the pins in `omega-harness` |
+| Omega syntax, keywords, types, traps, limits, error codes, host or device words, the compiler or its pin | `omega-encoding` and `writing-omega`, plus the pins in `omega-harness`; add or update the program in `examples/` and rerun `examples/gate.sh` |
 | Build, compile, gate or verification commands, or the seed procedure | `omega-harness` sections 3 and 4 |
 | Conversion, encoder or bridge behavior, or what it supports | the conversion note in `omega-harness` section 2, and the README |
 | Status vocabulary, receipts, report or handoff conventions, wire formats | `omega-communication` |

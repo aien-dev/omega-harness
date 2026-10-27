@@ -7,6 +7,7 @@ Skills can't make agents flawless. What these do is turn the mistakes agents kee
 | Skill | Use it for |
 |---|---|
 | [`omega-harness`](skills/omega-harness/SKILL.md) | The overall workflow: orient, implement in `.om`, compile, run, challenge, handle effects, learn from repeated errors |
+| [`writing-omega`](skills/writing-omega/SKILL.md) | A portable guide for writing a correct `.om` program on any machine: shape, types, words, traps, errors 1..30, common mistakes with their exact refusals, known compiler defects and workarounds |
 | [`omega-encoding`](skills/omega-encoding/SKILL.md) | The language the seeded compiler accepts: prefix words, types, traps, bounds, registers, host I/O, byte layouts, error codes, plus two runnable examples |
 | [`omega-communication`](skills/omega-communication/SKILL.md) | Status labels, reports, PR text, agent handoffs, receipts, wire formats, corrections |
 | [`aien-repositories`](skills/aien-repositories/SKILL.md) | What AIEN builds, who decides what, and which repository owns a task |
@@ -54,26 +55,23 @@ and evidence. CPU execution is not GPU or DPC++ qualification.
 
 ## Check the examples yourself
 
-The examples run on Linux AArch64 hosts only:
+The examples run on Linux AArch64 hosts only. [`examples/`](examples/) holds 94 programs, each
+`NAME.om` with `NAME.expect` (and `NAME.stdout` when it prints): every trap, one refusal per error
+code, the common mistakes and the known defects. `examples/gate.sh` refuses any compiler but the
+pinned one, then compiles and runs every program here and in `skills/*/examples/`:
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv.git omega-src
-sha256sum omega-src/seed/out/omc   # 734f0a39319fbfa930bcc62cb30dbf06d47d78e126372b74f5baf478e6126b61 at the pin
-omega-src/seed/out/omc < skills/omega-encoding/examples/fnv1a32.om > fnv 2> fnv.err
-compile_rc=$?
-printf 'compile rc=%s\n' "$compile_rc"
-cat fnv.err
-if [ "$compile_rc" -eq 0 ]; then
-    chmod +x fnv
-    printf abc > fnv.in
-    ./fnv < fnv.in > fnv.out
-    run_rc=$?
-    printf 'run rc=%s\n' "$run_rc"
-    if [ "$run_rc" -eq 0 ]; then od -An -tx1 fnv.out; fi  # 0b e9 47 1a
-fi
+git -C omega-src checkout e5b32567a7aff3ce594e3254a622a846a6cd190b
+sha256sum omega-src/seed/out/omc   # 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+examples/gate.sh omega-src/seed/out/omc
 ```
 
-The `omega-encoding` skill (section 13) records the full set of observed results and the negative controls.
+It prints `PASS name` or `FAIL name: reason` per program and ends with
+`GATE PASS examples=96 pass=96 fail=0 omc=2c8248...` (exit 0), `GATE FAIL ...` (exit 1), or a hash
+refusal (exit 2). The `omega-encoding` skill (section 0 and section 13) records the observed results
+and the negative controls; [`examples/WOLFRAM.md`](examples/WOLFRAM.md) records the Wolfram checks of
+the arithmetic expectations.
 
 ## Keeping it current
 
