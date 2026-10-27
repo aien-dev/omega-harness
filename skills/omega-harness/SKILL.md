@@ -146,6 +146,28 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
   contract checks. No DPC++, Level Zero, GPU or Alpha qualification is implied.
   The standalone acceptance gate is not wired into protected gate manifests.
 
+### CUDA cubin writer (pending omega-mv #864)
+
+`seed/sm80/cubin.om` in draft [omega-mv #864](https://github.com/aien-dev/omega-mv/pull/864)
+(stacked on #836) wraps raw 16-byte SASS into a cubin: `cubin SM ABI API REGS NAME SIG < code.bin`.
+It is unmerged; check the PR state before relying on it.
+
+- `REGS` is the registers the code uses (highest Rn + 1, counting pair tops). The cubin records
+  `REGS + 2`: Volta+ hardware burns 2 GPRs for the program counter (Mesa NAK
+  `hw_reserved_gprs`; nvcc 13.0 records highest Rn + 3). Recording the bare count made the top
+  2 registers illegal: alu/ctl writing R14/R15 with REGCOUNT 16 failed `cuCtxSynchronize` with
+  715 `CUDA_ERROR_ILLEGAL_INSTRUCTION` on sm_80/86/89 (OpenResearch boxes, 2026-10-26). Exit 6
+  refuses `REGS` below a destination register.
+- Localising a device fault without a debugger: build variants with instruction N replaced by
+  EXIT and find the first N that faults. A forward branch that jumps past the cut reaches the
+  later code anyway, so a fault below the true boundary can be an artifact; check branch targets.
+- ABI 8 cubins (CUDA 13 style) failed `cuModuleLoadData` with 200 `CUDA_ERROR_INVALID_IMAGE`
+  on 535 and 580 drivers. #864 adds `.note.nv.tkinfo` and the cuinfo link to it, drops
+  `EIATTR_SW2861232_WAR`, and at sm_90+ writes nvcc's `.text`/cuinfo `sh_info`. Whether that
+  fixes loading is NOT_RUN until a retest; ABI 7 vecadd at sm_80/86/89 is the only loading form
+  with a PASS receipt. Those runs exercised the encoding via NVIDIA libcuda (interop oracle),
+  not CUDA++.
+
 ## 4. Effects and authority
 
 - A proposed program or effect description does not authorize running it. Confirm capability and privilege at the execution boundary. Model confidence and semantic identity grant no authority.
