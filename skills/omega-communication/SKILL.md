@@ -54,10 +54,17 @@ When designing state communication, follow the canonical contract in `spec/seman
 
 Every serialized format needs field order, width, signedness, endianness, ranges, versioning, canonicalization and rejection behavior. Test boundaries and malformed or truncated input.
 
-### Pending native GPU realization records (2026-10-28)
+### Native GPU realization records (2026-10-28)
 
-The native kernel work under [CUDApp #26](https://github.com/aien-dev/CUDApp/issues/26)
-is pending integration and hardware qualification. Its records have different roles:
+The canonical consumer integration is [CUDApp #169](https://github.com/aien-dev/CUDApp/pull/169),
+merged as `c6977b4906229fe83f41103b7eff65b64a0986d6` from reviewed
+`7a354dbda9eddd405610fdcabf4fc4e24c1a0f47`. Its
+[host acceptance receipt](https://github.com/aien-dev/CUDApp/pull/169#issuecomment-6476381404)
+records 52 host targets, 23 runtime controls, byte-identical regeneration of 37
+production roots and the zero-CUDA gate. This is source integration and host evidence,
+not GPU execution, independently accepted candidate qualification or full-model evidence.
+Production native resolution remains `NULL` with record count zero.
+Its records have different roles:
 
 - **Quant semantic declaration vs physical preparation request:** [QSCHEMA-1 source
   `fe25929ce71b11703eafa72395df2dd495aa61f2`](https://github.com/aien-dev/CUDApp/blob/fe25929ce71b11703eafa72395df2dd495aa61f2/docs/models/QUANT.md)
@@ -86,8 +93,36 @@ or nonzero digest fields is not an independently accepted receipt. Keep syntheti
 fixtures out of production admission. Record implementation, host execution, consumer
 binding, chip qualification and complete-model qualification separately; production
 selection stays refused or on the qualified incumbent when any required proof is absent.
-These source pins document pending contracts, not merged, deployed or hardware-qualified
-behavior. Refresh the exact pins and exercised scope when the integration changes.
+The individual source pins above identify their measured contract revisions; their
+pending wording must not override the merged integration status of #169. Conversely,
+merged source must not promote synthetic host evidence into hardware qualification.
+The separate [capacity repair #173](https://github.com/aien-dev/CUDApp/pull/173)
+remains a draft dependency, not an accepted merged consumer pin. Instruction-slot
+exhaustion must refuse with result 2 instead of reaching a branch-patch or tail-store
+bounds trap (103); actual `nv_staged` recomposition must refuse without changing caller
+code. Record its final accepted source and fresh consumer acceptance before changing
+the canonical consumer lock.
+
+Shape-aware selection and grouped MoE acceptance must cover the actual recorded owner,
+not just a selector fixture. The complete ordered operation binds every relevant
+router, gather, expert, shared-expert, activation and combine occurrence, including
+all chunks before any queue commit. Version2 nested code/launch series belong to the
+single existing [MoE closure owner at `4aef070`](https://github.com/aien-dev/CUDApp/blob/4aef070f207f849e1672103e9edd0be21600e1a3/native/learn53/moe-closure.om),
+not a second qualification registry. Observe the mode-final emitted QMD, active
+argument/driver-bank bytes and resolved options consumed unchanged by submission;
+raw retained QMD storage before mode preparation is insufficient. Refusal resets
+the unsubmitted list without fallback. The approved joint qualification subject
+is distinct from the live operation-instance digest. Actual-owner host controls,
+protected evaluator execution, independent numerical/model-quality/full-cost results,
+physical paired large-M/grouped runs and full-model qualification are separate claims.
+Absent physical evidence remains NOT_RUN.
+
+The x86 binding work [omega-bridge #37](https://github.com/aien-dev/omega-bridge/pull/37)
+and companion [guide #116](https://github.com/aien-dev/omega-harness/pull/116)
+also depend on [compiler #923](https://github.com/aien-dev/omega-mv/pull/923).
+Keep their guides pending until the exact compiler and caller acceptance is recorded;
+emulated boundary checks are not native x86 execution. Neither dependency changes the
+production resolver defaults or authorizes GPU execution or production activation.
 
 
 ## Corrections
