@@ -39,10 +39,12 @@ cp -R omega-harness/skills/* ~/.agents/skills/   # pick the directory for your a
 
 These skills cover working in Omega itself. Conversion between Omega and other languages belongs to [`omega-bridge`](https://github.com/aien-dev/omega-bridge). It converts a declared, checked subset and refuses to attempt universal conversion. You can run an MCP server in front of it if you want automated conversion, but that wrapper doesn't let it convert anything beyond that subset.
 
-Pending [omega-bridge #31](https://github.com/aien-dev/omega-bridge/pull/31) localizes private
-generated native-runtime symbols so separate binding translation units can link together without
-changing their public ABI. The companion `omega-harness` section 2 note records the source pin,
-host-only acceptance evidence and the global-symbol negative control; it is not a merge claim.
+Pending [omega-bridge #32](https://github.com/aien-dev/omega-bridge/pull/32) localizes private
+ABI1/ABI2 runtime symbols so independently generated translation units link without collisions.
+Draft [#33](https://github.com/aien-dev/omega-bridge/pull/33) adds an explicitly checked
+integer-scalar freestanding output with no pthread, mmap, heap or TLS. The companion section 2
+records exact source pins, host evidence and negative controls; pending work is not a main,
+deployment or GPU-qualification claim.
 
 The merged [omega-mv WebAssembly backend (#787)](https://github.com/aien-dev/omega-mv/pull/787)
 is a compiler backend for the existing scalar OSC IR v1 wire format, not a foreign-source
