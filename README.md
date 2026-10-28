@@ -81,4 +81,11 @@ The `omega-encoding` skill (section 13) records the full set of observed results
 
 Each skill names the omega-mv commit it was checked against and lists known disagreements. Historical sections retain their dated pins. `omega-encoding` section 0 adds scoped pins for the IR/wasm backend, the merged Omega 1.0 roadmap, and main `91b3c932` (compiler `189ada82…3b54`): executable contracts, expanded capacity and the f32 return fix. The batch has host evidence, not GPU qualification. When the compiler changes, recheck cited lines, rerun examples, then update pins. Do not edit old evidence. Contributions follow the [shared AIEN agent rules](https://www.aienos.com/agents/RULES.md).
 
+The 2026-10-28 qty/diagnostics pin originally recorded for #911 is merged as
+`6999fa9e6dae4847c155ef4eacaece74f491d3ca`. The skills also record a separate,
+pending audit-fix pin for [omega-mv #914](https://github.com/aien-dev/omega-mv/pull/914):
+`84489ba66043d6944cb895d59d407e2deee4ef74`, compiler `0ab18500…b9a3`.
+Its expanded quantity and diagnostic examples were exercised on a Linux AArch64
+host. Pending source and host replay are not merge, deployment or hardware qualification.
+
 Written by Drake Stapleton with AIEN agents. Apache License 2.0.

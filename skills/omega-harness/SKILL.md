@@ -60,6 +60,19 @@ say so and stop rather than estimating.
 
 Use the target repository's documented commands. A host-only seed workflow on AArch64 Linux, in a disposable clone pinned to an exact revision, looks like this:
 
+Current audit-fix candidate (observed 2026-10-28): omega-mv
+`84489ba66043d6944cb895d59d407e2deee4ef74`, pending
+[#914](https://github.com/aien-dev/omega-mv/pull/914), not merged or deployed.
+`seed/omc/omc.om`: 12,545 lines, sha256
+`d2e7c7c55af63272e5d0c3071eeb5c977554864143f115a1d1f42ee5da587d0d`;
+`seed/out/omc`: sha256
+`0ab18500a68dfaff21c1e6eb74ef3c329cae6aac3d10d7310643c980dcefb9a3`.
+A fresh-clone seed rebuild reproduced that digest. `omega-encoding` section 0
+records the replayed overflow/wrap/refusal controls, typed qty literals,
+checked integer ingress, corrected diagnostic categories and output-failure
+controls. The diagnostics regression command there also exercised large queries.
+These are focused host observations, not a full qualification or deployment.
+
 Merged source pin (2026-10-28): omega-mv
 `1fe5976d398646b17acabbf6d9dfae96b017e439`, incorporated by
 [#911](https://github.com/aien-dev/omega-mv/pull/911) into main
@@ -70,7 +83,8 @@ Merged source pin (2026-10-28): omega-mv
 `seed/out/omc`: sha256
 `d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84`.
 The fresh-clone `qty`, wrap/refusal controls and `check`/`next` outputs are
-recorded in `omega-encoding` section 0. Older pins below remain dated history.
+recorded in `omega-encoding` section 0 as historical observations; the expanded
+examples use the pending audit-fix pin above. Older pins below remain dated history.
 
 
 ```sh

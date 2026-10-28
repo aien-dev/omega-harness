@@ -10,8 +10,37 @@ cannot express, and before encoding bytes, integers or host I/O in Omega.
 
 ## 0. Pin and how to re-check it
 
-The merged pin below covers `qty` and the compiler's `check`/`next` interface.
-Older tables and their citations remain dated history, not claims about this pin.
+### Current audit-fix candidate pin (observed 2026-10-28)
+
+Pending [omega-mv #914](https://github.com/aien-dev/omega-mv/pull/914), not
+merged or deployed. A fresh clone of `fix/qty-diag-audit` at this exact commit
+was used for the host-only observations in the `qty` and `check`/`next` sections.
+
+| Item | Value |
+|---|---|
+| Commit | `84489ba66043d6944cb895d59d407e2deee4ef74` |
+| Compiler source `seed/omc/omc.om` | 12,545 lines, sha256 `d2e7c7c55af63272e5d0c3071eeb5c977554864143f115a1d1f42ee5da587d0d` |
+| Compiler `seed/out/omc` | sha256 `0ab18500a68dfaff21c1e6eb74ef3c329cae6aac3d10d7310643c980dcefb9a3` |
+| Seed loader `seed/rung0/seed0.hex` | sha256 `baaf081fe6055a768485c5d25d7435681ce00b04cfa80b26c48169f78944e14d` |
+
+`sh seed/omega-from-seed.sh` exited 0 with empty stderr. Its full stdout matched
+the merged-pin rebuild block below byte for byte except for the fixpoint line,
+which was:
+
+```text
+PASS omc fixpoint 0ab18500a68dfaff21c1e6eb74ef3c329cae6aac3d10d7310643c980dcefb9a3
+```
+
+The committed `seed/out/omc.sha256` and the independently measured binary digest
+agreed before rebuilding; the rebuild reproduced that digest. This is a
+fixpoint and focused host replay, not full qualification. The merged d629 pin
+below still accepts some float/qty mixes and rejects legal quantity literals
+and explicit integer ingress; its original register-only examples did not
+exercise those boundaries. Use the pending fix pin for the expanded examples,
+and do not treat it as an already-merged compiler.
+
+The earlier merged pin below covers the original `qty` and `check`/`next`
+examples. Older tables and their citations remain dated history.
 Originally observed on the [omega-mv #911](https://github.com/aien-dev/omega-mv/pull/911)
 candidate, including [#909](https://github.com/aien-dev/omega-mv/pull/909).
 Both are now merged: main `6999fa9e6dae4847c155ef4eacaece74f491d3ca`
@@ -261,6 +290,38 @@ Observed: compile exit 7, empty stdout, stderr:
 omc: line 4: error 7
 ```
 
+The audit-fix candidate also accepts typed quantity literals in arithmetic:
+
+```text
+fn main to int
+a = qty 1
+b = add a qty 1
+ret int b
+end
+```
+
+Observed: compile exit 0, empty stderr; run exit 2, empty stdout/stderr.
+Negative control: replace only `add a qty 1` with `add a 1.0`. Observed:
+compile exit 7, empty stdout, stderr exactly `omc: line 3: error 7` followed
+by a newline. A float literal must not be relabeled as quantity bits.
+
+Explicit integer ingress is checked rather than implicitly coerced:
+
+```text
+fn main to int
+a = ulong 7
+b = qty a
+ret int b
+end
+```
+
+Observed: compile exit 0, empty stderr; run exit 7, empty stdout/stderr.
+Negative control: replace only `ulong 7` with `long -1`. Observed:
+compile exit 0, empty stderr; run exit 105 (conversion trap 5), empty
+stdout/stderr. These examples and all the earlier overflow, wrap and mixing
+controls were rerun with the audit-fix candidate.
+
+
 ### `check` and `next`: text diagnostics and prefix context
 
 These are leading input lines to the seeded compiler, not command-line flags
@@ -309,6 +370,50 @@ promise of an exact next-token mask. The unfinished loop above is intentional.
 Negative control: compare the observed query with a copy whose name line is
 `a ulong param`. Observed comparison: unequal (`REJECTED`), so a local/parameter
 kind error is detectable.
+
+At the audit-fix candidate, unknown names are `NAME`, not `TYPE` diagnostics:
+
+```sh
+printf 'check\nfn main to int\nret missing\nend\n' | seed/out/omc
+```
+
+Observed exit 3, stdout:
+
+```text
+omega-diag v1
+om1 NAME span=19-26 UNKNOWN REPAIRABLE code=3 line=2 expect=name found=missing
+```
+
+Observed stderr exactly `omc: line 3: error 3` followed by a newline.
+The earlier `ret 0` check is the successful-output negative control. The
+original `ret true` diagnostic and unfinished-loop query above were also
+rerun and compared byte for byte with their quoted output at this candidate.
+
+Output failures must not report success. On Linux with `/dev/full`:
+
+```sh
+for mode in check next; do
+    if printf '%s\nfn main to int\nret 0\nend\n' "$mode" | seed/out/omc > /dev/full; then rc=0; else rc=$?; fi
+    printf '%s rc=%s\n' "$mode" "$rc"
+done
+```
+
+Observed stdout, empty stderr:
+
+```text
+check rc=2
+next rc=2
+```
+
+Run the broader host regression with
+`bash tests/diagnostics/experiment_issue655.sh`. Observed exit 0, ending
+`ALL 39/39 EXPERIMENT CHECKS PASSED (negative control + exact first error span matching)`.
+It checks category records, compares complete query bytes for both 10- and
+1,200-function inputs, and pairs `/dev/full` failures with successful-output
+controls for `check`, `next` and ordinary compilation. Prefix queries are
+streamed rather than limited to one 65,536-byte message buffer; this does
+not remove the compiler's input, function-table or name-table limits.
+
 
 
 ## 1. Which language is which
