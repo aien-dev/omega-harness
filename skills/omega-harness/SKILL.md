@@ -112,7 +112,11 @@ say so and stop rather than estimating.
   `-Wall -Wextra -Werror` and adds an annotation-removal negative control.
   `tools/bridge-freest c|h` separately checks an integer-only, stateless,
   nontrapping whole-unit subset and emits import-free scalar C. Revision/epoch
-  use separate translation units, no TLS, libc, setjmp or native machine code.
+  and binary32-to-binary16 RNE conversion use separate translation units, no TLS,
+  libc, setjmp or native machine code. The latter is first-party integer Omega;
+  the hosted `_Float16` cast remains a verification oracle. CUDApp's complete
+  58-target ARM host suite exercised its boundary/sweep/six-mutant check;
+  that is not native x86 whole-consumer or physical Ampere qualification.
   `src/freest.om` SHA256 is
   `836cbf9ef8a3c4ee82b0458070884405bc8296f83b10f933556bf27750bb3661`;
   frontend SHA256 is
