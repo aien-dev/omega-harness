@@ -16,7 +16,7 @@ Companion skills in this package:
 ## Pending FR-9 target overlay (2026-10-28)
 
 Draft [omega-mv #923](https://github.com/aien-dev/omega-mv/pull/923), commit
-`becf5c817bcb7e0846d12ebfc2be91042d8ad89a`, adds the explicit first-line
+`3e66b6744590cc72c623d8e09413b9072bcab36e`, adds the explicit first-line
 selector `target x86linux` in seeded `.om`. Default output remains AArch64 Linux;
 the candidate also emits static x86-64 Linux ELF64 and private-ABI bare units.
 It does not add a SysV C ABI, native x86 seed0 bootstrap or UEFI target.
@@ -24,25 +24,28 @@ Foreign callers, including CUDA++, still use omega-bridge's declared conversion
 route rather than treating bare code as C-callable.
 
 Source SHA256 is
-`3a40637bfc11eb4b0c0af80a73bd228a3975c25ef805859f06cb1f6d7fc089f4`;
+`4b5392fffd25a3a37844ad8bb5138fbaada690be7dae95132614524bdb78a1e0`;
 the regenerated AArch64 compiler SHA256 is
-`5f0faab7cd4fc12158cf8e099418098d278df644efc10e4e7e2e5ca6141fca86`.
-The qemu-executed x86 compiler SHA256 is
-`a95de640177954118482f4fab45945e6cdefc8935afe3eb4e0ac0ec314dc78fc`.
-The unchanged seed ladder, host checks and gate5 passed. Under QEMU the complete
-x86 compiler regenerated both targets byte-identically; independent objdump
-decoded its entire instruction stream. Exit-42 behavior matched; four actual
-CUDA++ encoder/cubin/runtime units compiled for both targets, but composed
-behavior of those units remains NOT_RUN.
+`badedbb0c6287887641fcd7e97301b43b5f82f2d7a2838bbe0d17547873108be`.
+The unchanged seed ladder (`sh seed/omega-from-seed.sh`), host checks
+(`sh seed/host/check.sh`) and referee (`sh seed/omc/gate5.sh`) exited 0.
+The additive receipt `seed/qualification/x86-linux/20261028-orphan-host.json`
+records both guide examples on both targets: FNV `abc` emits bytes with hex
+`0be9471a` and exits 0, narrow conversion traps with exit 105, and removing the store
+produces exit 44. X86 runs use QEMU, not physical x86 hardware.
 
-Qualification is **not complete**: the full differential ended **FAIL**
-(7,537 PASS, 152 FAIL, 399 NOT_RUN, five MISSING_IMPLEMENTATION, 570 EXCLUDED,
-257 MISSING_INPUT). Invalid-opcode and valid-but-wrong-immediate mutants were
-caught. Contract loops, output capacity, bare-unit branch-boundary checks,
-diagnostics, incomplete callers/drivers and missing SHA inputs remain;
-QEMU's invalid-fd NVIDIA ioctl also returns a different errno from the native
-AArch64 kernel. See the candidate's `docs/X86-LINUX.md` and
-`seed/qualification/x86-linux/20261028.json` before making a support claim.
+The repair adds the missing x86 per-function growth bound. Its candidate
+refuses the growth fixture with exit 14 and empty output on both targets;
+removing the guard accepts a 4,462,186-byte x86 image. This control does not
+establish general compiler acceptance.
+
+Qualification is **not complete**. The original full differential at
+`becf5c817bcb7e0846d12ebfc2be91042d8ad89a` remains **FAIL**:
+7,537 PASS, 152 FAIL, 399 NOT_RUN, five MISSING_IMPLEMENTATION, 570 EXCLUDED,
+257 MISSING_INPUT. Its receipt `seed/qualification/x86-linux/20261028.json`
+is immutable; those totals must not be attributed to the repaired source.
+Current-source final corpus evidence is pending. See `docs/X86-LINUX.md`
+for contract, diagnostic, caller and emulator limits.
 All x86 execution evidence is **EMULATED**. Native x86 execution is **NOT_RUN**.
 This draft is IMPLEMENTED, not QUALIFIED, MERGED or DEPLOYED; do not replace
 the dated established pins below with a claim that FR-9 is complete.
