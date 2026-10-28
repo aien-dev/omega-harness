@@ -114,9 +114,13 @@ say so and stop rather than estimating.
   nontrapping whole-unit subset and emits import-free scalar C. Revision/epoch
   and binary32-to-binary16 RNE conversion use separate translation units, no TLS,
   libc, setjmp or native machine code. The latter is first-party integer Omega;
-  the hosted `_Float16` cast remains a verification oracle. CUDApp's complete
-  58-target ARM host suite exercised its boundary/sweep/six-mutant check;
-  that is not native x86 whole-consumer or physical Ampere qualification.
+  the hosted `_Float16` cast remains a verification oracle. CUDApp draft
+  [PR #170](https://github.com/aien-dev/CUDApp/pull/170), source
+  `3b6ca6fda726a6b2eb01100ae155fbcb890d00af`, completed the unchanged
+  58-target ARM host suite, including 40-root regeneration, f16 boundaries,
+  sweep and six mutants, native-artifact, zero-CUDA, device-build and
+  cubin-disassembly checks. Device-build is not device execution:
+  physical Ampere remains **NOT_RUN**.
   `src/freest.om` SHA256 is
   `836cbf9ef8a3c4ee82b0458070884405bc8296f83b10f933556bf27750bb3661`;
   frontend SHA256 is
@@ -154,7 +158,17 @@ say so and stop rather than estimating.
   executables are NATIVE and must still pass their unchanged acceptance.
   This dependency is a verification oracle, not production code. Its
   intended Omega replacement is the separate, still-failing native x86
-  compiler; pending native CI is not a successful execution claim.
+  compiler. Historical native x86 consumer
+  [workflow 40762515409](https://github.com/aien-dev/CUDApp/actions/runs/40762515409)
+  passed at `592cee` (test merge `6a2b759`), including 58 targets,
+  40 roots and 2,169 oracle comparisons; it is not current-head evidence.
+  Current-source native x86 workflow evidence remains pending.
+  The current fixture writer creates new output files with mode 0600,
+  including under umask 000; it intentionally preserves existing-file modes.
+  The historical writer creates mode 0666 with identical bytes, so the
+  permission negative control fails as required. Five wrong compiler/bridge
+  pins refuse with exit 3 and no installed output. Earlier stale-build
+  failures remain historical evidence, not current clean-suite results.
 - The scalar IR-to-WebAssembly backend is owned by omega-mv, not a foreign-source import:
   [#787](https://github.com/aien-dev/omega-mv/pull/787) merged as
   `3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`, after boolean IR fix
