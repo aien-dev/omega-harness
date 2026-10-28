@@ -58,15 +58,18 @@ say so and stop rather than estimating.
 
 ### Pending independent GPU driver host slice
 
-`aien-dev/omega-gpu-driver` [draft #4](https://github.com/aien-dev/omega-gpu-driver/pull/4),
-stacked on draft #3, has candidate source `b1c8e6ea76da81dc47b57670304bf256b0ba9818`.
-It remains pending, not main, qualified or deployed. Its compiler is specifically
+`aien-dev/omega-gpu-driver` [draft #6](https://github.com/aien-dev/omega-gpu-driver/pull/6),
+stacked on drafts #4/#3, has candidate source `95383da4789556c9ca09befb9c6ab788e4e25d79`
+(2026-10-28). It remains pending, not main, qualified or deployed. Its compiler is specifically
 `omega-mv@397e67040fb74853c6814097fe02ae4e1ebd6f66` (draft #890 atop #878),
 omc sha256 `bcfa582892afca8f65e551fe56867d918d86e84540c7381be8fa9ef18d0cf0f6`,
 not the different compiler candidate in section 3. Protocol authority is NVIDIA
 `open-gpu-kernel-modules@20e4e6e19cc26ba47b5cbe23130a396be100c427` (580.173.02);
 the independent boot-image oracle is
-`aienux@c5bb3a4b9898257658aba0b7178a3c73a0371c27`.
+`aienux@a108b1144a064aa7b824374a622d627c6ba91fd1` (#463). This deliberately corrects
+the old `c5bb3a4b` oracle's common-mode GB10B COT bug: the vendor GB10B MCTP HAL
+returns 1, not SOM|EOM `0xc0000000`. The old-value mutant now fails exact parity.
+Do not treat the former matching C/Omega bytes as proof of the corrected header.
 
 Seeded `.om` now encodes the complete bounded boot arena/COT and non-CC RPC frames,
 boot/guest/static handshake, RM allocation/control/free and timeout/error/sequencer suspension.
@@ -75,15 +78,25 @@ Reuse `gsp/sysinfo.om` and `chan/params.om`; do not duplicate their encoders.
 uncertain boot completion to retention of the matching published backing. It is not a real
 queue publisher, memory fence, firmware authenticator or hardware RPC endpoint.
 
-At that exact candidate all 27 `tests/*.sh` host runners were exercised in one run with the
-pinned OMC (also linked as `build/omc`, which `tests/window_sim.sh` checks against
-`tools/omc.pin`) and the clean AIENUX reference: exact sender/full-arena parity, channel,
-completion (33 lines) and RM (59 lines) parity, sequencer dispatch parity, the composed mapped
-transport (17 cases, post-publication notification failure quarantines), and every mutant
-suite with no survivor (dispatch 12, RM channel 11, completion 8, transport 10 among them).
-See `tests/transport-host-receipt.txt` and the other `tests/*host-receipt.txt` files for
-commands and source/binary hashes. GCC 13.3.0-6ubuntu2~24.04.1, GNU objdump 2.42 and
-Python 3.12.3 are verification-only dependencies, never production `.om` substitutes.
+At the former `b1c8e6e` candidate all 27 original host runners were exercised. At the
+new candidate all 29 `tests/*.sh` host runners have final exit0 with the pinned compiler
+and corrected clean C reference. Initial failures are retained: a redundant profile guard
+required updating the behavior mutant, and the private window simulator needed the pinned
+`build/omc` link; the affected gates were rerun successfully. See
+`tests/gsp-qualification-host-receipt.txt` for exact commands, outcomes and assembly/binary
+hashes. All 13 arena mutants (including old MCTP) and six compiling SEC2 mutants were detected.
+GB20B has 15 passing simulator cases, including wrong profile/package, secure-boot/response
+timeouts, bad envelope, firmware error, pointer failure and delayed success.
+GCC 13.3.0-6ubuntu2~24.04.1 and Python 3.12.3 are verification-only dependencies.
+
+`gsp/arena.om` profile 2 and `gsp/sec2.om` implement the vendor-selected GB20B cold-production
+COTv2 candidate: gb20y and distinct GB20B boot/FMC source profiles, zero FRTS fields,
+FWSEC scratch wait and MSGQ command-response validation before common GSP completion.
+Package mismatches refuse before register effects. `gpchip` remains GB10B-only transport
+admission; `gpclass` classification is not admission. Existing `fwprep` still extracts GB10B,
+and caller package assertions are not firmware authentication. The GB20B fixture is synthetic,
+not an authenticated extracted package. Read the candidate's `GB20B.md` before composing it.
+Vendor secure-boot timing requires a native monotonic timer policy, not a simulator poll count.
 
 Mapped queue cursors use aligned `mapget`/`mapset`; the pinned compiler brackets each with
 DSB SY. That is process instruction ordering only, not device coherency, cache maintenance or
@@ -102,6 +115,13 @@ VFIO/IOMMU services; it is not an Omega kernel module or a completed kernel repl
 A separate reviewed kernel execution/effects profile, typed DMA/MMIO spans and deferred IRQ
 transport are required for kernel execution. No device/VFIO open, service/module change,
 authorization, gate or trust change was part of this host work.
+
+`build.sh` still builds only `w0`/`fwprep`, not a composed `ogd boot/hello/exec`.
+The native Aienux loader/ABI, profile-bound MMIO/DMA/IRQ capabilities, visibility fence,
+uncached completion and quiesce/bus-master-off before SMMU reclaim remain absent effects.
+The documented minimal W0 identity request is unexecuted and requires current operator
+authorization: VFIO open/release can implicitly FLR/SBR even for read-only BOOT_42.
+Never infer a hardware window or service-stop permission from these host receipts.
 
 ## 3. Compile, execute, challenge
 
