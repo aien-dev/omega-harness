@@ -48,6 +48,15 @@ say so and stop rather than estimating.
 - Reuse the existing unit composition, error handling, buffer layouts and build patterns. Make bounds, types, ownership, effects and wire encodings explicit. Keep authorization and refusal paths working, not just the happy-path bytes.
 - Migrate the actual consumers before deleting a replaced implementation. Preserve history and immutable evidence. Matching a recorded hash does not prove parity with the current foreign reference; where the contract calls for it, run an independently built oracle.
 - Conversion between Omega and other languages is not this skill's job. Route it to `aien-dev/omega-bridge`, which implements checked conversion for a declared subset and refuses universal conversion. An MCP wrapper is optional tooling and does not widen what the bridge can convert. A native binding counts as working for a language only when its caller was built and executed by the bridge's native-call runner (section 3); a binding that was generated but never called is IMPLEMENTED, not EXERCISED.
+  Pending bridge [PR #31](https://github.com/aien-dev/omega-bridge/pull/31), source
+  `62ac98aec54b0698b103f97b1707f4acd6756195` (2026-10-28), makes all private emitted
+  assembly symbols local, matching the existing static C runtime helpers and state. This allows
+  independently generated C translation units to link without private-helper collisions; only
+  `omega_<name>` exports remain public. The per-translation-unit runtime table and per-thread stack
+  and reentry state stay distinct. Host evidence: all seven native callers and build-failure controls
+  passed; `tests/native/test_private_symbols.py` linked two independent bindings, ran trap recovery
+  and concurrent callers, checked local symbols with `nm`, and rejected a `.globl ombr_enter`
+  mutant. This is pending source behavior, not merged, deployed or GPU-qualified.
 - The scalar IR-to-WebAssembly backend is owned by omega-mv, not a foreign-source import:
   [#787](https://github.com/aien-dev/omega-mv/pull/787) merged as
   `3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`, after boolean IR fix
