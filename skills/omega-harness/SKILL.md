@@ -86,7 +86,7 @@ say so and stop rather than estimating.
   Remote CodeQL checks are analysis, not functional execution. This is MERGED and HOST EXERCISED,
   not deployed or GPU-qualified.
   Pending additive frontend [PR #36](https://github.com/aien-dev/omega-bridge/pull/36),
-  source `93a216d90dfd2256d192e6d82529dabd44933928` (2026-10-28), is separate from that
+  source `6c278ae9c633593ec8e70f828746dbcb23fa5199` (2026-10-28), is separate from that
   merged native-call qualification. `tools/bridge-seeded c|python|h` requires the exact
   omega-mv `e5b32567` compiler SHA256
   `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.
@@ -96,13 +96,14 @@ say so and stop rather than estimating.
   loop break. It does not import arbitrary C/Python, provide floating point, or replace
   the baseline `191b776e` compiler, `tools/bridge` or required `tools/test.sh`.
   The pending converter source SHA256 is
-  `0ad0a90844c085a69861c0ecd3f44d00a269f6dbf23650439e55e9c6418dda2c`;
+  `321e0acad5dddf5d545445bf6260e5feffb44fa08d15f14b4260b3de22aeb4ec`;
   `tools/bridge-seeded` SHA256 is
   `23ff7a2356bb5d980060a4685a27ac46587013069b7d24b37c2873d7ee659b37`.
   Consumers record each source-unit SHA256 and generated-C SHA256. The generated C can
   build and execute on native Linux x86-64 without embedding AArch64 Omega machine code;
   generating it still needs the pinned AArch64 compiler. Function-unit wrapper statuses
   are 0 completion, 1 through 14 traps, 32 invalid arguments/alias and 33 reentry.
+  C view pointers are const-qualified; edit pointers remain writable.
   Generator build and CUDApp unit generation were exercised, not behavior-qualified.
   Run the unchanged baseline suite, then `python3 tests/seeded.py` with both exact compiler
   environments; it includes native/C/Python/x86 differential, wrong-seed refusal,

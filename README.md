@@ -49,7 +49,7 @@ Merged host-exercised source is not deployment or GPU qualification.
 
 Pending [omega-bridge #36](https://github.com/aien-dev/omega-bridge/pull/36) adds an
 explicitly pinned `bridge-seeded` frontend for portable checked C/Python and C declarations.
-Section 2 records source `93a216d90dfd2256d192e6d82529dabd44933928`, compiler and converter
+Section 2 records source `6c278ae9c633593ec8e70f828746dbcb23fa5199`, compiler and converter
 hashes, capacities and the separate required differential/mutant checks. Generation has
 been exercised; behavior verification remains pending. This is not a replacement for the
 baseline converter gates or an x86 native-machine-code backend for the seeded compiler.
