@@ -70,13 +70,15 @@ say so and stop rather than estimating.
   inspectors and a deterministic source swap whose original-reread mutant admits mismatched code.
   Framed source/code must still match the pinned compiler: this is not an arbitrary-bytecode sandbox.
   Current bridge main source pin, including bounded-capacity
-  [PR #35](https://github.com/aien-dev/omega-bridge/pull/35), is
-  `2efdd48cd0c7c232064d5870e77660a5a75966e1` (native.om SHA256
+  [PR #35](https://github.com/aien-dev/omega-bridge/pull/35) and ABI-v2 verdict
+  [PR #34](https://github.com/aien-dev/omega-bridge/pull/34), is
+  `0c4cb9ff980af278890b231b994eaede4dc7621c` (2026-10-28; native.om SHA256 unchanged:
   `d3cfe0561696aad92164ddf11340522645cf6daf7af238835c3d3c61ecdef656`).
   Fixed pools hold 4194304 input bytes (accepted input strictly smaller) and 16777216 output
   bytes; exhaustion exits 106 before output. Compiler/per-unit limits are unchanged.
-  Host evidence: all seven native callers, build-failure controls and ABI2 suite passed;
-  private/freestanding controls and a compiler-matched 16-unit frame beyond both old pool sizes
+  Historical host evidence with configured language-toolchain PATH: all seven native callers,
+  build-failure controls and ABI2 suite passed; private/freestanding controls and a compiler-matched
+  16-unit frame beyond both old pool sizes
   passed, while old-bound mutants and both current-overflow probes refused. The independent
   31-root consumer frame emitted and C-compiled with both pinned compilers; those 31 consumer
   functions were not executed by this qualification. Evidence is under
@@ -85,6 +87,13 @@ say so and stop rather than estimating.
   `native-boundaries.log` and `qualification-boundaries.json` for current boundary coverage.
   Remote CodeQL checks are analysis, not functional execution. This is MERGED and HOST EXERCISED,
   not deployed or GPU-qualified.
+  A separate ordinary-process-PATH replay at `0c4cb9ff` built and executed C, BTI-C, C++, Python,
+  Rust2021 and Rust2024 successfully, but neither Zig nor Go was discoverable on that PATH.
+  Both full runners returned exit 1: `NATIVE-CALL NOT_RUN (not run: zig go)` and
+  `NATIVE-V2 NOT_RUN (not run: zig go)`. This does not retract the historical configured-PATH
+  Zig/Go executions: their logs have individual successful caller lines, not merely aggregate PASS.
+  Java, Swift and Node/JavaScript are not callers in these suites. See the
+  [coverage clarification and replay receipt hashes](https://github.com/aien-dev/omega-bridge/pull/34#issuecomment-6473079219).
 - The scalar IR-to-WebAssembly backend is owned by omega-mv, not a foreign-source import:
   [#787](https://github.com/aien-dev/omega-mv/pull/787) merged as
   `3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`, after boolean IR fix
@@ -144,6 +153,12 @@ fi
 - `seed/wasm/gate-irwasm.sh` and the OM-2 `gate.om` suites are merged but not in any `tests/gates/*.gate` manifest at main `19f014f21`, so `tests/gates/run.sh seed` does not cover them (omega-mv #790). Run and report them separately.
 - A benchmark can need a seekable stdin. A checker replay that seeks back over its input 101 times exits 90 when stdin is a pipe, and the same command exits 0 when stdin is an opened regular file. Supply a file, and do not count the setup-status exit as a control result.
 - Native callers of compiled Omega units are qualified per language, and only by execution. Since omega-bridge main `adb26cc654656926e76ab1839adae63e92909e88` (PR #18, merged 2026-10-26), `tests/native/run.sh` prints `NATIVE-CALL PASS` only after all seven required callers (`c`, `c-bti`, `cpp`, `python`, `rust`, `zig`, `go`) built and ran. A present toolchain whose build fails prints `NATIVE-CALL FAIL` and a missing toolchain prints `NATIVE-CALL NOT_RUN`; both exit nonzero. Check the refusal paths with `OMEGA_NATIVE_OMC=<pinned-omc> sh tests/native/test_build_failures.sh`: it injects failing Zig and Go toolchains, hides both for the missing-toolchain control, then requires the real Zig and Go callers to pass. It needs real Zig 0.13.0 and Go binaries (`ZIG`, `GO`) and prints `NOT_RUN` without them. The historical `evidence/native-call-v1/run.log` predates this runner and stays unchanged; do not cite it as a current all-caller PASS.
+  ABI-v2's `tests/native/v2/run.sh` has the corresponding terminal refusal since bridge
+  `0c4cb9ff980af278890b231b994eaede4dc7621c` (#34, 2026-10-28): actual failures take precedence,
+  otherwise any missing required toolchain emits `NATIVE-V2 NOT_RUN` and exits 1.
+  `python3 tests/native/v2/test_verdict.py` passed all five compiler-free tests on that pin;
+  these execute the real terminal shell suffix, not upstream detection or native callers.
+  The separate full native-v2 run above exercised detection and the new missing-toolchain verdict.
 - Compiler changes need the repository's referee and wrong-word-mutant checks, not just a self-fixpoint. Before running any gate, read its prerequisites, device requirements and whether it writes receipts.
 - For the merged IR/wasm backend above, run `nice -n 19 sh seed/wasm/gate-irwasm.sh`.
   Node v24.21.0 is a read-only wasm validation/execution oracle only; never use Node to generate
