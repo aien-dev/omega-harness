@@ -18,7 +18,7 @@ was used for the host-only observations in the `qty` and `check`/`next` sections
 
 | Item | Value |
 |---|---|
-| Commit | `84489ba66043d6944cb895d59d407e2deee4ef74` |
+| Commit | `955586a891f79d1cb4997f599be8760eaf70f819` |
 | Compiler source `seed/omc/omc.om` | 12,545 lines, sha256 `d2e7c7c55af63272e5d0c3071eeb5c977554864143f115a1d1f42ee5da587d0d` |
 | Compiler `seed/out/omc` | sha256 `0ab18500a68dfaff21c1e6eb74ef3c329cae6aac3d10d7310643c980dcefb9a3` |
 | Seed loader `seed/rung0/seed0.hex` | sha256 `baaf081fe6055a768485c5d25d7435681ce00b04cfa80b26c48169f78944e14d` |
@@ -407,7 +407,7 @@ next rc=2
 
 Run the broader host regression with
 `bash tests/diagnostics/experiment_issue655.sh`. Observed exit 0, ending
-`ALL 39/39 EXPERIMENT CHECKS PASSED (negative control + exact first error span matching)`.
+`ALL 54/54 EXPERIMENT CHECKS PASSED (negative control + exact first error span matching)`.
 It checks category records, compares complete query bytes for both 10- and
 1,200-function inputs, and pairs `/dev/full` failures with successful-output
 controls for `check`, `next` and ordinary compilation. Prefix queries are

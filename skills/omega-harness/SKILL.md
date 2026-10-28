@@ -61,7 +61,7 @@ say so and stop rather than estimating.
 Use the target repository's documented commands. A host-only seed workflow on AArch64 Linux, in a disposable clone pinned to an exact revision, looks like this:
 
 Current audit-fix candidate (observed 2026-10-28): omega-mv
-`84489ba66043d6944cb895d59d407e2deee4ef74`, pending
+`955586a891f79d1cb4997f599be8760eaf70f819`, pending
 [#914](https://github.com/aien-dev/omega-mv/pull/914), not merged or deployed.
 `seed/omc/omc.om`: 12,545 lines, sha256
 `d2e7c7c55af63272e5d0c3071eeb5c977554864143f115a1d1f42ee5da587d0d`;
