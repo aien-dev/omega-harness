@@ -85,6 +85,90 @@ say so and stop rather than estimating.
   `native-boundaries.log` and `qualification-boundaries.json` for current boundary coverage.
   Remote CodeQL checks are analysis, not functional execution. This is MERGED and HOST EXERCISED,
   not deployed or GPU-qualified.
+  Pending additive frontend [PR #36](https://github.com/aien-dev/omega-bridge/pull/36),
+  source `ead98302ff0a649c49c3f2c7568af5e1b3da33eb` (2026-10-28), is separate from that
+  merged native-call qualification. `tools/bridge-seeded c|python|h` requires the exact
+  omega-mv `e5b32567` compiler SHA256
+  `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.
+  It checks one source snapshot before emitting portable checked C, Python or the final
+  function's C declaration after validating all bodies. It adds bounded numeric constants,
+  six parameters, 512 functions, long function names, larger fixed view/edit shapes,
+  explicit view/edit call prefixes, loop break and seeded-C continue. Seeded C supports
+  internal binary32 literals, bitcasts, fabs, multiply and ordered le for canonical quant
+  roots. Public float ABI, float arrays, numeric float casts and other float operators
+  remain refused; baseline/Python float inputs are unchanged refusals. It neither imports
+  arbitrary C/Python nor replaces baseline `191b776e`, `tools/bridge` or `tools/test.sh`.
+  The pending converter source SHA256 is
+  `9116caab9b46e8bea1f1f3dc2752b4f2cdec0d4e266859167e6814085dd4fed3`;
+  `tools/bridge-seeded` SHA256 is
+  `23ff7a2356bb5d980060a4685a27ac46587013069b7d24b37c2873d7ee659b37`.
+  Consumers record each source-unit SHA256 and generated-C SHA256. The generated C can
+  build and execute on native Linux x86-64 without embedding AArch64 Omega machine code;
+  generating it still needs the pinned AArch64 compiler. Function-unit wrapper statuses
+  are 0 completion, 1 through 14 traps, 32 invalid arguments/alias and 33 reentry.
+  C view pointers are const-qualified; edit pointers remain writable.
+  Seeded source scalar declarations carry an unused attribute without skipping initializer
+  effects, and literal-count loops omit unused guard counters. Strict host coverage keeps
+  `-Wall -Wextra -Werror` and adds an annotation-removal negative control.
+  `tools/bridge-freest c|h` separately checks an integer-only, stateless,
+  nontrapping whole-unit subset and emits import-free scalar C. Revision/epoch
+  and binary32-to-binary16 RNE conversion use separate translation units, no TLS,
+  libc, setjmp or native machine code. The latter is first-party integer Omega;
+  the hosted `_Float16` cast remains a verification oracle. CUDApp draft
+  [PR #170](https://github.com/aien-dev/CUDApp/pull/170), source
+  `3b6ca6fda726a6b2eb01100ae155fbcb890d00af`, completed the unchanged
+  58-target ARM host suite, including 40-root regeneration, f16 boundaries,
+  sweep and six mutants, native-artifact, zero-CUDA, device-build and
+  cubin-disassembly checks. Device-build is not device execution:
+  physical Ampere remains **NOT_RUN**.
+  `src/freest.om` SHA256 is
+  `836cbf9ef8a3c4ee82b0458070884405bc8296f83b10f933556bf27750bb3661`;
+  frontend SHA256 is
+  `51b41794e7001c5606b715fd7de8a34ec935a6e4e4bc1da36ad08102c009537d`.
+  `python3 tests/freest.py` checks actual roots, O0/O2 imports/TLS, x86 emulation,
+  28 whole-unit refusal cases and a wrong-result negative control. The integrated
+  strict O2 hosted comparison passed; the earlier isolated O0 receipt stays historical.
+  Unsigned shifts are accepted only with a literal or resolved constant count
+  below the source operand width. Dynamic, negative, boolean, signed-operand
+  and out-of-width shifts remain whole-unit refusals, including unused helpers.
+  Additional tests compare every unsigned width against the pinned compiler
+  and exact Wolfram boundary values; a wrong-direction shift mutant is refused.
+  The unchanged baseline suite and seeded differential/control suites were exercised
+  during recovery, including binary32 byte parity and float/fast-math refusals.
+  Run `tools/test.sh`, `python3 tests/seeded.py` and `python3 tests/seeded_float.py`
+  with the exact compilers. The native x86 compiler remains a separate failing path,
+  never an assumed dependency of this portable C route. Keep the guide and bridge
+  PRs draft while the implementation and consumer acceptance remain pending merge.
+  No device qualification follows from generated C or x86 host execution.
+  [Behavior CI](https://github.com/aien-dev/omega-bridge/actions/runs/40758894095)
+  passed at that exact source: source bootstrap, unchanged baseline suite,
+  seeded differentials/binary32 refusals, native AArch64 scalar controls
+  and explicit-QEMU x86 scalar controls. This is exercised behavior,
+  not merely CodeQL and not CUDApp's whole-consumer native x86 acceptance.
+  CUDApp's x86 consumer CI source-bootstraps the exact baseline on AArch64,
+  verifies its artifact hash and the seeded compiler hash, then uses
+  verification-only QEMU `8.2.2+ds-0ubuntu1.19` for ARM provenance on a
+  disposable x86 runner. Its package SHA256 is
+  `ec80ee896fe8f57f7420f4d4076164cb0fa613df6848568cdf5d1a2dbe2347cb`,
+  interpreter SHA256
+  `1152646a17920a81c618d62574ee8ae8b63243349957095d40212c2245f20aab`.
+  The registration is checked against the exact ARM-only magic/mask and
+  removed by an always-run teardown. No Spark host configuration changes.
+  ARM compiler/converter provenance is EMULATED; compiled-C x86 consumer
+  executables are NATIVE and must still pass their unchanged acceptance.
+  This dependency is a verification oracle, not production code. Its
+  intended Omega replacement is the separate, still-failing native x86
+  compiler. Historical native x86 consumer
+  [workflow 40762515409](https://github.com/aien-dev/CUDApp/actions/runs/40762515409)
+  passed at `592cee` (test merge `6a2b759`), including 58 targets,
+  40 roots and 2,169 oracle comparisons; it is not current-head evidence.
+  Current-source native x86 workflow evidence remains pending.
+  The current fixture writer creates new output files with mode 0600,
+  including under umask 000; it intentionally preserves existing-file modes.
+  The historical writer creates mode 0666 with identical bytes, so the
+  permission negative control fails as required. Five wrong compiler/bridge
+  pins refuse with exit 3 and no installed output. Earlier stale-build
+  failures remain historical evidence, not current clean-suite results.
 - The scalar IR-to-WebAssembly backend is owned by omega-mv, not a foreign-source import:
   [#787](https://github.com/aien-dev/omega-mv/pull/787) merged as
   `3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`, after boolean IR fix
