@@ -50,30 +50,41 @@ say so and stop rather than estimating.
 - Conversion between Omega and other languages is not this skill's job. Route it to `aien-dev/omega-bridge`, which implements checked conversion for a declared subset and refuses universal conversion. An MCP wrapper is optional tooling and does not widen what the bridge can convert. A native binding counts as working for a language only when its caller was built and executed by the bridge's native-call runner (section 3); a binding that was generated but never called is IMPLEMENTED, not EXERCISED.
   Bridge ABI2 rollup [PR #15](https://github.com/aien-dev/omega-bridge/pull/15) merged at
   `826cb8aee4a09b65cc1b2e295b1dc9e50e155253` (2026-10-28), preserving its later main
-  native-caller gates. Current source extensions remain pending, not main pins:
-  [PR #32](https://github.com/aien-dev/omega-bridge/pull/32), head
-  `ddd9862f9f9de9c2473ecbd27386e9dcb379aa91`, makes all private ABI1/ABI2 assembly
-  symbols local, matching static C helpers and per-translation-unit runtime/TLS state.
-  Independently generated translation units link without helper collisions; public
+  native-caller gates. Private-linkage [PR #32](https://github.com/aien-dev/omega-bridge/pull/32)
+  merged at `31ce3886d7966c27f8208922e27fc79ed76b39c6`: all private ABI1/ABI2 assembly
+  runtime, code and entry labels are local, matching static C helpers and hosted per-TU/TLS
+  state. Independently generated translation units link without helper collisions; public
   `omega_`/`omega2_` exports and compiler bytes are unchanged. Its private-symbol regression
   checks independent units, trap recovery, concurrent callers, local `nm` bindings and a
   `.globl ombr_enter` link-failure mutant.
-  Draft [PR #33](https://github.com/aien-dev/omega-bridge/pull/33), source
-  `a81190ada26d2eb75ac0d4e0db9a8e69960f8304` (native.om SHA256
-  `edaa9bd7fadc23d0ab105c55b9cff954337294d9ebbbdd1348688d4013b33902`), adds generator
+  Freestanding [PR #33](https://github.com/aien-dev/omega-bridge/pull/33) merged at
+  `37bf93d158e2e4fd7a3c6a1b9a47b569195a2a66`. It adds generator
   output `freest` and `tools/native --freestanding OUTDIR unit.om...`: generated C/header/object,
   same scalar status ABI, caller-owned stack and no pthread, mmap, heap, TLS or mutable runtime
   state. Whole-source validation includes unused helpers and conservatively refuses arrays,
   globals, text, host effects, OM2 and types outside its declared integer/bool scalar subset.
   Traps return status without writing the result; nested and concurrent calls remain isolated.
-  The undefined-import gate permits only the GPU_FS_LINK libc-string allowlist and catches an
-  emitter mutant importing `pthread_self`. Framed source and code must still match the pinned
-  compiler invocation: this is not an arbitrary-bytecode sandbox.
-  Host evidence for both heads: all seven native callers, build-failure controls and the ABI2
-  suite passed; private-symbol and freestanding controls passed. Evidence is filed in
-  `evidence/native-private-symbols/` and `evidence/native-freestanding/`. Remote checks are
-  CodeQL analysis, not execution of those functional gates. Pending source is EXERCISED only,
-  not merged, deployed or GPU-qualified; consumer production pins must wait for main commits.
+  The undefined-import gate permits only the GPU_FS_LINK libc-string allowlist; failed symbol
+  extraction/filtering refuses installation. One private input snapshot supplies profile,
+  compilation, framing and identity. Tests exercise the pthread-import mutant, failed/missing
+  inspectors and a deterministic source swap whose original-reread mutant admits mismatched code.
+  Framed source/code must still match the pinned compiler: this is not an arbitrary-bytecode sandbox.
+  Current bridge main source pin, including bounded-capacity
+  [PR #35](https://github.com/aien-dev/omega-bridge/pull/35), is
+  `2efdd48cd0c7c232064d5870e77660a5a75966e1` (native.om SHA256
+  `d3cfe0561696aad92164ddf11340522645cf6daf7af238835c3d3c61ecdef656`).
+  Fixed pools hold 4194304 input bytes (accepted input strictly smaller) and 16777216 output
+  bytes; exhaustion exits 106 before output. Compiler/per-unit limits are unchanged.
+  Host evidence: all seven native callers, build-failure controls and ABI2 suite passed;
+  private/freestanding controls and a compiler-matched 16-unit frame beyond both old pool sizes
+  passed, while old-bound mutants and both current-overflow probes refused. The independent
+  31-root consumer frame emitted and C-compiled with both pinned compilers; those 31 consumer
+  functions were not executed by this qualification. Evidence is under
+  `evidence/native-{private-symbols,freestanding,capacity}/`. Capacity's
+  `coverage-correction.log` preserves and corrects an earlier overclaim; use
+  `native-boundaries.log` and `qualification-boundaries.json` for current boundary coverage.
+  Remote CodeQL checks are analysis, not functional execution. This is MERGED and HOST EXERCISED,
+  not deployed or GPU-qualified.
 - The scalar IR-to-WebAssembly backend is owned by omega-mv, not a foreign-source import:
   [#787](https://github.com/aien-dev/omega-mv/pull/787) merged as
   `3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`, after boolean IR fix
