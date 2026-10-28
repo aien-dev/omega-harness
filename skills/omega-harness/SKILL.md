@@ -35,6 +35,16 @@ say so and stop rather than estimating.
 - Seeded Omegese, compiled by `seed/out/omc`, is the forward language. The historical console syntax in `spec/omega-language-v0.md` and the C compiler checks are different things. As of omega-mv main `55f9b0af47de70a3d06357985cf99ae3e45c016f` (2026-10-25), the seeded compiler and its host and device words are on main. Any source saying they exist only on candidate branches is stale.
 - Do not promote design ambitions into supported syntax. Check the keyword table, typing and lowering, and the fixtures of the compiler you will actually run. Compiler limits are implementation limits at a pin, not permanent properties of Omega.
 - Optimize for verified programs produced per unit of inference cost on held-out tasks (first-attempt correctness, successful compilation, verified behavior, completion time, and total compute cost). Tokenization is not a language rule: fitting vocabulary to single tokens under a specific tokenizer is an empirical cost measurement, not a binding language constraint.
+  The token benchmark entry point is
+  `sh bench/inference_cost/driver.sh --run-model --endpoint "$AUTHORIZED_ENDPOINT" --model "$MODEL_ID" --langs om,c,py,rs --arms plain,feedback --attempts 3`.
+  It never starts a server. Use only an explicitly authorized endpoint; this guide
+  update did not contact a model (real token measurements: NOT_RUN).
+  Observed negative control at the section 3 candidate pin:
+  `sh bench/inference_cost/driver.sh --run-model --model example --langs om,c,py,rs --arms plain,feedback --attempts 3`
+  exited 3 and printed exactly:
+  ```text
+  NOT_RUN: no --endpoint given; no model was contacted
+  ```
 - Reuse the existing unit composition, error handling, buffer layouts and build patterns. Make bounds, types, ownership, effects and wire encodings explicit. Keep authorization and refusal paths working, not just the happy-path bytes.
 - Migrate the actual consumers before deleting a replaced implementation. Preserve history and immutable evidence. Matching a recorded hash does not prove parity with the current foreign reference; where the contract calls for it, run an independently built oracle.
 - Conversion between Omega and other languages is not this skill's job. Route it to `aien-dev/omega-bridge`, which implements checked conversion for a declared subset and refuses universal conversion. An MCP wrapper is optional tooling and does not widen what the bridge can convert. A native binding counts as working for a language only when its caller was built and executed by the bridge's native-call runner (section 3); a binding that was generated but never called is IMPLEMENTED, not EXERCISED.
@@ -49,6 +59,18 @@ say so and stop rather than estimating.
 ## 3. Compile, execute, challenge
 
 Use the target repository's documented commands. A host-only seed workflow on AArch64 Linux, in a disposable clone pinned to an exact revision, looks like this:
+
+Current candidate source pin (2026-10-28): omega-mv
+`1fe5976d398646b17acabbf6d9dfae96b017e439`, pending
+[#911](https://github.com/aien-dev/omega-mv/pull/911) and incorporating
+[#909](https://github.com/aien-dev/omega-mv/pull/909).
+`seed/omc/omc.om`: 12,520 lines, sha256
+`3f937160c823d3a90a6b4cc296f00f517f36ede7fd27a06505c998985ec62240`;
+`seed/out/omc`: sha256
+`d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84`.
+The fresh-clone `qty`, wrap/refusal controls and `check`/`next` outputs are
+recorded in `omega-encoding` section 0. Older pins below remain dated history.
+
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv.git omega-src
@@ -72,6 +94,11 @@ fi
 - Do not lose the status: no pipelines that hide it, and do not let `set -e` skip collecting an expected nonzero exit.
 - Rebuilding with `sh seed/omega-from-seed.sh` rewrites tracked files, including `seed/out/omc.sha256`. Record the expected digest independently beforehand; the rewritten sidecar is not a trust anchor. A self-rebuild fixpoint proves consistency, not correctness and not diverse compilation. At source `ec07d25d5506d33567adbd4d9b518177b7933bad` on 2026-10-26, the seed gate reproduced `499236398aabc652e2dae27fe4bdc4c5db3d3726314356e0dbef23e3345803ec`. Main later used `befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d`. Main `91b3c9326919faf1491e29ae9276929e8349b8c7` now carries batch compiler `189ada82e00bb440cb41351bd252cc68c54a1b1050051cc42a1df700081c3b54` (contracts, capacity and f32 returns); its host qualification is `evidence/BATCH-189ada82/README.md`.
 - Gate5 bookkeeping for any compiler change: since main `91b3c932`, `seed/omc/gate5.sh` writes current outputs to `build/seed/r5/evidence/`, never to immutable `evidence/SEED-0/omc/`. The living ledger `seed/omc/size-history.tsv` keeps the old history byte for byte, then one tab-separated row per compiler change (`rewrite change source_lines functions words sha256`). At `91b3c932` the last row is `RM2-capacity-f32` (`189ada82…`). Gate5 checks that the last row's sha256 equals the freshly built `omc`, and it never appends a row itself. So a compiler change adds exactly one row by hand, with values measured from the new build, in the same commit as the change. Never edit an older row to make the check pass, and never point the check back at `evidence/SEED-0`.
+  At the current candidate pin, `bash tests/gates/run.sh seed` also invokes
+  `sh seed/omc/gate5.sh` after the seed build and host checks. Keep one size-history
+  row for each distinct compiler change: the qty compiler and the check/next
+  compiler have separate rows, even when they arrive in the same PR. A final
+  matching row does not excuse omitting an intermediate compiler change.
 - Run the changed path and compare exact expected bytes, status and state; a successful compile proves nothing about behavior. Also exercise the failure or refusal boundary most likely to regress. If that is impractical, say exactly what was not run.
 - Run a negative control: change an expected value or feed invalid input, and confirm the check fails. A verifier that also accepts its negative control has not established anything.
 - Qualification case files (`.cases` in omega-mv) are executed by a conductor, not run directly. More than one conductor exists under `seed/qualification/`, and picking the wrong one looks like a failing gate. Read the conductor's `main` for its argument count first. Observed 2026-10-25 with compiler `734f0a39319fbfa930bcc62cb30dbf06d47d78e126372b74f5baf478e6126b61`: `seed/qualification/om2/gate.om` takes four arguments (`omc pinhash casesfile scratchdir`) and summarises as `OM2GATE PASS cases=N pass=N fail=N invalid=N not_run=N`; `seed/qualification/security673/gate669.om` accepts at most one argument and exits 90 under a four-argument call. A usage status such as 90 from a conductor is INVALID setup, never a qualified refusal.
