@@ -47,6 +47,13 @@ extends finite aggregate frame/output pools with checked refusal. Section 2 pins
 `2efdd48cd0c7c232064d5870e77660a5a75966e1` and records host evidence and negative controls.
 Merged host-exercised source is not deployment or GPU qualification.
 
+Pending [omega-bridge #36](https://github.com/aien-dev/omega-bridge/pull/36) adds an
+explicitly pinned `bridge-seeded` frontend for portable checked C/Python and C declarations.
+Section 2 records source `93a216d90dfd2256d192e6d82529dabd44933928`, compiler and converter
+hashes, capacities and the separate required differential/mutant checks. Generation has
+been exercised; behavior verification remains pending. This is not a replacement for the
+baseline converter gates or an x86 native-machine-code backend for the seeded compiler.
+
 The merged [omega-mv WebAssembly backend (#787)](https://github.com/aien-dev/omega-mv/pull/787)
 is a compiler backend for the existing scalar OSC IR v1 wire format, not a foreign-source
 converter. Its seeded Omega writer and read-only Node oracle boundary are documented in
