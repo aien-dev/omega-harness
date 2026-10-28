@@ -162,7 +162,17 @@ say so and stop rather than estimating.
   [workflow 40762515409](https://github.com/aien-dev/CUDApp/actions/runs/40762515409)
   passed at `592cee` (test merge `6a2b759`), including 58 targets,
   40 roots and 2,169 oracle comparisons; it is not current-head evidence.
-  Current-source native x86 workflow evidence remains pending.
+  Current-source native x86
+  [workflow 40776306246](https://github.com/aien-dev/CUDApp/actions/runs/40776306246)
+  completed successfully at source `3b6ca6fda726a6b2eb01100ae155fbcb890d00af`,
+  tested PR merge `cf65a61c8b95f7d0d7b51c5618a9dc87bcbb8cf4`.
+  Its provenance and native-consumer jobs passed: 58 host targets,
+  40 byte-identical roots, 2,169 offline kernel oracle comparisons,
+  73 native FP8 refusals, f16 sweep/six mutants and operand/MMIO/arithmetic/
+  branch/join/barrier/carry controls. The 17-file freestanding aggregate
+  imports only `memcmp`, `memcpy`, `memset`, `strcmp` and `strlen`.
+  This is native generated-C consumer evidence, not native Omega compiler,
+  physical GPU or production qualification.
   The current fixture writer creates new output files with mode 0600,
   including under umask 000; it intentionally preserves existing-file modes.
   The historical writer creates mode 0666 with identical bytes, so the
