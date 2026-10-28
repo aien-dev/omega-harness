@@ -116,6 +116,24 @@ is distinct from the live operation-instance digest. Actual-owner host controls,
 protected evaluator execution, independent numerical/model-quality/full-cost results,
 physical paired large-M/grouped runs and full-model qualification are separate claims.
 Absent physical evidence remains NOT_RUN.
+The standalone grouped host runner compatibility repair is
+[draft #175 at `491da3c`](https://github.com/aien-dev/CUDApp/pull/175), stacked on
+capacity candidate `ca441c5a92f5a951a67de00aeddae0e077f10216`.
+It compiles the included incumbent graph with the production GNU11 dialect while
+retaining strict C11 for the generated native caller. Its reproduced strict-C11
+`strnlen` build failure and repaired index/admission/refusal/mutant PASS are host
+runner evidence only, not a new runtime implementation or device result.
+
+For the existing Q36 35B candidate, freeze Core/Omega/CUDApp source and executable
+identities, generated-unit/archive hashes, model/config/tokenizer/weight/scale
+content identities, workload and exact command/environment. Reliability repairs
+#173 and #174 precede candidate qualification. Require correctness, memory, speed,
+reliability, recovery and neighboring-process evidence against that same manifest.
+NVIDIA kernel-driver replacement is a separate active objective: the current path
+still uses Linux RM/UVM device nodes, ioctls and mappings through the versioned
+580.173.02 interface headers. Record actual kernel-driver and firmware dependencies
+separately. No userspace zero-CUDA result proves kernel-driver independence or
+drop-in compatibility, and a replacement must be qualified before any cutover.
 
 The x86 binding work [omega-bridge #37](https://github.com/aien-dev/omega-bridge/pull/37)
 and companion [guide #116](https://github.com/aien-dev/omega-harness/pull/116)
