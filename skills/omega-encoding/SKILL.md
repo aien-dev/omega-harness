@@ -10,10 +10,37 @@ cannot express, and before encoding bytes, integers or host I/O in Omega.
 
 ## 0. Pin and how to re-check it
 
-The current candidate pin below covers `qty` and the compiler's `check`/`next` interface.
-Older tables and their citations remain dated history, not claims about this candidate.
-Pending [omega-mv #911](https://github.com/aien-dev/omega-mv/pull/911), including
-[#909](https://github.com/aien-dev/omega-mv/pull/909); not merged or deployed.
+The qty/check/next candidate below is a separate dated observation. The newer
+FR-9 overlay here is pending [omega-mv #923](https://github.com/aien-dev/omega-mv/pull/923),
+commit `becf5c817bcb7e0846d12ebfc2be91042d8ad89a`; it is not merged,
+deployed or fully qualified. Older tables remain history, not FR-9 evidence.
+
+### Pending x86-64 Linux overlay (observed 2026-10-28)
+
+At that exact candidate, first-line `target x86linux` selects static x86-64
+Linux ELF64. Omitting it retains AArch64 Linux output. Selection occurs before
+the normal language/mode directives; raw AArch64 `emit` is refused for x86.
+Bare units use Omega's private frame-slot ABI and six-byte entry slots, not
+SysV C calls. Linux syscall numbers and native flags are target-specific;
+`stat`/`fstat` are translated into the existing Omega record ABI.
+
+| Item | FR-9 candidate value |
+|---|---|
+| Source | 15,525 lines, 512 functions, SHA256 `3a40637bfc11eb4b0c0af80a73bd228a3975c25ef805859f06cb1f6d7fc089f4` |
+| AArch64 `seed/out/omc` | SHA256 `5f0faab7cd4fc12158cf8e099418098d278df644efc10e4e7e2e5ca6141fca86` |
+| x86 compiler | SHA256 `a95de640177954118482f4fab45945e6cdefc8935afe3eb4e0ac0ec314dc78fc` |
+| Existing seed/host and gate5 | PASS; seed0/hex1/asm2/om4 and capacities unchanged |
+| Full compiler cross-host fixpoints | Both targets byte-identical under x86 QEMU: EMULATED |
+| Complete cross-target differential | FAIL: 7,537 PASS, 152 FAIL, 399 NOT_RUN, 5 MISSING_IMPLEMENTATION, 570 EXCLUDED, 257 MISSING_INPUT |
+| Wrong-encoding controls | Invalid opcode and valid wrong immediate both caught |
+| Native x86 execution | NOT_RUN |
+
+Integer/layout/quantity operations, arrays/traps/calls, SSE2 scalar float and
+Linux host lowering are implemented in `.om`; this is not full FR-9 acceptance.
+Unresolved contract-loop refusals, x86 output capacity, bare-unit branches,
+diagnostic parity, QEMU ioctl errno and corpus-driver/input gaps are recorded in
+`docs/X86-LINUX.md` and `seed/qualification/x86-linux/20261028.json`.
+No x86 hardware, GPU, SysV C FFI or native x86 seed0 chain is qualified.
 
 ### Current candidate pin (observed 2026-10-28)
 

@@ -13,6 +13,40 @@ Companion skills in this package:
 - `omega-communication`: status labels, reports, handoffs and corrections.
 - `aien-repositories`: what AIEN builds and which repository owns a task.
 
+## Pending FR-9 target overlay (2026-10-28)
+
+Draft [omega-mv #923](https://github.com/aien-dev/omega-mv/pull/923), commit
+`becf5c817bcb7e0846d12ebfc2be91042d8ad89a`, adds the explicit first-line
+selector `target x86linux` in seeded `.om`. Default output remains AArch64 Linux;
+the candidate also emits static x86-64 Linux ELF64 and private-ABI bare units.
+It does not add a SysV C ABI, native x86 seed0 bootstrap or UEFI target.
+Foreign callers, including CUDA++, still use omega-bridge's declared conversion
+route rather than treating bare code as C-callable.
+
+Source SHA256 is
+`3a40637bfc11eb4b0c0af80a73bd228a3975c25ef805859f06cb1f6d7fc089f4`;
+the regenerated AArch64 compiler SHA256 is
+`5f0faab7cd4fc12158cf8e099418098d278df644efc10e4e7e2e5ca6141fca86`.
+The qemu-executed x86 compiler SHA256 is
+`a95de640177954118482f4fab45945e6cdefc8935afe3eb4e0ac0ec314dc78fc`.
+The unchanged seed ladder, host checks and gate5 passed. Under QEMU the complete
+x86 compiler regenerated both targets byte-identically; independent objdump
+decoded its entire instruction stream. Exit-42 behavior matched; four actual
+CUDA++ encoder/cubin/runtime units compiled for both targets, but composed
+behavior of those units remains NOT_RUN.
+
+Qualification is **not complete**: the full differential ended **FAIL**
+(7,537 PASS, 152 FAIL, 399 NOT_RUN, five MISSING_IMPLEMENTATION, 570 EXCLUDED,
+257 MISSING_INPUT). Invalid-opcode and valid-but-wrong-immediate mutants were
+caught. Contract loops, output capacity, bare-unit branch-boundary checks,
+diagnostics, incomplete callers/drivers and missing SHA inputs remain;
+QEMU's invalid-fd NVIDIA ioctl also returns a different errno from the native
+AArch64 kernel. See the candidate's `docs/X86-LINUX.md` and
+`seed/qualification/x86-linux/20261028.json` before making a support claim.
+All x86 execution evidence is **EMULATED**. Native x86 execution is **NOT_RUN**.
+This draft is IMPLEMENTED, not QUALIFIED, MERGED or DEPLOYED; do not replace
+the dated established pins below with a claim that FR-9 is complete.
+
 ## 1. Orient before acting
 
 1. Identify the owning repository with `aien-repositories`. Record its actual remote, default branch and exact source commit, then read its `AGENTS.md` (or `CLAUDE.md`) and the target directory's `.crumb`. Read `crumb-protocol` before editing, creating or moving a directory, or when a gate reports a stale crumb: it covers reading a crumb, claiming and releasing locks, whispers and regenerating committed crumbs. An open PR, a local branch and a deployed service are three different states.
