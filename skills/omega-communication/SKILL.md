@@ -54,6 +54,42 @@ When designing state communication, follow the canonical contract in `spec/seman
 
 Every serialized format needs field order, width, signedness, endianness, ranges, versioning, canonicalization and rejection behavior. Test boundaries and malformed or truncated input.
 
+### Pending native GPU realization records (2026-10-28)
+
+The native kernel work under [CUDApp #26](https://github.com/aien-dev/CUDApp/issues/26)
+is pending integration and hardware qualification. Its records have different roles:
+
+- **Quant semantic declaration vs physical preparation request:** [QSCHEMA-1 source
+  `fe25929ce71b11703eafa72395df2dd495aa61f2`](https://github.com/aien-dev/CUDApp/blob/fe25929ce71b11703eafa72395df2dd495aa61f2/docs/models/QUANT.md)
+  separates these identities. Successful parsing does not establish executable repack
+  capability. The FNV values are lookup indexes, not content digests or authentication;
+  compare canonical bytes and bind actual weight/scale content independently.
+- **Realization identity vs qualification:** [component source
+  `8bfc7083cb2a90506816f92f6854c829e5bf20ac`](https://github.com/aien-dev/CUDApp/blob/8bfc7083cb2a90506816f92f6854c829e5bf20ac/om/components/README.md)
+  binds semantic, compiler, encoder, instruction-specification, code, launch and lineage
+  identities. Compatibility matching is not qualification inheritance. Launch digests
+  must bind the actual admitted parameter ABI, constant-bank and address-free QMD
+  templates, not an independently valid but unrelated manifest.
+- **Portable artifact vs resident object:** [cache production source
+  `693464cfcff678a9278fe4586f8a24b07ce45fb2`](https://github.com/aien-dev/CUDApp/tree/693464cfcff678a9278fe4586f8a24b07ce45fb2/om/cache)
+  separates content identity from session generation, residency and live references.
+  A device address is not a portable cache key. A timeout is not evidence that a
+  recorded or in-flight reference can be freed.
+- **Kernel vs complete operation:** [selector #57](https://github.com/aien-dev/CUDApp/issues/57)
+  and [indexed MoE #159](https://github.com/aien-dev/CUDApp/issues/159) require the
+  complete workload and routing contract. Matching two kernel hashes does not bind
+  router, gather/scatter, shared-expert or reduction-order semantics. An opaque digest
+  is useful only when its canonical preimage and validator are specified.
+
+An ordinary record containing `qualified=true`, a descriptive qualification string,
+or nonzero digest fields is not an independently accepted receipt. Keep synthetic host
+fixtures out of production admission. Record implementation, host execution, consumer
+binding, chip qualification and complete-model qualification separately; production
+selection stays refused or on the qualified incumbent when any required proof is absent.
+These source pins document pending contracts, not merged, deployed or hardware-qualified
+behavior. Refresh the exact pins and exercised scope when the integration changes.
+
+
 ## Corrections
 
 When a statement is wrong, name the false claim, replacement evidence and affected decisions. Preserve historical receipts and old failures; add a correction rather than silently rewriting the record. If a broadly used instruction was stale, update it with source revision and invalidation condition.
