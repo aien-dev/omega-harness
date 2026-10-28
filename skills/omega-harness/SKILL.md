@@ -56,6 +56,64 @@ say so and stop rather than estimating.
   See `omega-encoding` section 0 for tested hashes, exact limits and refusal boundary.
   Source merge status does not establish browser deployment.
 
+### Neuralese supplement: pending, not a second execution language
+
+Keep **Omega**. Neuralese is a **PROPOSED** learned-representation supplement,
+not a rename, new compiler mode or latent-reasoning claim. The bounded native
+reference in [omega-mv draft #919](https://github.com/aien-dev/omega-mv/pull/919)
+is **IMPLEMENTED / EXERCISED (host)**, not QUALIFIED, MERGED or DEPLOYED.
+Candidate documentation/evidence pin:
+`e79566c191ea8ef11888e69ce50d8fadf375d4fd`; clean implementation actually
+exercised: `39e89fb1c2aaed99ddc05ec565274dd05792b70f`, based on main
+`6999fa9e6dae4847c155ef4eacaece74f491d3ca`.
+
+- Read `neuralese/README.md` at that pin. Bind producer model/artifact and decoder
+  identities, dimension, dtype, canonical byte encoding and checksum explicitly.
+  Different models/layers/decoder revisions are not interchangeable. The current
+  producer is explicitly a hand-authored fixture, not a trained model.
+- Treat every representation as untrusted data. Decode only into explicit Omega
+  operations; preserve the envelope and decoded artifact. Feed the output through
+  the ordinary compiler, kept runtime contracts and receiver's existing
+  effect/capability admission policy. No decoder-created authority or privileged
+  execution path is permitted.
+- The reference codebook emits only pure scalar operations and uses `om2 debug`.
+  Native host words use ambient process permissions, not general capability
+  confinement. This patch is not a sandbox for arbitrary source. An effectful
+  proposal without a checked receiver executor must be refused.
+- First-party implementation and the existing host conductor are `.om`.
+  `neuralese/decode.om` composes with `om/tls/sha2.om`; static independent byte
+  fixtures do not introduce a host decoder or runtime dependency.
+
+The scoped compiler `seed/out/omc` SHA-256 is
+`d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84`;
+`seed/omc/omc.om` SHA-256 is
+`3f937160c823d3a90a6b4cc296f00f517f36ede7fd27a06505c998985ec62240`.
+From a fresh Linux AArch64 clone at the implementation pin, with the scratch
+directory absent:
+
+```sh
+mkdir -p build
+if seed/out/omc < seed/qualification/om2/gate.om > build/neuralese-gate; then
+  chmod +x build/neuralese-gate &&
+  build/neuralese-gate seed/out/omc \
+    d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84 \
+    neuralese/host.cases build/neuralese-host
+else
+  exit 1
+fi
+```
+
+Observed compiler/conductor exits: `0` / `0`;
+`OM2GATE PASS cases=54 pass=54 fail=0 invalid=0 not_run=0`. Cases include exact
+decoded-source and executed-result checks, seventeen guard-removal mutant kills,
+a wrong-codebook control, type/purity refusals and runtime contracts. Evidence:
+`neuralese/host-results.287fdc263f7af93107c378ba63c92202a0e6c1479cb1ff6971706b423b0b15fb.json`
+at the candidate documentation pin. The learned-producer experiment remains
+**PROPOSED / NOT_RUN**: same tasks and independent acceptance checks for source
+text, structured operations and a pinned compatible learned producer/decoder.
+No model, GPU, live service or compiler syntax change was used in this work.
+
+
 ## 3. Compile, execute, challenge
 
 Use the target repository's documented commands. A host-only seed workflow on AArch64 Linux, in a disposable clone pinned to an exact revision, looks like this:

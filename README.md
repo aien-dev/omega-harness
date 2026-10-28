@@ -52,6 +52,14 @@ emitter, a PoCL CPU parity gate and a minimal OpenCL IL demo. `omega-harness`
 section 3 records the exact exercised source, toolchain, ABI, refusal boundary
 and evidence. CPU execution is not GPU or DPC++ qualification.
 
+The [Neuralese supplement draft (#919)](https://github.com/aien-dev/omega-mv/pull/919)
+keeps Omega's name and proposes model/decoder-bound representations that decode
+into explicit Omega operations on the ordinary checked path. `omega-harness`
+section 2 and `omega-communication` record its scoped pin, native host codebook
+evidence and trust boundary. The learned experiment is PROPOSED / NOT_RUN; the
+bounded reference is IMPLEMENTED / EXERCISED, not hardware QUALIFIED or deployed.
+
+
 ## Check the examples yourself
 
 The examples run on Linux AArch64 hosts only:

@@ -54,6 +54,32 @@ When designing state communication, follow the canonical contract in `spec/seman
 
 Every serialized format needs field order, width, signedness, endianness, ranges, versioning, canonicalization and rejection behavior. Test boundaries and malformed or truncated input.
 
+### Neuralese envelopes and decoded proposals
+
+Keep Omega's name. The Neuralese supplement in
+[omega-mv draft #919](https://github.com/aien-dev/omega-mv/pull/919) is pending at
+documentation/evidence pin `e79566c191ea8ef11888e69ce50d8fadf375d4fd`;
+`neuralese/README.md` distinguishes the PROPOSED learned envelope/experiment
+from the IMPLEMENTED / EXERCISED host-only fixed codebook.
+
+- Require immutable producer model/artifact and decoder identities, compatible
+  representation layer/version, dimension/shape, dtype, canonical byte encoding,
+  byte order, framing bound and checksum. A non-model fixture must identify
+  itself as non-model. Same shape does not make models or decoders interchangeable.
+- A checksum authenticates nobody and conveys no execution authority. Keep task
+  context bindings where applicable; unknown identity pairs or malformed data
+  must be refused before any output is executed.
+- Retain envelope bytes, the exact decoded explicit Omega artifact, compiler
+  identity and receiver policy/acceptance evidence. Decoded output re-enters the
+  ordinary checked path with normal contracts, effects and capabilities; it gets
+  no privileged execution. The current pure codebook is not a general native
+  capability sandbox or effectful executor.
+- Report bounded validator/codebook results separately from learned-producer
+  results. No model was run for this supplement; learned reasoning, compression
+  benefits, model interoperability, GPU qualification and deployment are not
+  established by the host codebook's passing cases.
+
+
 ## Corrections
 
 When a statement is wrong, name the false claim, replacement evidence and affected decisions. Preserve historical receipts and old failures; add a correction rather than silently rewriting the record. If a broadly used instruction was stale, update it with source revision and invalidation condition.
