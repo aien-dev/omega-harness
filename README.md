@@ -83,10 +83,11 @@ Each skill names the omega-mv commit it was checked against and lists known disa
 
 The 2026-10-28 qty/diagnostics pin originally recorded for #911 is merged as
 `6999fa9e6dae4847c155ef4eacaece74f491d3ca`. The skills also record a separate,
-pending audit-fix pin for [omega-mv #914](https://github.com/aien-dev/omega-mv/pull/914):
+audit-fix pin for [omega-mv #914](https://github.com/aien-dev/omega-mv/pull/914):
 `955586a891f79d1cb4997f599be8760eaf70f819`, compiler `0ab18500…b9a3`.
 Its expanded quantity and diagnostic examples were exercised on a Linux AArch64
-host. Pending source and host replay are not merge, deployment or hardware qualification.
+host. The fix merged as `d94a503f7aae57d09697046405da2e9a5895be6d` on
+2026-10-28. Deployment and hardware qualification are not established.
 `omega-harness` section 3 separately records the pending
 [CUDApp #160](https://github.com/aien-dev/CUDApp/pull/160) encoder/TileLab repair,
 its unchanged C5 compiler pin, required offline disassembler and independently

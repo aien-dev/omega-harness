@@ -10,10 +10,11 @@ cannot express, and before encoding bytes, integers or host I/O in Omega.
 
 ## 0. Pin and how to re-check it
 
-### Current audit-fix candidate pin (observed 2026-10-28)
+### Merged audit-fix pin (observed 2026-10-28)
 
-Pending [omega-mv #914](https://github.com/aien-dev/omega-mv/pull/914), not
-merged or deployed. A fresh clone of `fix/qty-diag-audit` at this exact commit
+[omega-mv #914](https://github.com/aien-dev/omega-mv/pull/914) merged as
+`d94a503f7aae57d09697046405da2e9a5895be6d` on 2026-10-28. Deployment is not
+established. A fresh clone of `fix/qty-diag-audit` at this exact candidate commit
 was used for the host-only observations in the `qty` and `check`/`next` sections.
 
 | Item | Value |
@@ -36,8 +37,7 @@ agreed before rebuilding; the rebuild reproduced that digest. This is a
 fixpoint and focused host replay, not full qualification. The merged d629 pin
 below still accepts some float/qty mixes and rejects legal quantity literals
 and explicit integer ingress; its original register-only examples did not
-exercise those boundaries. Use the pending fix pin for the expanded examples,
-and do not treat it as an already-merged compiler.
+exercise those boundaries. Use the audit-fix pin for the expanded examples.
 
 The earlier merged pin below covers the original `qty` and `check`/`next`
 examples. Older tables and their citations remain dated history.

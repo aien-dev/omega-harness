@@ -60,9 +60,10 @@ say so and stop rather than estimating.
 
 Use the target repository's documented commands. A host-only seed workflow on AArch64 Linux, in a disposable clone pinned to an exact revision, looks like this:
 
-Current audit-fix candidate (observed 2026-10-28): omega-mv
-`955586a891f79d1cb4997f599be8760eaf70f819`, pending
-[#914](https://github.com/aien-dev/omega-mv/pull/914), not merged or deployed.
+Merged audit-fix pin (observed 2026-10-28): omega-mv candidate
+`955586a891f79d1cb4997f599be8760eaf70f819`, incorporated by
+[#914](https://github.com/aien-dev/omega-mv/pull/914) as
+`d94a503f7aae57d09697046405da2e9a5895be6d`. Deployment is not established.
 `seed/omc/omc.om`: 12,545 lines, sha256
 `d2e7c7c55af63272e5d0c3071eeb5c977554864143f115a1d1f42ee5da587d0d`;
 `seed/out/omc`: sha256
@@ -84,7 +85,7 @@ Merged source pin (2026-10-28): omega-mv
 `d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84`.
 The fresh-clone `qty`, wrap/refusal controls and `check`/`next` outputs are
 recorded in `omega-encoding` section 0 as historical observations; the expanded
-examples use the pending audit-fix pin above. Older pins below remain dated history.
+examples use the audit-fix pin above. Older pins below remain dated history.
 
 
 ```sh
