@@ -78,6 +78,30 @@ logs, training and verification costs separately. Quantization spacing is
 not a serialized-byte budget. Report wrong acceptance, abstention and
 heldout regret as well as successful reconstruction.
 
+The NL4 boundary adapter was source-frozen at train
+`18b3d08cdf383033e2c8d674a37325d11f010fc4` (draft
+[aien-train#41](https://github.com/aien-dev/aien-train/pull/41)) before
+custody opened. `boundary.om` (sha256 `731b682f…aa320ba`) composes the
+unchanged NL4 prefix and units and adds no codec, validator or executor.
+Every two-bit chunk goes through `lpvalid`, `nlproposal` and `nlmatch`
+before any `nlexec` runs. Build it from stdin (`omc < boundary.om > bin`):
+a file argument gives error 16. With omc `d6290c76…` the binary is
+`a20add32…2d63f`. Errors 7, 9, 12 and 19 from the failed attempts are
+kept in `evidence/`. The judge (benchmarks-mv
+[#59](https://github.com/aien-dev/benchmarks-mv/pull/59) at
+`463123e6aeb77b0ec269f479941310921e6521ff`, `evidence/FINAL-REPORT.md`)
+rebuilt it byte-identically and replayed all 9360 original task decisions
+with exact stdout, stderr, status and frame match. Of those, 3371 were
+accepted, 2243 mismatches refused and 3746 abstentions or omissions
+refused. Hidden reveal matched custody commitment `39ce89ee…2772` and all
+seven hashes from `8a78e38`. Withheld accepted-correct counts out of 8:
+capacity historical 4, four-coordinate 5, learned nonlinear 0, fixed
+direct byte 8; task dense/binary reconstruction 4/4, parity 2/4,
+receiver side information 4/8. Fixed byte and full evidence score 8/8
+on every task, and receiver-only parity scores 4/8, which is chance. No
+learned communication or economic advantage over the fixed code is
+established.
+
 A task carrier grants no execution authority. NL4 separately verifies its
 full typed envelope against independent trusted references. Production
 capability/reservation binding, authorized external execution, GPU/device
