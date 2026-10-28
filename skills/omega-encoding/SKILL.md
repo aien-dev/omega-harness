@@ -212,6 +212,12 @@ disagree, `omc` is what compiles your program:
 
 Language rule: `.om` is the only forward first-party implementation language. C, Rust and shell that
 remain are unfinished migration, not exemptions ([README.md#L50](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L50)).
+- **Tokenization is not a language rule:** Language design optimizes for verified programs produced
+  per unit of inference cost (measured on held-out tasks by first-attempt correctness, successful
+  compilation, verified behavior, latency, and total compute cost). Fitting words into single tokens
+  under particular tokenizers (e.g. Qwen3) is an empirical measurement and cost consideration, not a
+  binding rule of Omega or Omegese. The compiler-guided interface remains portable across models and
+  tokenizers.
 
 ## 1a. Compile and run (Linux AArch64 host only)
 
