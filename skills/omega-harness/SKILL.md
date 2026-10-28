@@ -59,7 +59,7 @@ say so and stop rather than estimating.
 ### Pending independent GPU driver host slice
 
 `aien-dev/omega-gpu-driver` [draft #4](https://github.com/aien-dev/omega-gpu-driver/pull/4),
-stacked on draft #3, has candidate source `a5dd456740d8fb5235774cd69cecdf1b9a4c192c`.
+stacked on draft #3, has candidate source `b1c8e6ea76da81dc47b57670304bf256b0ba9818`.
 It remains pending, not main, qualified or deployed. Its compiler is specifically
 `omega-mv@397e67040fb74853c6814097fe02ae4e1ebd6f66` (draft #890 atop #878),
 omc sha256 `bcfa582892afca8f65e551fe56867d918d86e84540c7381be8fa9ef18d0cf0f6`,
@@ -75,13 +75,23 @@ Reuse `gsp/sysinfo.om` and `chan/params.om`; do not duplicate their encoders.
 uncertain boot completion to retention of the matching published backing. It is not a real
 queue publisher, memory fence, firmware authenticator or hardware RPC endpoint.
 
-At that exact candidate the host runners `tests/mutants-rpc.sh`, `tests/mutants-arena.sh`,
-`tests/boot_dma.sh` and `tests/dma_host.sh` were exercised with the pinned OMC and clean
-AIENUX reference. Exact sender/full-arena parity, 19 RPC/12 arena behavior mutants,
-composed real-anonymous-map staging/timeout retention plus two mutants, and 23 DMA
-boundary cases/11 lifecycle mutants passed. See its two `tests/*host-receipt.txt`
-receipts for commands and source/binary hashes. C GCC 13.3.0-6ubuntu2~24.04.1 and
+At that exact candidate all 27 `tests/*.sh` host runners were exercised in one run with the
+pinned OMC (also linked as `build/omc`, which `tests/window_sim.sh` checks against
+`tools/omc.pin`) and the clean AIENUX reference: exact sender/full-arena parity, channel,
+completion (33 lines) and RM (59 lines) parity, sequencer dispatch parity, the composed mapped
+transport (17 cases, post-publication notification failure quarantines), and every mutant
+suite with no survivor (dispatch 12, RM channel 11, completion 8, transport 10 among them).
+See `tests/transport-host-receipt.txt` and the other `tests/*host-receipt.txt` files for
+commands and source/binary hashes. GCC 13.3.0-6ubuntu2~24.04.1, GNU objdump 2.42 and
 Python 3.12.3 are verification-only dependencies, never production `.om` substitutes.
+
+Mapped queue cursors use aligned `mapget`/`mapset`; the pinned compiler brackets each with
+DSB SY. That is process instruction ordering only, not device coherency, cache maintenance or
+`dma_wmb`/`dma_rmb`. Channels follow prepared (`chprep`) -> RM-scheduled (submit-ready) ->
+disabled (prepared); hardware sequencer dispatch is refused whole before any effect.
+Completion-semaphore progress is not engine idle; WFI/membar is a separate absent effect.
+A private implementation outside this public repository is a separate track and is not part
+of this candidate.
 
 Hardware and kernel execution remain NOT_RUN. Preserve production refusal until measured device
 identity, owned live queue transport, release/acquire/coherency, queue notification, sequencer
