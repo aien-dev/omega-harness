@@ -105,7 +105,7 @@ must refuse without changing caller code. Reset the generated adapter's failure
 sentinel before every invocation, including repeated calls and recovery: a prior
 success must not mask a later omitted status write. Missing-status call-one,
 call-two and recovery mutants each fail with status 1. This host acceptance does
-not accept the still-unfixed #174 command-lifetime prerequisite or freeze the
+not accept the still-unaccepted #174 command-lifetime prerequisite or freeze the
 combined consumer lock.
 The independent [consumer recovery #924](https://github.com/aien-dev/omega-mv/pull/924)
 preserves the original staged source/index and remains a draft. Its host acceptance
@@ -116,6 +116,58 @@ against the reviewed #169 source `7a354dbda9eddd405610fdcabf4fc4e24c1a0f47`.
 Manifest provenance/refusal mutants also pass on the synthetic chip-run seam.
 This is exercised old-pin consumer compatibility, not acceptance of a combined
 #173/#174 artifact or a physical inference run.
+
+The existing 35B Core consumer follow-through is tracked in
+[Core MV #797](https://github.com/aien-dev/aien-sovereign-core-mv/issues/797).
+Its canonical GPU identity must describe `libcudapp.a` and the authenticated
+CUDApp source; `libomega_gpu.a` is a separately authenticated Omega CPU/evidence
+companion with ABI status `none`, never a fabricated GPU ABI pass. Require
+independent source/target/compiler digest records for both link inputs, the
+canonical archive alone to satisfy GPU layout/symbol checks, and refusal of
+GPU API symbols supplied by the companion.
+
+Authenticate the source checker's commit, root tree, tools tree and blob before
+executing a private copy. A checker that only validates itself after execution
+does not authenticate its bootstrap. Corrupt-object controls must refuse before
+the poisoned checker writes its marker. Rehash private link snapshots against
+the admitted independent digests; regenerated stage checksum files alone must
+not bless a substituted archive.
+
+Optional FP8/MoE/prefill callers
+must derive availability from the admitted canonical archive, not retired
+Omega-local header presence or a prebuilt override. Persistent KV namespaces
+must bind both actual archives, both sources, both targets and the clean engine
+commit using length-framed, domain-separated hashing. Keep the existing bounded
+KV format: the explicit `v2:` identity must reject old single-archive namespaces,
+not extend the field limit to fit concatenated hashes. Host ABI/refusal, tiny
+host-engine HTTP, and persistence controls remain host evidence, not a physical
+35B candidate qualification.
+The engine build stamp must invalidate on tracked source and outside-crate changes,
+not only HEAD/index changes. Use read-only Git status, require an actually Fresh
+no-op Cargo build, and make a watcher-removed private mutant reproduce stale-clean
+metadata. Accidental always-rerunning build scripts do not prove source tracking.
+
+The canonical archive must be compiled from the authenticated CUDApp tree only.
+A parent `make PHYSICS_DIR=<physics>` reaches a nested CUDApp make through
+`MAKEFLAGS` and overrides `PHYSICS_DIR ?= .`, silently compiling physics'
+`nvrm.c`, `nvrm.h` and `m16_native.c` into an archive attributed to the CUDApp
+revision. At CUDApp `7a354dbd` the clean stage is `353b1131…`; the inherited
+variant is `cf95a6a7…`, the digest first recorded for #924/#798, which is
+therefore not CUDApp's archive. Build the stage under a cleared environment with
+`PHYSICS_DIR=.`, and keep a control that stages under a hostile inherited
+`PHYSICS_DIR`, `CFLAGS` and `CUDAPP_ENCODER` and requires identical bytes.
+Compare a consumer-built archive against an independent restage before
+recording any lock line.
+
+Status vocabulary for the 35B consumer chain: capacity
+[#173](https://github.com/aien-dev/CUDApp/pull/173), command-lifetime
+[#174](https://github.com/aien-dev/CUDApp/pull/174) and shape/MoE
+[#175](https://github.com/aien-dev/CUDApp/pull/175) are each
+`EXERCISED_HOST_UNMERGED`. A local merge of exactly those heads is a combined
+host candidate, not main, not merged and not device-qualified; record it by its
+parent heads, its own merge commit and its measured archive, and keep it separate
+from the canonical merged #169 path. The x86 compiler, bridge and guide changes
+remain separate dependencies of that chain.
 
 Shape-aware selection and grouped MoE acceptance must cover the actual recorded owner,
 not just a selector fixture. The complete ordered operation binds every relevant
@@ -148,6 +200,15 @@ still uses Linux RM/UVM device nodes, ioctls and mappings through the versioned
 580.173.02 interface headers. Record actual kernel-driver and firmware dependencies
 separately. No userspace zero-CUDA result proves kernel-driver independence or
 drop-in compatibility, and a replacement must be qualified before any cutover.
+Do not infer that the canonical #169 archive includes an independent-driver
+adapter: it does not. The separate Compute ABI 1 adapter is
+[CUDApp draft #97](https://github.com/aien-dev/CUDApp/pull/97), whose observed
+remote head is `7036170b`; local discovery snapshot `03eb155d` is not that head.
+Its tracked UAPI header is `third_party/aien-gpu-abi1/aien_gpu_uapi.h`, with
+`src/omega_gpu_platform_aien.c`. Its `/dev/aien-gpu` selection and simulated
+host controls are not hardware qualification or production activation. Keep
+the standalone private driver, this adapter branch, and the separate public
+Omega driver bootstrap experiments as distinct source/evidence subjects.
 
 The x86 binding work [omega-bridge #37](https://github.com/aien-dev/omega-bridge/pull/37)
 and companion [guide #116](https://github.com/aien-dev/omega-harness/pull/116)
