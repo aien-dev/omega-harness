@@ -60,10 +60,11 @@ say so and stop rather than estimating.
 
 Use the target repository's documented commands. A host-only seed workflow on AArch64 Linux, in a disposable clone pinned to an exact revision, looks like this:
 
-Current candidate source pin (2026-10-28): omega-mv
-`1fe5976d398646b17acabbf6d9dfae96b017e439`, pending
-[#911](https://github.com/aien-dev/omega-mv/pull/911) and incorporating
-[#909](https://github.com/aien-dev/omega-mv/pull/909).
+Merged source pin (2026-10-28): omega-mv
+`1fe5976d398646b17acabbf6d9dfae96b017e439`, incorporated by
+[#911](https://github.com/aien-dev/omega-mv/pull/911) into main
+`6999fa9e6dae4847c155ef4eacaece74f491d3ca`, including
+[#909](https://github.com/aien-dev/omega-mv/pull/909). Deployment is not established.
 `seed/omc/omc.om`: 12,520 lines, sha256
 `3f937160c823d3a90a6b4cc296f00f517f36ede7fd27a06505c998985ec62240`;
 `seed/out/omc`: sha256

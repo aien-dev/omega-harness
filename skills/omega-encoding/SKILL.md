@@ -10,12 +10,14 @@ cannot express, and before encoding bytes, integers or host I/O in Omega.
 
 ## 0. Pin and how to re-check it
 
-The current candidate pin below covers `qty` and the compiler's `check`/`next` interface.
-Older tables and their citations remain dated history, not claims about this candidate.
-Pending [omega-mv #911](https://github.com/aien-dev/omega-mv/pull/911), including
-[#909](https://github.com/aien-dev/omega-mv/pull/909); not merged or deployed.
+The merged pin below covers `qty` and the compiler's `check`/`next` interface.
+Older tables and their citations remain dated history, not claims about this pin.
+Originally observed on the [omega-mv #911](https://github.com/aien-dev/omega-mv/pull/911)
+candidate, including [#909](https://github.com/aien-dev/omega-mv/pull/909).
+Both are now merged: main `6999fa9e6dae4847c155ef4eacaece74f491d3ca`
+contains the same compiler bytes. This does not establish deployment.
 
-### Current candidate pin (observed 2026-10-28)
+### Merged qty and diagnostics pin (observed 2026-10-28)
 
 | Item | Value |
 |---|---|
