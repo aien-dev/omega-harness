@@ -189,6 +189,40 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
   contract checks. No DPC++, Level Zero, GPU or Alpha qualification is implied.
   The standalone acceptance gate is not wired into protected gate manifests.
 
+### CUDApp encoder and TileLab host repair (pending, observed 2026-10-28)
+
+Separate pending dependency: [CUDApp #160](https://github.com/aien-dev/CUDApp/pull/160),
+source `85c059cc15edf704c9833fe4832f18c052ee83b3`, not merged or deployed.
+This is not the compiler #914 pin above. Its `tools/c5/omc.pin` still selects
+omega-mv `e5b32567a7aff3ce594e3254a622a846a6cd190b`, compiler sha256
+`2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.
+Set `C5_OMC` to that checked compiler's absolute path. These host commands were
+independently exercised in a disposable CUDApp clone at the pending source:
+
+```sh
+OMC="$C5_OMC" sh tools/test_bw_spec_encoder.sh
+make -j2 test-tilelab-host TILELAB_OMC="$C5_OMC"
+make tilelab-replay TILELAB_OMC="$C5_OMC"
+```
+
+Prerequisites exercised: Linux AArch64, gcc 13.3.0 and offline `nvdisasm`
+release 13.0, V13.0.85. The disassembler is a read-only instruction oracle,
+not a production dependency. It is now required by the operand checks; a
+missing oracle returns NOT_RUN, not a qualified encoder pass.
+
+All three commands exited 0. The encoder checked reference bytes and active
+decode semantics on 461 corpus instructions, sample operand disassembly,
+cold decode and refusal/read/truncation/mutation controls. Its final line was
+`[spec-encoder] ALL SPEC-DRIVEN ENCODER/DECODER VERIFICATIONS PASSED (HOST_TESTED)!`.
+The TileLab host target exercises a nondelegating CPU-fault driver through an
+Omega conductor, ending `TILELAB_REPLAY PASS` and
+`TILELAB_HOST_FAULT PASS (synthetic CPU only; GPU NOT_RUN)`. Expected refusal
+messages on stderr are part of those controls, not ignored test failures.
+`make tilelab-replay` builds the current `.om` replay in `build/tilelab_replay`,
+outside historical evidence. It propagates child/exec failures; do not run it
+with a real GPU driver without current hardware authorization. These are
+focused synthetic host observations, not GPU qualification or a full-host-suite claim.
+
 ## 4. Effects and authority
 
 - A proposed program or effect description does not authorize running it. Confirm capability and privilege at the execution boundary. Model confidence and semantic identity grant no authority.

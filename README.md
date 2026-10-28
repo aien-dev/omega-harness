@@ -87,5 +87,9 @@ pending audit-fix pin for [omega-mv #914](https://github.com/aien-dev/omega-mv/p
 `955586a891f79d1cb4997f599be8760eaf70f819`, compiler `0ab18500…b9a3`.
 Its expanded quantity and diagnostic examples were exercised on a Linux AArch64
 host. Pending source and host replay are not merge, deployment or hardware qualification.
+`omega-harness` section 3 separately records the pending
+[CUDApp #160](https://github.com/aien-dev/CUDApp/pull/160) encoder/TileLab repair,
+its unchanged C5 compiler pin, required offline disassembler and independently
+exercised CPU-only commands. That pending dependency is distinct from compiler #914.
 
 Written by Drake Stapleton with AIEN agents. Apache License 2.0.
