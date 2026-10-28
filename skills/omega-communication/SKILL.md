@@ -97,11 +97,25 @@ The individual source pins above identify their measured contract revisions; the
 pending wording must not override the merged integration status of #169. Conversely,
 merged source must not promote synthetic host evidence into hardware qualification.
 The separate [capacity repair #173](https://github.com/aien-dev/CUDApp/pull/173)
-remains a draft dependency, not an accepted merged consumer pin. Instruction-slot
-exhaustion must refuse with result 2 instead of reaching a branch-patch or tail-store
-bounds trap (103); actual `nv_staged` recomposition must refuse without changing caller
-code. Record its final accepted source and fresh consumer acceptance before changing
-the canonical consumer lock.
+remains a draft dependency, not a merged consumer pin. Its final host-accepted
+source is `ca441c5a92f5a951a67de00aeddae0e077f10216`: all 52 host targets pass.
+Instruction-slot exhaustion must refuse with result 2 instead of reaching a
+branch-patch or tail-store bounds trap (103); actual `nv_staged` recomposition
+must refuse without changing caller code. Reset the generated adapter's failure
+sentinel before every invocation, including repeated calls and recovery: a prior
+success must not mask a later omitted status write. Missing-status call-one,
+call-two and recovery mutants each fail with status 1. This host acceptance does
+not accept the still-unfixed #174 command-lifetime prerequisite or freeze the
+combined consumer lock.
+The independent [consumer recovery #924](https://github.com/aien-dev/omega-mv/pull/924)
+preserves the original staged source/index and remains a draft. Its host acceptance
+at `cafb7be0` retains canonical weak-identity archive members in Visor machine tests
+and stages before tensor mutation runners. Numeric CPU/GB10-host models, program
+FP32/realization/identity, tensor/store/ASan/mutants and Visor host controls pass
+against the reviewed #169 source `7a354dbda9eddd405610fdcabf4fc4e24c1a0f47`.
+Manifest provenance/refusal mutants also pass on the synthetic chip-run seam.
+This is exercised old-pin consumer compatibility, not acceptance of a combined
+#173/#174 artifact or a physical inference run.
 
 Shape-aware selection and grouped MoE acceptance must cover the actual recorded owner,
 not just a selector fixture. The complete ordered operation binds every relevant
