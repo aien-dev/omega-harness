@@ -61,6 +61,30 @@ Names below are current catalog slugs under `https://github.com/aien-dev/`. Use 
 | Small boot root | [atlas](https://github.com/aien-dev/atlas) | Read its actual default branch (`master` in this snapshot); QEMU qualification is not native hardware qualification. |
 | GPU machine-code toolchain/runtime/driver-client work | [CUDApp](https://github.com/aien-dev/CUDApp) | Check target support and remaining driver/OS dependencies; do not imply a complete driver replacement. |
 
+**Pending Spark boot/input path 5 (2026-10-28).** Aienux
+[#471](https://github.com/aien-dev/aienux/pull/471), source
+[`180618ae4336b33d9310046b94496bd9b4f4f4c5`](https://github.com/aien-dev/aienux/tree/180618ae4336b33d9310046b94496bd9b4f4f4c5),
+is a draft stacked on the retained-DMA-release fix, not a main-branch or
+hardware-qualified feature. Its `CK_SPARK_INPUT=1` selector composes the
+existing confined xHCI/HID bounded boot shell with RTL8127/UDP reporting,
+without linking NVMe, Store, security or Allen write stages. Do not
+substitute the storage-bearing `full CK_RTL8127=1` image or make the
+QEMU-only sustained console session hardware-admissible.
+The [row-32b fixture correction](https://github.com/aien-dev/aienux/blob/180618ae4336b33d9310046b94496bd9b4f4f4c5/native/kernel/GATES.md)
+removes a stale Spark IORT parser-refusal prediction: the measured table
+parses with three SMMU instances; all six USB routes target the instance
+at `0x13800000`. Static routing predicts no successful hardware grant.
+Named host/QEMU gates, a read-only exact GPT input boot and an RTL
+failed-unconfine negative control were exercised; physical input,
+RTL DMA/link/TX and hardware handoff remain NOT_RUN.
+The actual `CK_HARDWARE_STAGING` build remains blocked on the NOT DONE
+TRUST-1 owner ceremony. The built non-staging artifact is **NOT
+boot-admissible**. Keep the global provisioning gate intact even though
+this storage-free selection has no Store keys consumer. Use the
+[pinned attended procedure](https://github.com/aien-dev/aienux/blob/180618ae4336b33d9310046b94496bd9b4f4f4c5/docs/campaigns/SPARK-BOOT-INPUT-20261028.md)
+for its exact staging delta, receiver, one-shot boot and restore
+prerequisites; the document grants no physical or live-service authority.
+
 ### Runtime and learning
 
 - [aien-sovereign-core-mv](https://github.com/aien-dev/aien-sovereign-core-mv): host runtime, `aien` CLI, inference ABI, scheduling/KV state and verification tooling. Product source and gate manifests determine implementation; installed service state requires separate evidence.
