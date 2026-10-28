@@ -105,6 +105,15 @@ For the pending canonical LTP0/NL4 lanes, distinguish the following explicitly:
   not independent statistical trials. Preserve failures and refusal channels.
   Use NL6's independent request/result replay; producer-reported scores are not
   acceptance evidence. Never tune on a held-out result then call it preregistered.
+  Independent checker/receipt publication:
+  [benchmarks draft56](https://github.com/aien-dev/benchmarks-mv/pull/56),
+  `e4ab4afecd62272f86d67043f74ffc8153ae703e`; the freeze above is unchanged.
+  Its `native/neuralese/nl4-independent.json` records an independent rebuild of
+  NL4 source09b1394 and actual success/refusal replay: exact raw channels match,
+  success exit0 with result3 recomputed by `score.om`, foreign-tenant exit20
+  with empty stdout and zero-residue refusal on stderr; both checker exits0.
+  These are HOST_SYNTHETIC boundary checks, not a learned campaign (NOT_RUN)
+  or physical GB10 qualification (BLOCKED).
 
 
 ## Corrections
