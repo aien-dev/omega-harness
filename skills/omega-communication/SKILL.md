@@ -79,6 +79,33 @@ from the IMPLEMENTED / EXERCISED host-only fixed codebook.
   benefits, model interoperability, GPU qualification and deployment are not
   established by the host codebook's passing cases.
 
+For the pending canonical LTP0/NL4 lanes, distinguish the following explicitly:
+
+- LTP0 structural/template conformance at protocols source
+  `6fb728a14781eb4e5262ffbdc9c2e6be64974f36` (draft #71) is not a signed producer
+  MJR1 output/consumer CONTENT admission, atomic durable reservation or capability.
+  Field101 is a producer-node effect class, never receiver authorization.
+- NL4 source `09b1394fe68287eaa10b0d90cf07a9dd00e6cb60` executes only closed
+  pure uint increment/double/identity after receiver-owned typed expectation.
+  The actual result is HOST_SYNTHETIC:63/63 native cases, including24 positive
+  executions,27 refusals,9 killed mutants, two ordinary contract traps and one
+  independent sixteen-payload codec oracle. Inherited #919 cases separately54/54.
+- Preserve raw frame/context/request, exact source/compiler hashes, result channel
+  and exit. `NL4R1 decision op lhs rhs rank dim0 dim1 elements effects result`
+  has decision0 only for an executed success on stdout. A nonzero refusal is
+  stderr, stdout empty, every other numeric field zero. Do not count that as an
+  executed task success or an authorized production receipt.
+- A local expected capability reference or SHA256 checksum grants nothing.
+  Actual native gateway/reservation bindings remain owner proposals AEGIS #79
+  and protocols #70; production authority, durable replay, signed MJB/MJR relation
+  and effectful execution are NOT_RUN.
+- The independent experiment preregistration is benchmarks draft #56, design
+  freeze `8ee0a494bf73230c9d37647eb3caea792298fa8d`. Public sixteen-case toy/
+  deterministic codec controls are not the secret held-out campaign and are
+  not independent statistical trials. Preserve failures and refusal channels.
+  Use NL6's independent request/result replay; producer-reported scores are not
+  acceptance evidence. Never tune on a held-out result then call it preregistered.
+
 
 ## Corrections
 
