@@ -28,6 +28,62 @@ it carries the rule, the MCP setup that any agent can perform without a human, t
 calls, and the failure handling. A session whose Wolfram tools are not mounted is not math-capable:
 say so and stop rather than estimating.
 
+## NL1R host-only experiment boundaries (2026-10-28)
+
+The training experiment belongs to `aien-dev/aien-train`; independent
+evaluation belongs to `aien-dev/benchmarks-mv`, not the producer. Follow
+[train #39](https://github.com/aien-dev/aien-train/issues/39) and capacity
+[draft #40](https://github.com/aien-dev/aien-train/pull/40), final evidence
+commit `9061d3b75251d37961268666ab449c5c1a3487cb`, with producer source frozen
+at `fed670ae6a7aceabe2ea7db7481e910c8e331b62` before learning.
+This is a new diagnostic; the original negative experiment stays unchanged.
+
+Use the exact seeded compiler from omega-mv
+`1fe5976d398646b17acabbf6d9dfae96b017e439`, binary SHA256
+`d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84`.
+The replay commands and actual control/mutant receipts are in
+`native/neuralese/nl1r/README.md` and its `evidence/` directory at that
+capacity commit; no new guide example or compiler pin replaces those receipts.
+
+Capacity is not learning. The recorded Wolfram oracle bounds the original
+three-dimensional affine decoder with four output thresholds at 15 strict
+patterns; it does not prove that the observed 14/16 is optimal. Constructive
+four-coordinate and nonlinear witnesses recover all 16 patterns, but are
+not learned checkpoints. Across frozen seeds 17/29/43, random fullfit
+accepted-correct counts are 14/14/14 for original affine3, 16/16/16 for
+affine4, and 14/15/14 for nonlinear3. Parity heldout counts out of eight
+are respectively 5/5/6, 7/8/8 and 5/6/6. Both correlated heldout splits
+give every learned arm 0/8; the direct byte baseline gives 8/8.
+These are filed measurements in `evidence/public-metrics.json`, not a
+general compositionality or optimization guarantee.
+
+The separate task-conditioned experiment freezes source/configuration at
+`1bae5bda767c9024c1408ae866c7993eb3d7deb0`, under
+`native/neuralese/nl1r-task/`. The sender observes four evidence bits and
+the shared task. The receiver gets actual carrier bytes and shared task;
+only the declared side-information task additionally receives the first
+two original bits. IDs are evaluation labels, not receiver input.
+Fixed, dense and factorized carriers each serialize one actual byte;
+full evidence uses four ASCII bytes and receiver-only uses no payload.
+Dense and factorized share one trained checkpoint and are inference-channel
+ablations, not independently trained discrete communication models.
+
+The frozen independent preregistration is benchmarks
+`c8aefbc6cf72ea2ca47fe4308bd867cb1a55e86c`, manifest SHA256
+`2fe5c72edbfe24df38f70b72275bb008ac71779e66455501662ca8e7d911751c`.
+Independent hidden custody and final task results must be reported from
+the judge's own receipt, never inferred from producer exit status.
+Charge payload, context, checkpoint/codebook, schema, code, metadata,
+logs, training and verification costs separately. Quantization spacing is
+not a serialized-byte budget. Report wrong acceptance, abstention and
+heldout regret as well as successful reconstruction.
+
+A task carrier grants no execution authority. NL4 separately verifies its
+full typed envelope against independent trusted references. Production
+capability/reservation binding, authorized external execution, GPU/device
+qualification, live serving and deployment remain **NOT_RUN**. Host
+synthetic evidence cannot establish production or economic improvement.
+
 ## 2. Implement in the actual language
 
 - First-party implementation belongs in `.om`. Existing C, Rust and shell are unfinished migration, not permission to add more foreign code. Never pass off a foreign implementation as generated code, vendor code, glue or an `.om` file.

@@ -60,6 +60,15 @@ emitter, a PoCL CPU parity gate and a minimal OpenCL IL demo. `omega-harness`
 section 3 records the exact exercised source, toolchain, ABI, refusal boundary
 and evidence. CPU execution is not GPU or DPC++ qualification.
 
+## Host-only NL1R diagnostics
+
+`omega-harness` documents the separate capacity and task-conditioned experiments
+under [aien-train #39](https://github.com/aien-dev/aien-train/issues/39), with exact
+frozen source/compiler pins, independent judge custody, actual carrier/context
+budgets and retained negative results. Constructive capacity, learned recovery,
+heldout performance and production execution authority are separate claims.
+These host experiments do not qualify device execution or deployment.
+
 ## Check the examples yourself
 
 The examples run on Linux AArch64 hosts only:
