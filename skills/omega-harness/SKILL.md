@@ -226,6 +226,34 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
   contract checks. No DPC++, Level Zero, GPU or Alpha qualification is implied.
   The standalone acceptance gate is not wired into protected gate manifests.
 
+### Pending Aienux SMMU probe event qualification (path 1)
+
+- Pending [aienux#469](https://github.com/aien-dev/aienux/pull/469), source
+  `7d555ade734bd56787d4bfd477caa0e79d0a1134` (2026-10-28), adds
+  `CK_B7B_PROBE=1 CK_B7B_EVENT_READOUT=1`. It prints all SIDs/raw event words,
+  every accepted RMR identity exception, and a bounded final drain of each
+  already-live SMMU queue before the final report; overflow/pending and
+  inactive/failed instances are explicit. No event is not proof of no DMA.
+- Exercised commands: `make -C native/kernel test sanitize`,
+  `make -C native/kernel iort-mutants smmu-l2-mutants`, and
+  `bash scripts/qemu_ck_b7b_probe_test.sh` with `--self-test`, no flag,
+  `--positive`, and `--events`, all exit 0. The new events mode observes actual
+  emulated NVMe out-of-window DMA, matches decoded SID/address, intact canary
+  and recovery read. DROP_EVENT is killed; missing/wrong-SID/wrong-address
+  event, overflow and pending controls fail as required.
+- A fixture-provisioned full hardware-staging-format artifact is **NOT
+  boot-admissible**. Prerequisite 0 is the owner's actual public-key/machine
+  identity ceremony; never generate substitute material. The non-staging
+  core-only probe requires no Store identity, retains probe/readout code, and
+  excludes device/security/Store stages; it is not the combined input/witness
+  physical candidate. No staging gate was relaxed.
+- Physical GB10/HDA0 faults and GPU DMA/cache visibility/recovery are NOT_RUN.
+  The designed GPU test requires a native capability-bound map/submit,
+  system-visibility fence, uncached completion and verified-quiesce endpoint;
+  a Linux/VFIO protocol simulator does not supply it. Follow the source's
+  `docs/campaigns/B7B-PHYSICAL-BOOT-PREP.md` and fresh operator authorization.
+  This pending guide is not permission to stage, stop a service or boot.
+
 ## 4. Effects and authority
 
 - A proposed program or effect description does not authorize running it. Confirm capability and privilege at the execution boundary. Model confidence and semantic identity grant no authority.
