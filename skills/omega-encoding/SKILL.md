@@ -573,8 +573,9 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
   `mmwdmap(epoch, fd)` maps the whole owned extent; `mmwpublish(epoch)` must precede any externally
   visible DMA reference. Epoch/handle/length/IOVA/container identity stays fixed for that lifetime.
   Rebuild MAP_DMA requests after every call: the compiler overwrites vaddr even on ioctl error.
-  An unpublished extent may close only after successful UNMAP_DMA returns its exact original length,
-  then successful `mapdrop`. Only EBADF is classified as proven no-target; uncertain mapping errors,
+  An unpublished DMA-mapped extent closes only after UNMAP_DMA returns its exact original length,
+  then successful `mapdrop`; a never-mapped OWN extent drops directly. Only EBADF is proven no-target;
+  uncertain mapping errors,
   failed/partial/unexpected unmaps and drop failures retain backing. Published or quarantined backing
   cannot be reset/reused/dropped: TLB invalidation or a simulator idle is not a documented DMA-idle
   proof, and no GB10 reclaim-proof API exists here. The single owner must retain process/container
