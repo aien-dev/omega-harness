@@ -19,7 +19,7 @@ It is pending, not merged or deployed. Older tables and citations remain dated h
 | Item | Value |
 |---|---|
 | Repository | `github.com/aien-dev/omega-mv`, branch `fix/accepted-peer-metadata` |
-| Source commit | `00607cef50d97f673fe18b87dd8ad1f7d1996396` (implementation `96bc3e5d12a7c686de0b1857a9c065ac69ecf840`), based on #914 `955586a891f79d1cb4997f599be8760eaf70f819` |
+| Source commit | `5628c214227caf142341a9b03666b3d681f504fe` (implementation `96bc3e5d12a7c686de0b1857a9c065ac69ecf840`), based on #914 `955586a891f79d1cb4997f599be8760eaf70f819` |
 | Compiler source `seed/omc/omc.om` | 12,556 lines, sha256 `37131195785285204481cbea4d48f427b1c53abaa963558c578070dd9ebda596` |
 | Compiler `seed/out/omc` | sha256 `1b0c6dc26f374e9cfe992a5d69b2a9048454de7bdb6438194b5af5da7e82ed83` |
 

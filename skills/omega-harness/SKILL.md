@@ -61,7 +61,7 @@ say so and stop rather than estimating.
 Use the target repository's documented commands. A host-only seed workflow on AArch64 Linux, in a disposable clone pinned to an exact revision, looks like this:
 
 Current pending peername candidate (2026-10-28): omega-mv
-`00607cef50d97f673fe18b87dd8ad1f7d1996396`, branch
+`5628c214227caf142341a9b03666b3d681f504fe`, branch
 `fix/accepted-peer-metadata`, stacked on reviewed #914
 `955586a891f79d1cb4997f599be8760eaf70f819`. Draft [#918](https://github.com/aien-dev/omega-mv/pull/918), not merged or deployed.
 `seed/omc/omc.om`: 12,556 lines, sha256
