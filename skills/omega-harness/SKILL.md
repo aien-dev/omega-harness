@@ -86,17 +86,20 @@ say so and stop rather than estimating.
   Remote CodeQL checks are analysis, not functional execution. This is MERGED and HOST EXERCISED,
   not deployed or GPU-qualified.
   Pending additive frontend [PR #36](https://github.com/aien-dev/omega-bridge/pull/36),
-  source `dfd8393aa3d4a67280349921c479b8dd52f88e58` (2026-10-28), is separate from that
+  source `cb492a76348546dc1ffe5857492e0796cfcec232` (2026-10-28), is separate from that
   merged native-call qualification. `tools/bridge-seeded c|python|h` requires the exact
   omega-mv `e5b32567` compiler SHA256
   `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.
   It checks one source snapshot before emitting portable checked C, Python or the final
-  function's C declaration. It adds bounded numeric constants, six parameters, 64 functions,
-  long function names, larger fixed view/edit shapes, explicit view/edit call prefixes and
-  loop break. It does not import arbitrary C/Python, provide floating point, or replace
-  the baseline `191b776e` compiler, `tools/bridge` or required `tools/test.sh`.
+  function's C declaration after validating all bodies. It adds bounded numeric constants,
+  six parameters, 512 functions, long function names, larger fixed view/edit shapes,
+  explicit view/edit call prefixes, loop break and seeded-C continue. Seeded C supports
+  internal binary32 literals, bitcasts, fabs, multiply and ordered le for canonical quant
+  roots. Public float ABI, float arrays, numeric float casts and other float operators
+  remain refused; baseline/Python float inputs are unchanged refusals. It neither imports
+  arbitrary C/Python nor replaces baseline `191b776e`, `tools/bridge` or `tools/test.sh`.
   The pending converter source SHA256 is
-  `e1d1de0a83e27b34792041cd9e30a5c353c57fa1dc1aff05361bc950278d418b`;
+  `9116caab9b46e8bea1f1f3dc2752b4f2cdec0d4e266859167e6814085dd4fed3`;
   `tools/bridge-seeded` SHA256 is
   `23ff7a2356bb5d980060a4685a27ac46587013069b7d24b37c2873d7ee659b37`.
   Consumers record each source-unit SHA256 and generated-C SHA256. The generated C can
@@ -107,11 +110,22 @@ say so and stop rather than estimating.
   Seeded source scalar declarations carry an unused attribute without skipping initializer
   effects, and literal-count loops omit unused guard counters. Strict host coverage keeps
   `-Wall -Wextra -Werror` and adds an annotation-removal negative control.
-  Generator build and CUDApp unit generation were exercised, not behavior-qualified.
-  Run the unchanged baseline suite, then `python3 tests/seeded.py` with both exact compiler
-  environments; it includes native/C/Python/x86 differential, wrong-seed refusal,
-  arithmetic-emitter mutant and header ABI controls. These suites are pending parent
-  verification, not PASS. Keep the guide and bridge PRs draft until that evidence lands.
+  `tools/bridge-freest c|h` separately checks an integer-only, stateless,
+  nontrapping whole-unit subset and emits import-free scalar C. Revision/epoch
+  use separate translation units, no TLS, libc, setjmp or native machine code.
+  `src/freest.om` SHA256 is
+  `6e4f5099713d437229d890f1870908dcdf7c6bbb1ae2c52aae01170c57a0fd98`;
+  frontend SHA256 is
+  `51b41794e7001c5606b715fd7de8a34ec935a6e4e4bc1da36ad08102c009537d`.
+  `python3 tests/freest.py` checks actual roots, O0/O2 imports/TLS, x86 emulation,
+  23 whole-unit refusal cases and a wrong-result negative control. The integrated
+  strict O2 hosted comparison passed; the earlier isolated O0 receipt stays historical.
+  The unchanged baseline suite and seeded differential/control suites were exercised
+  during recovery, including binary32 byte parity and float/fast-math refusals.
+  Run `tools/test.sh`, `python3 tests/seeded.py` and `python3 tests/seeded_float.py`
+  with the exact compilers. The native x86 compiler remains a separate failing path,
+  never an assumed dependency of this portable C route. Keep the guide and bridge
+  PRs draft while the implementation and consumer acceptance remain pending merge.
   No device qualification follows from generated C or x86 host execution.
 - The scalar IR-to-WebAssembly backend is owned by omega-mv, not a foreign-source import:
   [#787](https://github.com/aien-dev/omega-mv/pull/787) merged as
