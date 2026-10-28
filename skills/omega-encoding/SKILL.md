@@ -10,12 +10,44 @@ cannot express, and before encoding bytes, integers or host I/O in Omega.
 
 ## 0. Pin and how to re-check it
 
-The current candidate pin below covers `qty` and the compiler's `check`/`next` interface.
-Older tables and their citations remain dated history, not claims about this candidate.
-Pending [omega-mv #911](https://github.com/aien-dev/omega-mv/pull/911), including
-[#909](https://github.com/aien-dev/omega-mv/pull/909); not merged or deployed.
+The newest candidate below adds bounded connected-peer metadata, stacked on the
+reviewed #914 head: [omega-mv draft #918](https://github.com/aien-dev/omega-mv/pull/918).
+It is pending, not merged or deployed. Older tables and citations remain dated history.
 
-### Current candidate pin (observed 2026-10-28)
+### Pending peername candidate (observed 2026-10-28)
+
+| Item | Value |
+|---|---|
+| Repository | `github.com/aien-dev/omega-mv`, branch `fix/accepted-peer-metadata` |
+| Source commit | `00607cef50d97f673fe18b87dd8ad1f7d1996396` (implementation `96bc3e5d12a7c686de0b1857a9c065ac69ecf840`), based on #914 `955586a891f79d1cb4997f599be8760eaf70f819` |
+| Compiler source `seed/omc/omc.om` | 12,556 lines, sha256 `37131195785285204481cbea4d48f427b1c53abaa963558c578070dd9ebda596` |
+| Compiler `seed/out/omc` | sha256 `1b0c6dc26f374e9cfe992a5d69b2a9048454de7bdb6438194b5af5da7e82ed83` |
+
+`peername fd A off n` is keyword 224, program mode only. Types are `int`,
+writable `uchar[]`, `ulong`, `ulong`; result `long`. It queries Linux AArch64
+getpeername syscall 205 on the existing process descriptor. Its bounded slice
+and private 32-bit socklen lowering are shared with `sockname`; no socket is
+acquired or connected. Return full native sockaddr length on success, even if
+greater than capacity; preserve raw negative errno. Zero capacity, including
+at array end, returns full length without address writes. Invalid slices trap 3;
+readonly buffers are compile error 20. Check success, length and family before
+decoding; keep descriptor lifetime under caller control.
+
+Host observations at this candidate: two complete seed rebuilds reached the
+same compiler digest. The native loopback fixture compared accepted peer bytes
+to the client's independently queried local endpoint, distinguished the server
+endpoint, and checked truncation, offset sentinels, empty slices, EBADF,
+ENOTSOCK and ENOTCONN. Bounds and compile refusal controls passed; replacing
+getpeername with getsockname was caught by the real fixture.
+
+The existing guide examples were rerun unchanged: `fnv1a32.om` compiled and
+returned `0be9471a` for `abc`, exit 0; the wrong-prime control returned
+`55bedcf5`, exit 0. `trap_narrow.om` compiled and exited 105.
+These observations are host-only, not a deployment or proxy-policy activation.
+A transport peer is not an authenticated user or original client behind a
+proxy. No forwarding header, shared secret or caller claim gains authority.
+
+### Earlier pending qty/diagnostic candidate (observed 2026-10-28)
 
 | Item | Value |
 |---|---|

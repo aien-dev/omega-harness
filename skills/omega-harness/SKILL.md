@@ -60,16 +60,19 @@ say so and stop rather than estimating.
 
 Use the target repository's documented commands. A host-only seed workflow on AArch64 Linux, in a disposable clone pinned to an exact revision, looks like this:
 
-Current candidate source pin (2026-10-28): omega-mv
-`1fe5976d398646b17acabbf6d9dfae96b017e439`, pending
-[#911](https://github.com/aien-dev/omega-mv/pull/911) and incorporating
-[#909](https://github.com/aien-dev/omega-mv/pull/909).
-`seed/omc/omc.om`: 12,520 lines, sha256
-`3f937160c823d3a90a6b4cc296f00f517f36ede7fd27a06505c998985ec62240`;
+Current pending peername candidate (2026-10-28): omega-mv
+`00607cef50d97f673fe18b87dd8ad1f7d1996396`, branch
+`fix/accepted-peer-metadata`, stacked on reviewed #914
+`955586a891f79d1cb4997f599be8760eaf70f819`. Draft [#918](https://github.com/aien-dev/omega-mv/pull/918), not merged or deployed.
+`seed/omc/omc.om`: 12,556 lines, sha256
+`37131195785285204481cbea4d48f427b1c53abaa963558c578070dd9ebda596`;
 `seed/out/omc`: sha256
-`d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84`.
-The fresh-clone `qty`, wrap/refusal controls and `check`/`next` outputs are
-recorded in `omega-encoding` section 0. Older pins below remain dated history.
+`1b0c6dc26f374e9cfe992a5d69b2a9048454de7bdb6438194b5af5da7e82ed83`.
+Two seed rebuilds reproduced this fixpoint. Exact peername API, host controls
+and rerun guide examples are recorded in `omega-encoding` section 0.
+Use only the compiler matching the chosen source; this pending interface is
+not present in the older e5b32567 pin. Peer metadata does not authenticate
+proxy headers or authorize gateway policy changes. Older pins remain history.
 
 
 ```sh
