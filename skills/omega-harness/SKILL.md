@@ -56,6 +56,43 @@ say so and stop rather than estimating.
   See `omega-encoding` section 0 for tested hashes, exact limits and refusal boundary.
   Source merge status does not establish browser deployment.
 
+### Pending independent GPU driver host slice
+
+`aien-dev/omega-gpu-driver` [draft #4](https://github.com/aien-dev/omega-gpu-driver/pull/4),
+stacked on draft #3, has candidate source `a5dd456740d8fb5235774cd69cecdf1b9a4c192c`.
+It remains pending, not main, qualified or deployed. Its compiler is specifically
+`omega-mv@397e67040fb74853c6814097fe02ae4e1ebd6f66` (draft #890 atop #878),
+omc sha256 `bcfa582892afca8f65e551fe56867d918d86e84540c7381be8fa9ef18d0cf0f6`,
+not the different compiler candidate in section 3. Protocol authority is NVIDIA
+`open-gpu-kernel-modules@20e4e6e19cc26ba47b5cbe23130a396be100c427` (580.173.02);
+the independent boot-image oracle is
+`aienux@c5bb3a4b9898257658aba0b7178a3c73a0371c27`.
+
+Seeded `.om` now encodes the complete bounded boot arena/COT and non-CC RPC frames,
+boot/guest/static handshake, RM allocation/control/free and timeout/error/sequencer suspension.
+Reuse `gsp/sysinfo.om` and `chan/params.om`; do not duplicate their encoders.
+`gsp/owned.om` stages complete arena bytes through an owned checked map handle and binds
+uncertain boot completion to retention of the matching published backing. It is not a real
+queue publisher, memory fence, firmware authenticator or hardware RPC endpoint.
+
+At that exact candidate the host runners `tests/mutants-rpc.sh`, `tests/mutants-arena.sh`,
+`tests/boot_dma.sh` and `tests/dma_host.sh` were exercised with the pinned OMC and clean
+AIENUX reference. Exact sender/full-arena parity, 19 RPC/12 arena behavior mutants,
+composed real-anonymous-map staging/timeout retention plus two mutants, and 23 DMA
+boundary cases/11 lifecycle mutants passed. See its two `tests/*host-receipt.txt`
+receipts for commands and source/binary hashes. C GCC 13.3.0-6ubuntu2~24.04.1 and
+Python 3.12.3 are verification-only dependencies, never production `.om` substitutes.
+
+Hardware and kernel execution remain NOT_RUN. Preserve production refusal until measured device
+identity, owned live queue transport, release/acquire/coherency, queue notification, sequencer
+dispatch, channel scheduling, completion-semaphore progress and fault/drain idle proof exist.
+Published or quarantined backing is retained, never automatically reclaimed after a timeout.
+The Linux-process ELF/VFIO compiler profile can remove NVIDIA modules only while retaining Linux
+VFIO/IOMMU services; it is not an Omega kernel module or a completed kernel replacement.
+A separate reviewed kernel execution/effects profile, typed DMA/MMIO spans and deferred IRQ
+transport are required for kernel execution. No device/VFIO open, service/module change,
+authorization, gate or trust change was part of this host work.
+
 ## 3. Compile, execute, challenge
 
 Use the target repository's documented commands. A host-only seed workflow on AArch64 Linux, in a disposable clone pinned to an exact revision, looks like this:
