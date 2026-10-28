@@ -31,8 +31,8 @@ SysV C calls. Linux syscall numbers and native flags are target-specific;
 | Existing seed/host and gate5 | PASS at this source; stage1/stage2/stage3 byte-identical |
 | Guide examples, both targets | FNV `abc` emits hex bytes `0be9471a`, exit 0; narrow trap exit 105; store-removal control exit 44 |
 | Function-growth refusal | Both targets exit 14 with empty output; guard-removed x86 mutant emits 4,462,186 bytes |
-| Complete cross-target differential | Current-source final receipt pending; no full-corpus PASS claim |
-| Historical wrong-encoding controls | Invalid opcode and valid wrong immediate both caught at the original candidate |
+| Complete cross-target differential | **FAIL**, exit 1: 14,936 PASS, 54 FAIL, 10 NOT_RUN, 216 EXCLUDED |
+| Wrong-encoding controls at this source | Invalid opcode and valid wrong encoding both caught |
 | Native x86 execution | NOT_RUN |
 
 Integer/layout/quantity operations, arrays/traps/calls, SSE2 scalar float and
@@ -44,6 +44,12 @@ differential at `becf5c817bcb7e0846d12ebfc2be91042d8ad89a` remains **FAIL**
 (7,537 PASS, 152 FAIL, 399 NOT_RUN, 5 MISSING_IMPLEMENTATION, 570 EXCLUDED,
 257 MISSING_INPUT), retained in `seed/qualification/x86-linux/20261028.json`.
 Those totals are historical, not measurements of the repaired source.
+The repaired-source full receipt is
+`seed/qualification/x86-linux/20261028-orphan-corpus.json`; its 54 failures
+include literal diagnostics, growth refusal source-coordinate equality,
+historical S2 mutants, frozen current-C2 and pre-OM2 refusal cases.
+Ten NOT_RUN cases are QEMU ioctl artifacts and entryless diagnostic callers.
+No new cross-host compiler self-fixpoint was measured at this source.
 No x86 hardware, GPU, SysV C FFI or native x86 seed0 chain is qualified.
 
 ### Current candidate pin (observed 2026-10-28)

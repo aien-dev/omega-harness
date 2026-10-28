@@ -44,8 +44,18 @@ Qualification is **not complete**. The original full differential at
 7,537 PASS, 152 FAIL, 399 NOT_RUN, five MISSING_IMPLEMENTATION, 570 EXCLUDED,
 257 MISSING_INPUT. Its receipt `seed/qualification/x86-linux/20261028.json`
 is immutable; those totals must not be attributed to the repaired source.
-Current-source final corpus evidence is pending. See `docs/X86-LINUX.md`
-for contract, diagnostic, caller and emulator limits.
+Current-source `python3 -u seed/omc/qualify-x86.py` with the pinned compiler,
+QEMU, bridge baseline and objdump arguments recorded in
+`seed/qualification/x86-linux/20261028-orphan-corpus.json` exited 1:
+**FAIL**, 14,936 PASS, 54 FAIL, 10 NOT_RUN, 216 EXCLUDED.
+The case-name multiplicities match the prior complete run; failures were
+not excluded to improve the verdict. Invalid-opcode and valid-wrong-encoding
+mutants were both caught. Remaining failures include 17 literal diagnostic
+equalities, eight growth source-coordinate equalities, 16 historical S2
+mutants, 12 frozen current-C2 cases and one pre-OM2 refusal. The ten NOT_RUN
+cases are two QEMU ioctl artifacts and eight entryless diagnostic callers.
+No new cross-host compiler self-fixpoint receipt exists at this source;
+do not transfer an older x86 compiler hash to it. See `docs/X86-LINUX.md`.
 All x86 execution evidence is **EMULATED**. Native x86 execution is **NOT_RUN**.
 This draft is IMPLEMENTED, not QUALIFIED, MERGED or DEPLOYED; do not replace
 the dated established pins below with a claim that FR-9 is complete.
