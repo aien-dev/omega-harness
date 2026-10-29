@@ -74,6 +74,43 @@ This reproduces the independently recorded binary digest, not an independent
 correctness proof or a full gate5/host qualification.
 
 
+### Pending optional kernel-leaf experiment (2026-10-28; not an active pin)
+
+Compiler [draft #925](https://github.com/aien-dev/omega-mv/pull/925) and bridge
+[draft #38](https://github.com/aien-dev/omega-bridge/pull/38) describe an optional
+restricted ABI experiment, not a prerequisite for Linux-hosted Omega policy.
+Function-mode continuations/effect records can use the existing policy language;
+kernel adapter, lifetime and non-leaf hardening requirements remain separate.
+
+The host-tested compiler source is
+`c4b4500d172690c8a72ae2df7124c1bf70c39173` (isolated base
+`6999fa9e6dae4847c155ef4eacaece74f491d3ca`, distinct from FR9).
+`seed/omc/omc.om` SHA256 is
+`545e630349b45b826d49f8e75ed1fbc0e5d76c90410650f9945e0d89829441c8`;
+experimental executable SHA256 is
+`e7e95a8305fe0bf8331f579533b1fca69101eaf351fc5cea8208e3892a8733b8`.
+The untouched seed remains
+`d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84`.
+Bridge source `9a4e5102a82c913699fb7c3dd99a2736cab2b3d6`,
+`src/kernel_leaf.om`, has SHA256
+`3f599cd22bc636084e81d4d3118a352da5ed1c42ce93624c88d7394ebed044cb`.
+None replaces the current candidate/general-language/native-command pin.
+
+The experimental `kleaf` directive permits one bounded unsigned scalar function,
+normal x0 value/x1 status returns and allocated volatile-register clearing.
+It rejects stack/calls/views/loops/host/OM-2 rather than claiming a general kernel
+backend. Its `.om` bridge envelope matches only inspected
+Linux `7.0.0-1019-nvidia` leaf tracing/PAC metadata; GNU binutils 2.42
+performs assembly/object packaging. Native ET_REL generation is not added.
+The compiler-side `seed/omc/kernel-leaf-experiment.py` requires clean compiler
+and bridge commits and produced immutable host receipt SHA256
+`254e2f3ea3acc3f9578e0854c6bd4664df234b3d8c9a9cf970a8c0c3ef8504d7`,
+filed in #925. Self-rebuild, ABI/status/trap/register, refusal/mutant and explicit
+single-kbuild-object comparisons passed. No module link/modpost/sign/load,
+kernel execution, tracing exercise, DMA/IRQ or GPU qualification occurred.
+The broader Linux effect contract is proposed only. Existing examples and
+active pins are unchanged.
+
 ### Historical general-language pin (2026-10-25)
 
 | Item | Value |

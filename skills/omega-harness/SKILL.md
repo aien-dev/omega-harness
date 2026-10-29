@@ -107,6 +107,19 @@ say so and stop rather than estimating.
   `87489da90a1a7a750fd4a7f9eeb005b1221721f6`. It is written in seeded Omega.
   See `omega-encoding` section 0 for tested hashes, exact limits and refusal boundary.
   Source merge status does not establish browser deployment.
+- Optional kernel-leaf/compiler ABI work is pending
+  [omega-mv #925](https://github.com/aien-dev/omega-mv/pull/925) and
+  [omega-bridge #38](https://github.com/aien-dev/omega-bridge/pull/38);
+  exact tested sources/hashes are in `omega-encoding` section 0. It is a narrow
+  scalar experiment, not a driver-enabling prerequisite or supported kernel
+  transport. Linux callbacks already run in kernel context; direct userspace
+  EL1 access and OS replacement are not requirements. Existing function-mode
+  continuations need a checked primitive adapter and reviewed target hardening,
+  not arbitrary extern calls. Host scalar execution and single-object kbuild
+  comparison passed; module/kernel/device execution did not run. No active
+  compiler pin, native-command fingerprint, trust path or loading authority
+  changes. First-party policy/generation remains `.om`; GNU object tooling is
+  a disclosed dependency, not an independent Omega driver.
 
 ## 3. Compile, execute, challenge
 
