@@ -10,12 +10,32 @@ cannot express, and before encoding bytes, integers or host I/O in Omega.
 
 ## 0. Pin and how to re-check it
 
-The current candidate pin below covers `qty` and the compiler's `check`/`next` interface.
-Older tables and their citations remain dated history, not claims about this candidate.
-Pending [omega-mv #911](https://github.com/aien-dev/omega-mv/pull/911), including
-[#909](https://github.com/aien-dev/omega-mv/pull/909); not merged or deployed.
+The quantity and diagnostic audit is merged through omega-mv #914 at main
+`d94a503f7aae57d09697046405da2e9a5895be6d`. The older candidate observations
+below remain dated history, not claims about the newer integration.
 
-### Current candidate pin (observed 2026-10-28)
+### Pending integrated x86 candidate (observed 2026-10-28)
+
+Compiler draft [#923](https://github.com/aien-dev/omega-mv/pull/923), source
+`7ab5fdd067884fd3044155084b39163da1be5c8a`, integrates current main and batch 3
+(#904). Source `seed/omc/omc.om` has SHA256
+`96d51b63c8f451661ac715395078e04f39195e50c9e8fe37746cda121e4d7a1e`;
+compiler `seed/out/omc` has SHA256
+`62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b`.
+The seed gate passed, including GATE5. Both guide examples compiled with empty
+stderr: `fnv1a32.om` on `abc` exited 0 with bytes `0b e9 47 1a`;
+`trap_narrow.om` exited 105, while removing its unmasked store exited 44.
+
+The exact first line `target x86linux` selects the pending backend. Quantity
+negation and complement refuse with error 7 on both targets. Empty text remains
+sized with length zero and emits no literal bytes; bounds checks still apply.
+Target-specific diagnostic contracts preserve the extra x86 stack-check records
+and exact growth-refusal records. See the source's `docs/X86-LINUX.md` and
+`seed/omc/x86-diagnostic-contracts.json`. Historical failed experiments and
+frozen compatibility rows remain separate from current acceptance.
+This candidate is not merged and does not establish native x86 qualification.
+
+### Historical quantity/check/next candidate (observed 2026-10-28)
 
 | Item | Value |
 |---|---|
