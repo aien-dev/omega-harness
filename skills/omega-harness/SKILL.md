@@ -5,6 +5,12 @@ description: Operate in Omega and the AIEN repositories. Use for any Omega or .o
 
 # Omega Harness: operate, encode, communicate
 
+Merge status, 2026-10-29: omega-mv #904 and #923 are merged (x86 main
+`bf54b19fa590e8ae925c0e80815516dbf41e7326`); omega-bridge #40, including the
+earlier #37 proposal, merged at `ed420fcbffa1ad83db78111deb836dd880ed891e`.
+The pending labels in the dated observations below describe pre-merge tests.
+Compiler identities and execution limits are unchanged. Native x86 remains NOT_RUN.
+
 These skills are operating guidance for coding agents. They are not a compiler and cannot guarantee correct output. What they do is require the checks that catch the mistakes agents keep repeating. English is how the work gets steered. Explicit programs, checked contracts and replayable execution evidence are what establish that something was done.
 
 Companion skills in this package:

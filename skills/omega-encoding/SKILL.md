@@ -10,6 +10,12 @@ cannot express, and before encoding bytes, integers or host I/O in Omega.
 
 ## 0. Pin and how to re-check it
 
+Merge status, 2026-10-29: compiler batch #904 merged at `e2662fffbce1c21ef09da71c0d8808133a6af8ab`;
+x86 integration #923 merged at `bf54b19fa590e8ae925c0e80815516dbf41e7326`.
+The tested x86 compiler/source hashes below are unchanged by those merges.
+Earlier pending labels describe the recorded pre-merge tests. Native x86
+execution remains NOT_RUN; merging is not hardware qualification.
+
 The quantity and diagnostic audit is merged through omega-mv #914 at main
 `d94a503f7aae57d09697046405da2e9a5895be6d`. The older candidate observations
 below remain dated history, not claims about the newer integration.
