@@ -781,6 +781,11 @@ check proves nothing.
    ([#L27](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L27)) says they are on `main`. GPU launch and model execution through
    them are not qualified. (README line 5's old "candidate branches" wording was corrected on main by
    #801.)
+7. `devctl` request set at this pin: FIONREAD (21531) and encoded read/write NVRM `'F'` requests
+   only; any DRM request is error 9. PENDING, not merged: aien-dev/omega-mv#899 (draft) adds an
+   explicit list of eleven accel/ethosu requests (the ten `DRM_IOCTL_ETHOSU_*` of Linux v7.3 plus
+   `DRM_IOCTL_GEM_CLOSE`), with the exact-size check unchanged. Until it merges and the pin moves,
+   code that issues those requests needs that branch's `omc` and must say so.
 
 ## 13. Examples
 
