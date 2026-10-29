@@ -34,9 +34,66 @@ say so and stop rather than estimating.
 - When the language lacks something, write a concrete extension proposal and the smallest experiment that would test it. Do not invent a word, and do not fall back silently to another language.
 - Seeded Omegese, compiled by `seed/out/omc`, is the forward language. The historical console syntax in `spec/omega-language-v0.md` and the C compiler checks are different things. As of omega-mv main `55f9b0af47de70a3d06357985cf99ae3e45c016f` (2026-10-25), the seeded compiler and its host and device words are on main. Any source saying they exist only on candidate branches is stale.
 - Do not promote design ambitions into supported syntax. Check the keyword table, typing and lowering, and the fixtures of the compiler you will actually run. Compiler limits are implementation limits at a pin, not permanent properties of Omega.
+- Optimize for verified programs produced per unit of inference cost on held-out tasks (first-attempt correctness, successful compilation, verified behavior, completion time, and total compute cost). Tokenization is not a language rule: fitting vocabulary to single tokens under a specific tokenizer is an empirical cost measurement, not a binding language constraint.
+  The token benchmark entry point is
+  `sh bench/inference_cost/driver.sh --run-model --endpoint "$AUTHORIZED_ENDPOINT" --model "$MODEL_ID" --langs om,c,py,rs --arms plain,feedback --attempts 3`.
+  It never starts a server. Use only an explicitly authorized endpoint; this guide
+  update did not contact a model (real token measurements: NOT_RUN).
+  Observed negative control at the section 3 candidate pin:
+  `sh bench/inference_cost/driver.sh --run-model --model example --langs om,c,py,rs --arms plain,feedback --attempts 3`
+  exited 3 and printed exactly:
+  ```text
+  NOT_RUN: no --endpoint given; no model was contacted
+  ```
 - Reuse the existing unit composition, error handling, buffer layouts and build patterns. Make bounds, types, ownership, effects and wire encodings explicit. Keep authorization and refusal paths working, not just the happy-path bytes.
 - Migrate the actual consumers before deleting a replaced implementation. Preserve history and immutable evidence. Matching a recorded hash does not prove parity with the current foreign reference; where the contract calls for it, run an independently built oracle.
 - Conversion between Omega and other languages is not this skill's job. Route it to `aien-dev/omega-bridge`, which implements checked conversion for a declared subset and refuses universal conversion. An MCP wrapper is optional tooling and does not widen what the bridge can convert. A native binding counts as working for a language only when its caller was built and executed by the bridge's native-call runner (section 3); a binding that was generated but never called is IMPLEMENTED, not EXERCISED.
+  Bridge ABI2 rollup [PR #15](https://github.com/aien-dev/omega-bridge/pull/15) merged at
+  `826cb8aee4a09b65cc1b2e295b1dc9e50e155253` (2026-10-28), preserving its later main
+  native-caller gates. Private-linkage [PR #32](https://github.com/aien-dev/omega-bridge/pull/32)
+  merged at `31ce3886d7966c27f8208922e27fc79ed76b39c6`: all private ABI1/ABI2 assembly
+  runtime, code and entry labels are local, matching static C helpers and hosted per-TU/TLS
+  state. Independently generated translation units link without helper collisions; public
+  `omega_`/`omega2_` exports and compiler bytes are unchanged. Its private-symbol regression
+  checks independent units, trap recovery, concurrent callers, local `nm` bindings and a
+  `.globl ombr_enter` link-failure mutant.
+  Freestanding [PR #33](https://github.com/aien-dev/omega-bridge/pull/33) merged at
+  `37bf93d158e2e4fd7a3c6a1b9a47b569195a2a66`. It adds generator
+  output `freest` and `tools/native --freestanding OUTDIR unit.om...`: generated C/header/object,
+  same scalar status ABI, caller-owned stack and no pthread, mmap, heap, TLS or mutable runtime
+  state. Whole-source validation includes unused helpers and conservatively refuses arrays,
+  globals, text, host effects, OM2 and types outside its declared integer/bool scalar subset.
+  Traps return status without writing the result; nested and concurrent calls remain isolated.
+  The undefined-import gate permits only the GPU_FS_LINK libc-string allowlist; failed symbol
+  extraction/filtering refuses installation. One private input snapshot supplies profile,
+  compilation, framing and identity. Tests exercise the pthread-import mutant, failed/missing
+  inspectors and a deterministic source swap whose original-reread mutant admits mismatched code.
+  Framed source/code must still match the pinned compiler: this is not an arbitrary-bytecode sandbox.
+  Current bridge main source pin, including bounded-capacity
+  [PR #35](https://github.com/aien-dev/omega-bridge/pull/35) and ABI-v2 verdict
+  [PR #34](https://github.com/aien-dev/omega-bridge/pull/34), is
+  `0c4cb9ff980af278890b231b994eaede4dc7621c` (2026-10-28; native.om SHA256 unchanged:
+  `d3cfe0561696aad92164ddf11340522645cf6daf7af238835c3d3c61ecdef656`).
+  Fixed pools hold 4194304 input bytes (accepted input strictly smaller) and 16777216 output
+  bytes; exhaustion exits 106 before output. Compiler/per-unit limits are unchanged.
+  Historical host evidence with configured language-toolchain PATH: all seven native callers,
+  build-failure controls and ABI2 suite passed; private/freestanding controls and a compiler-matched
+  16-unit frame beyond both old pool sizes
+  passed, while old-bound mutants and both current-overflow probes refused. The independent
+  31-root consumer frame emitted and C-compiled with both pinned compilers; those 31 consumer
+  functions were not executed by this qualification. Evidence is under
+  `evidence/native-{private-symbols,freestanding,capacity}/`. Capacity's
+  `coverage-correction.log` preserves and corrects an earlier overclaim; use
+  `native-boundaries.log` and `qualification-boundaries.json` for current boundary coverage.
+  Remote CodeQL checks are analysis, not functional execution. This is MERGED and HOST EXERCISED,
+  not deployed or GPU-qualified.
+  A separate ordinary-process-PATH replay at `0c4cb9ff` built and executed C, BTI-C, C++, Python,
+  Rust2021 and Rust2024 successfully, but neither Zig nor Go was discoverable on that PATH.
+  Both full runners returned exit 1: `NATIVE-CALL NOT_RUN (not run: zig go)` and
+  `NATIVE-V2 NOT_RUN (not run: zig go)`. This does not retract the historical configured-PATH
+  Zig/Go executions: their logs have individual successful caller lines, not merely aggregate PASS.
+  Java, Swift and Node/JavaScript are not callers in these suites. See the
+  [coverage clarification and replay receipt hashes](https://github.com/aien-dev/omega-bridge/pull/34#issuecomment-6473079219).
 - The scalar IR-to-WebAssembly backend is owned by omega-mv, not a foreign-source import:
   [#787](https://github.com/aien-dev/omega-mv/pull/787) merged as
   `3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`, after boolean IR fix
@@ -48,6 +105,18 @@ say so and stop rather than estimating.
 ## 3. Compile, execute, challenge
 
 Use the target repository's documented commands. A host-only seed workflow on AArch64 Linux, in a disposable clone pinned to an exact revision, looks like this:
+
+Current candidate source pin (2026-10-28): omega-mv
+`1fe5976d398646b17acabbf6d9dfae96b017e439`, pending
+[#911](https://github.com/aien-dev/omega-mv/pull/911) and incorporating
+[#909](https://github.com/aien-dev/omega-mv/pull/909).
+`seed/omc/omc.om`: 12,520 lines, sha256
+`3f937160c823d3a90a6b4cc296f00f517f36ede7fd27a06505c998985ec62240`;
+`seed/out/omc`: sha256
+`d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84`.
+The fresh-clone `qty`, wrap/refusal controls and `check`/`next` outputs are
+recorded in `omega-encoding` section 0. Older pins below remain dated history.
+
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv.git omega-src
@@ -72,6 +141,11 @@ fi
 - Rebuilding with `sh seed/omega-from-seed.sh` rewrites tracked files, including `seed/out/omc.sha256`. Record the expected digest independently beforehand; the rewritten sidecar is not a trust anchor. A self-rebuild fixpoint proves consistency, not correctness and not diverse compilation. At source `ec07d25d5506d33567adbd4d9b518177b7933bad` on 2026-10-26, the seed gate reproduced `499236398aabc652e2dae27fe4bdc4c5db3d3726314356e0dbef23e3345803ec`. Main later used `befb8199db8c4bca188a494dfaac2a6f0ee5c36fcea11188c75666c55fce8a1d`. Main `91b3c9326919faf1491e29ae9276929e8349b8c7` now carries batch compiler `189ada82e00bb440cb41351bd252cc68c54a1b1050051cc42a1df700081c3b54` (contracts, capacity and f32 returns); its host qualification is `evidence/BATCH-189ada82/README.md`.
 - Gate5 bookkeeping for any compiler change: since main `91b3c932`, `seed/omc/gate5.sh` writes current outputs to `build/seed/r5/evidence/`, never to immutable `evidence/SEED-0/omc/`. The living ledger `seed/omc/size-history.tsv` keeps the old history byte for byte, then one tab-separated row per compiler change (`rewrite change source_lines functions words sha256`). At `91b3c932` the last row is `RM2-capacity-f32` (`189ada82…`). Gate5 checks that the last row's sha256 equals the freshly built `omc`, and it never appends a row itself. So a compiler change adds exactly one row by hand, with values measured from the new build, in the same commit as the change. Never edit an older row to make the check pass, and never point the check back at `evidence/SEED-0`.
 - Pending (2026-10-28, not merged): draft omega-mv#904 integrates current main at source `7bce2a4fddc43268ac2af09cddc4a5a67d78312d`, compiler `1811d4047f118440cc35e995261af6768b606148cb17e18c42158afd15fcad58` (row `RM-batch3-current`, #896 #897 #898 #903). The original `397346de` evidence stays historical. A reseed must also move compiler pins in `seed/json/tests/gate-json.sh`, `seed/wasm/gate-irwasm.sh` and `seed/spirv/gate-irspirv.sh`; TLS suites read `OMC_PIN` from `om/units.sh`. The seed/GATE5, current-language and diagnostic checks pass. The integration also repairs `s2/mut/cyc.from` and `.to` to preserve the newer `check`/`next` prelude: before repair exact-once substitution matched zero times; after repair the same prohibited-recursion case catches the faulty compiler. An INVALID mutation setup is never a caught fault. Frozen C2 still has its six historical failures, while the separate capacity and batch2 manifests pass; do not call that frozen corpus PASS.
+- At the current candidate pin, `bash tests/gates/run.sh seed` also invokes
+  `sh seed/omc/gate5.sh` after the seed build and host checks. Keep one size-history
+  row for each distinct compiler change: the qty compiler and the check/next
+  compiler have separate rows, even when they arrive in the same PR. A final
+  matching row does not excuse omitting an intermediate compiler change.
 - Run the changed path and compare exact expected bytes, status and state; a successful compile proves nothing about behavior. Also exercise the failure or refusal boundary most likely to regress. If that is impractical, say exactly what was not run.
 - Run a negative control: change an expected value or feed invalid input, and confirm the check fails. A verifier that also accepts its negative control has not established anything.
 - Qualification case files (`.cases` in omega-mv) are executed by a conductor, not run directly. More than one conductor exists under `seed/qualification/`, and picking the wrong one looks like a failing gate. Read the conductor's `main` for its argument count first. Observed 2026-10-25 with compiler `734f0a39319fbfa930bcc62cb30dbf06d47d78e126372b74f5baf478e6126b61`: `seed/qualification/om2/gate.om` takes four arguments (`omc pinhash casesfile scratchdir`) and summarises as `OM2GATE PASS cases=N pass=N fail=N invalid=N not_run=N`; `seed/qualification/security673/gate669.om` accepts at most one argument and exits 90 under a four-argument call. A usage status such as 90 from a conductor is INVALID setup, never a qualified refusal.
@@ -80,6 +154,12 @@ fi
 - `seed/wasm/gate-irwasm.sh` and the OM-2 `gate.om` suites are merged but not in any `tests/gates/*.gate` manifest at main `19f014f21`, so `tests/gates/run.sh seed` does not cover them (omega-mv #790). Run and report them separately.
 - A benchmark can need a seekable stdin. A checker replay that seeks back over its input 101 times exits 90 when stdin is a pipe, and the same command exits 0 when stdin is an opened regular file. Supply a file, and do not count the setup-status exit as a control result.
 - Native callers of compiled Omega units are qualified per language, and only by execution. Since omega-bridge main `adb26cc654656926e76ab1839adae63e92909e88` (PR #18, merged 2026-10-26), `tests/native/run.sh` prints `NATIVE-CALL PASS` only after all seven required callers (`c`, `c-bti`, `cpp`, `python`, `rust`, `zig`, `go`) built and ran. A present toolchain whose build fails prints `NATIVE-CALL FAIL` and a missing toolchain prints `NATIVE-CALL NOT_RUN`; both exit nonzero. Check the refusal paths with `OMEGA_NATIVE_OMC=<pinned-omc> sh tests/native/test_build_failures.sh`: it injects failing Zig and Go toolchains, hides both for the missing-toolchain control, then requires the real Zig and Go callers to pass. It needs real Zig 0.13.0 and Go binaries (`ZIG`, `GO`) and prints `NOT_RUN` without them. The historical `evidence/native-call-v1/run.log` predates this runner and stays unchanged; do not cite it as a current all-caller PASS.
+  ABI-v2's `tests/native/v2/run.sh` has the corresponding terminal refusal since bridge
+  `0c4cb9ff980af278890b231b994eaede4dc7621c` (#34, 2026-10-28): actual failures take precedence,
+  otherwise any missing required toolchain emits `NATIVE-V2 NOT_RUN` and exits 1.
+  `python3 tests/native/v2/test_verdict.py` passed all five compiler-free tests on that pin;
+  these execute the real terminal shell suffix, not upstream detection or native callers.
+  The separate full native-v2 run above exercised detection and the new missing-toolchain verdict.
 - Compiler changes need the repository's referee and wrong-word-mutant checks, not just a self-fixpoint. Before running any gate, read its prerequisites, device requirements and whether it writes receipts.
 - For the merged IR/wasm backend above, run `nice -n 19 sh seed/wasm/gate-irwasm.sh`.
   Node v24.21.0 is a read-only wasm validation/execution oracle only; never use Node to generate

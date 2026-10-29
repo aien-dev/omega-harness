@@ -10,8 +10,45 @@ cannot express, and before encoding bytes, integers or host I/O in Omega.
 
 ## 0. Pin and how to re-check it
 
-The general-language citations below retain their dated historical pin. The newer,
-scope-specific pin immediately below is the tested and merged IR/wasm backend.
+The current candidate pin below covers `qty` and the compiler's `check`/`next` interface.
+Older tables and their citations remain dated history, not claims about this candidate.
+Pending [omega-mv #911](https://github.com/aien-dev/omega-mv/pull/911), including
+[#909](https://github.com/aien-dev/omega-mv/pull/909); not merged or deployed.
+
+### Current candidate pin (observed 2026-10-28)
+
+| Item | Value |
+|---|---|
+| Repository | `github.com/aien-dev/omega-mv`, PR #911 head |
+| Commit | `1fe5976d398646b17acabbf6d9dfae96b017e439` |
+| Compiler source `seed/omc/omc.om` | 12,520 lines, sha256 `3f937160c823d3a90a6b4cc296f00f517f36ede7fd27a06505c998985ec62240` |
+| Compiler `seed/out/omc` | sha256 `d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84` |
+| Seed loader `seed/rung0/seed0.hex` | sha256 `baaf081fe6055a768485c5d25d7435681ce00b04cfa80b26c48169f78944e14d` |
+
+Host-only observations below used a fresh clone checked out detached at this commit.
+Hash and count commands: `sha256sum seed/omc/omc.om seed/out/omc seed/rung0/seed0.hex`
+and `wc -l seed/omc/omc.om`; their observed values are in this table.
+The fresh-clone `sh seed/omega-from-seed.sh` run exited 0 and printed:
+
+```text
+PASS seed0 408 bytes, rebuilds itself
+PASS hex1 776 bytes, born from seed0
+PASS asm2 2464 bytes, born from hex1
+PASS om4 om4.bin 14224 bytes
+PASS omc fixpoint d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84
+PASS fwd exit 0
+PASS fwd runs, exit 7
+PASS mut exit 0
+PASS mut runs, exit 0
+PASS cycle exit 9
+PASS assign exit 7
+RC=0
+```
+This reproduces the independently recorded binary digest, not an independent
+correctness proof or a full gate5/host qualification.
+
+
+### Historical general-language pin (2026-10-25)
 
 | Item | Value |
 |---|---|
@@ -201,6 +238,96 @@ Status words used here: **implemented** (in `omc.om` at the pin), **gated** (a c
 or fixture checks it), **author-verified** (the repository records a run; not re-run for this note),
 **proposed** (described, not on `main`). Nothing here is hardware qualification, and nothing here is
 deployed anywhere.
+### `qty`: checked quantities, not modular words
+
+At the current candidate pin, `qty` is distinct from `ulong`. Do not silently mix
+quantity arithmetic with modular words. Save this as `qty-overflow.om`:
+
+```text
+fn main to int
+a = qty 18446744073709551615
+b = qty 1
+c = add a b
+ret int 0
+end
+```
+
+Use the section 1a compile/run recipe with `prog.om` replaced by `qty-overflow.om`.
+Observed: compile exit 0, empty stderr; run exit 101, empty stdout and stderr.
+The boundary literal is copied from the pinned `tests/quantity/qty_add_overflow.om`.
+
+Negative control: change only `a = qty 18446744073709551615` to `a = qty 0`
+and `ret int 0` to `ret int c`. Observed: compile exit 0, run exit 1,
+empty stdout/stderr. The trap is not an unconditional program exit.
+
+For the modular contrast, replace both `qty` spellings with `ulong` and return
+`int c`. Observed: compile exit 0, run exit 0, empty stdout/stderr: `ulong`
+still wraps. Mixed operands are refused, not coerced:
+
+```text
+fn main to int
+a = qty 1
+b = ulong 1
+c = add a b
+ret int 0
+end
+```
+
+Observed: compile exit 7, empty stdout, stderr:
+
+```text
+omc: line 4: error 7
+```
+
+### `check` and `next`: text diagnostics and prefix context
+
+These are leading input lines to the seeded compiler, not command-line flags
+and not the legacy C `omegese next` interface. At the current candidate pin:
+
+```sh
+printf 'check\nfn main to int\nret true\nend\n' | seed/out/omc
+```
+
+Observed stdout (exit 7):
+
+```text
+omega-diag v1
+om1 TYPE span=19-23 FINAL REPAIRABLE code=7 line=2 expect=value found=true
+```
+
+Observed stderr:
+
+```text
+omc: line 3: error 7
+```
+
+Negative control: replace `ret true` with `ret 0`. Observed exit 0, empty stderr,
+stdout exactly `omega-diag v1` followed by a newline. Check mode emits diagnostics,
+not an executable. Its record line is relative to the program after the leading
+mode line; the ordinary stderr line includes that mode line.
+
+```sh
+printf 'next\nfn main to int\na = ulong 3\nwhile lt a 9\n' | seed/out/omc
+```
+
+Observed exit 0, empty stderr, stdout:
+
+```text
+omega-query v1
+scope: function
+constructs: ret if while for trap exit put end note break continue
+names:
+a ulong local
+functions:
+fn main to int
+```
+
+This is prefix context (scope, constructs, visible names and signatures), not a
+promise of an exact next-token mask. The unfinished loop above is intentional.
+Negative control: compare the observed query with a copy whose name line is
+`a ulong param`. Observed comparison: unequal (`REJECTED`), so a local/parameter
+kind error is detectable.
+
 
 ## 1. Which language is which
 
@@ -232,6 +359,12 @@ disagree, `omc` is what compiles your program:
 
 Language rule: `.om` is the only forward first-party implementation language. C, Rust and shell that
 remain are unfinished migration, not exemptions ([README.md#L50](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L50)).
+- **Tokenization is not a language rule:** Language design optimizes for verified programs produced
+  per unit of inference cost (measured on held-out tasks by first-attempt correctness, successful
+  compilation, verified behavior, latency, and total compute cost). Fitting words into single tokens
+  under particular tokenizers (e.g. Qwen3) is an empirical measurement and cost consideration, not a
+  binding rule of Omega or Omegese. The compiler-guided interface remains portable across models and
+  tokenizers.
 
 ## 1a. Compile and run (Linux AArch64 host only)
 
