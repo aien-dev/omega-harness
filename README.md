@@ -66,7 +66,7 @@ The examples run on Linux AArch64 hosts only:
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv.git omega-src
-sha256sum omega-src/seed/out/omc   # 734f0a39319fbfa930bcc62cb30dbf06d47d78e126372b74f5baf478e6126b61 at the pin
+sha256sum omega-src/seed/out/omc   # 62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b at main bf54b19f (2026-10-29); 734f0a39... at the 2026-10-25 pin 55f9b0af
 omega-src/seed/out/omc < skills/omega-encoding/examples/fnv1a32.om > fnv 2> fnv.err
 compile_rc=$?
 printf 'compile rc=%s\n' "$compile_rc"
