@@ -202,6 +202,26 @@ returns now work: internal void return code 12 is distinct from f32 value type 1
 `gate8.sh` exercises f32 values and rejects void-as-value (7) and f32 fallthrough (18).
 Consumers must explicitly migrate and qualify their own pins; a main merge does not deploy them.
 
+### Pending compiler batch 3 (PROPOSED, not merged)
+
+Draft [omega-mv#904](https://github.com/aien-dev/omega-mv/pull/904), integrated on 2026-10-28 at
+`7bce2a4fddc43268ac2af09cddc4a5a67d78312d` over main `d94a503f7`, merges #896
+(integer `bitcast` re-extension), #897 (empty `text` sized `nm_len 0`, view count 0; closes the
+#775 defect above), #898 (function names that start with a keyword) and #903 (`pread`/`pwrite`
+destination writable check) and reseeds `seed/out/omc` to sha256
+`1811d4047f118440cc35e995261af6768b606148cb17e18c42158afd15fcad58` (12,577 source lines, 418
+functions, size-history row `RM-batch3-current`). Compiler source SHA-256:
+`d33ef5cab603f85a5cbcbdfdd55391f2ce0448bfcbc5fecbf0393599b636ef04`.
+Status: HOST_TESTED, not merged or deployed. The targeted regression cases, seed/GATE5,
+OM-2 s1 through s4 and their mutants, current-language quantity cases, diagnostic experiment,
+bindings/parity, JSON/HTTP, WebAssembly, CPU OpenCL, IR-trap checks and local TLS suites pass.
+The frozen C2 corpus still fails its six historical assertions; its capacity and batch2
+replacement manifests pass. TLS live-internet parity and GPU gates are NOT_RUN.
+The earlier `397346de` receipt remains immutable history in `evidence/BATCH-397346de/`.
+At this new pin, the guide's FNV example with `abc` outputs `0be9471a` (exit 0), the narrowing
+example exits 105, and removing its unmasked store exits 44. All compile with empty stderr.
+Until the proposal merges, do not cite this candidate pin as main or as x86 qualification.
+
 
 Re-check recipe (read only, in a fresh clone, never in a shared working tree another agent may be using):
 
