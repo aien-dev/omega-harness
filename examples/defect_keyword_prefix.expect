@@ -1,2 +1,2 @@
-compile 16
-stderr omc: line 4: error 16
+compile 0
+exit 7

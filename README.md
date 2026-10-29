@@ -62,13 +62,13 @@ pinned one, then compiles and runs every program here and in `skills/*/examples/
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv.git omega-src
-git -C omega-src checkout e5b32567a7aff3ce594e3254a622a846a6cd190b
-sha256sum omega-src/seed/out/omc   # 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+git -C omega-src checkout bf54b19fa590e8ae925c0e80815516dbf41e7326
+sha256sum omega-src/seed/out/omc   # 62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b
 examples/gate.sh omega-src/seed/out/omc
 ```
 
 It prints `PASS name` or `FAIL name: reason` per program and ends with
-`GATE PASS examples=98 pass=98 fail=0 omc=2c8248...` (exit 0), `GATE FAIL ...` (exit 1), or a hash
+`GATE PASS examples=98 pass=98 fail=0 omc=62775d2a...` (exit 0), `GATE FAIL ...` (exit 1), or a hash
 refusal (exit 2). The `omega-encoding` skill (section 0 and section 13) records the observed results
 and the negative controls; [`examples/WOLFRAM.md`](examples/WOLFRAM.md) records the Wolfram checks of
 the arithmetic expectations.

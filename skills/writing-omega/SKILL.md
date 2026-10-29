@@ -14,8 +14,8 @@ For compiler internals, register rules, wire formats and the reasons behind each
 
 | Pin | Value |
 |---|---|
-| omega-mv commit | `e5b32567a7aff3ce594e3254a622a846a6cd190b` |
-| compiler `seed/out/omc` | sha256 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f` |
+| omega-mv commit | `bf54b19fa590e8ae925c0e80815516dbf41e7326` |
+| compiler `seed/out/omc` | sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b` |
 | language reference | `docs/one_layer/OMEGESE.md` at that commit |
 | host | Linux AArch64 only; omc writes a static AArch64 Linux ELF |
 
@@ -26,7 +26,7 @@ decides; this guide records the known disagreements.
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv && cd omega-mv
-git checkout e5b32567a7aff3ce594e3254a622a846a6cd190b
+git checkout bf54b19fa590e8ae925c0e80815516dbf41e7326
 sha256sum seed/out/omc      # must print the pinned hash
 sh seed/omega-from-seed.sh  # optional: rebuild omc from the 408-byte loader
 seed/out/omc < prog.om > prog; echo "compile $?"
@@ -375,27 +375,19 @@ Each row is a program in `examples/` with its observed refusal.
 
 ## 13. Known compiler defects at the pin
 
-- **`bitcast` across signedness below 64 bits** (fix proposed in draft omega-mv #896, not in the
-  pin): the result does not compare equal to the reinterpreted value. Observed wrong: `uint` to
-  `int` (4294967295 is not -1, and adding 2 traps 1), `int` to `uint`, `ushort` to and from
-  `short`, `uchar` to and from `byte`, and `f32` to `int` (-1.0 is not -1082130432 and not below 0).
-  Observed correct: `ulong` to and from `long`, `f64` to `long`, `f32` to `uint`, `int` to `f32`.
-  Until a fixed compiler is pinned, do not `bitcast` between narrow integer types or from `f32` to
-  `int`; decode signed 8, 16 and 32-bit values arithmetically: load into `long`, then subtract 2^32
-  (or 2^16, 2^8) when the value is at least 2^31 (2^15, 2^7), as
-  [`examples/wire_le.om`](../../examples/wire_le.om) does. For float bits, `bitcast uint` of an
-  `f32` is correct.
-- **Empty text through `view uchar *`** (omega-mv issue #775): the parameter does not arrive with
-  `len` 0 (observed 60 and 28, depending on the other texts in the unit), so a loop over it runs past
-  the text (a crash has been reported; not reproduced here). Workaround: pass `part e 0 0`, which
-  arrives with `len` 0
+- **`bitcast` across signedness below 64 bits:** at this pin, `uint 4294967295` to `int` compares
+  equal to -1 and adding 2 returns 1, and `int -1` to `uint` compares equal to 4294967295. Those
+  two cases were wrong at omc `2c824805` (not equal; adding 2 trapped 1). `ushort`/`short`,
+  `uchar`/`byte` and `f32` to `int` were not retested on 2026-10-29. Do not assume they are fixed.
+  Decode signed values arithmetically when you have not measured the pair
+  ([`examples/wire_le.om`](../../examples/wire_le.om)).
+- **Empty text through `view uchar *`** (omega-mv issue #775): a 2026-10-27 report said `len` was
+  60 or 28, not 0. A two-text unit on 2026-10-29 returned 0 on this pin and on `2c824805`, so that
+  report was not reproduced. Keep passing `part e 0 0`
   ([`examples/empty_text_part.om`](../../examples/empty_text_part.om)).
-- **Function names that begin with an 8-letter keyword:** a function name longer than 8 bytes whose
-  first 8 bytes are a keyword (`continue_x`, `truncate_number`, `sockname_x`, `execprog_x`,
-  `peercred_x`) is error 16, although function names may be 63 characters. Shorter keyword prefixes
-  are fine (`breakx`, `whilex`, `getpid_x`). Workaround: rename (`cont_x`, `trunc_num`)
-  ([`examples/defect_keyword_prefix.om`](../../examples/defect_keyword_prefix.om)).
-- A fix for both is in progress in omega-mv; until a new compiler is pinned, use the workarounds.
+- **Function names:** a name of 9..63 bytes is not a keyword by its first 8 bytes. `continue_x`
+  compiles and returns 7 ([`examples/defect_keyword_prefix.om`](../../examples/defect_keyword_prefix.om)).
+  An exact keyword (`fn continue`) is still error 16. At omc `2c824805`, `continue_x` was error 16.
 - OMEGESE 9.9 lists `+ - * /` for floats; the compiler refuses them. Write `add sub mul div`.
 
 ## 14. Example index
@@ -412,5 +404,5 @@ arithmetic expectations are in [`examples/WOLFRAM.md`](../../examples/WOLFRAM.md
 - Traps: `trap1_overflow` .. `trap7_shift`, `trap_code`.
 - OM-2 and contracts: `om2_tour`, `om2_views`, `om2_hex_rotr`, `om2_part_trap`, `om2_param_slots`,
   `contracts_ok`, `contract_requires`, `contract_ensures`, `contract_invariant`, `contract_release`.
-- Known defects and their workarounds: `empty_text_part`, `defect_keyword_prefix`.
+- Regression guards: `empty_text_part`, `defect_keyword_prefix`.
 - Refusals: `err01_input` .. `err30_contract`, `mistake_*`.

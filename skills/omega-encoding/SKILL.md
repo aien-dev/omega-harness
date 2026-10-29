@@ -24,11 +24,36 @@ scope-specific pin immediately below is the tested and merged IR/wasm backend.
 
 Every citation links to that commit: `https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/<path>#L<n>`.
 
-### Rerun at omega-mv `e5b32567` (2026-10-27)
+### Rerun at omega-mv `bf54b19f` (2026-10-29)
+
+The example gate now pins this compiler. On 2026-10-29, Linux AArch64, `examples/gate.sh` against
+`seed/out/omc` sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b` printed
+`GATE PASS examples=98 pass=98 fail=0` after the keyword-prefix expectation was updated. The same
+gate pinned to `2c824805…029f` had passed 98/98 with the old expectation. A copy of the new gate
+pointed at `2c824805` was refused (exit 2).
+
+| Item | Value |
+|---|---|
+| Commit | `bf54b19fa590e8ae925c0e80815516dbf41e7326` (2026-10-28, merge of PR #923) |
+| `seed/omc/omc.om` | 15,624 lines, sha256 `96d51b63c8f451661ac715395078e04f39195e50c9e8fe37746cda121e4d7a1e` |
+| `seed/out/omc` | sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b` |
+| `seed/rung0/seed0.hex` | sha256 `baaf081fe6055a768485c5d25d7435681ce00b04cfa80b26c48169f78944e14d` (unchanged) |
+| `docs/one_layer/OMEGESE.md` | blob `90fa5d0c32757da6e7c271e96406b75105ba8008` |
+
+Two defects recorded at `e5b32567` are fixed in this compiler (the #904 integration, `e2662fff`):
+`fn continue_x` compiles and the program exits 7 (`examples/defect_keyword_prefix.om`); `bitcast int`
+of `uint 4294967295` compares equal to -1 and `add` 2 returns 1, and `bitcast uint` of `int -1`
+compares equal to 4294967295. At `2c824805` those three programs were error 16, exit 2 and exit 2,
+and `add` 2 trapped 1. `fn continue` is still error 16. The #775 empty-text report was not
+reproduced: a two-text unit passing `text e ""` to `view uchar *` returned len 0 on both compilers.
+Keep the `part e 0 0` workaround until that report has an exact failing program. Other
+"observed at e5b32567" lines below are dated history; the example suite still matches them.
+
+### Historical rerun at omega-mv `e5b32567` (2026-10-27)
 
 Every example and rule in this file that a program can show was rerun on 2026-10-27 with the
-compiler below, on a Linux AArch64 host only. Where an older dated pin in a later section disagrees
-with this list, this list is what the newer compiler does.
+compiler below, on a Linux AArch64 host only. The 2026-10-29 section above is current where it
+disagrees with this list.
 
 | Item | Value |
 |---|---|
@@ -75,10 +100,10 @@ Changes and confirmations against the rules below, each observed with a program:
   (OMEGESE 9.13 "Parameter slots"). Observed: 3 sized views plus 3 scalars compile and run; 2 unsized
   views plus 2 scalars compile; 2 unsized views plus 3 scalars, or 7 scalars, are error 9 on the `fn`
   line (`examples/om2_param_slots.om`, `mistake_om2_param_slots.om`, `mistake_seven_params.om`).
-- **Function names beginning with an 8-letter keyword (pin defect, fix in progress in omega-mv).**
-  A function name over 8 bytes whose first 8 bytes are a keyword (`continue_x`, `truncate_number`,
-  `sockname_x`, `execprog_x`, `peercred_x`) is error 16; `breakx`, `whilex`, `getpid_x`,
-  `continu_x` compile. Rename (`examples/defect_keyword_prefix.om`).
+- **Function names of 9..63 bytes are not keywords by their first 8 bytes** (fixed in the #904
+  integration, measured 2026-10-29 at omc `62775d2a`). `continue_x` compiles and returns 7
+  (`examples/defect_keyword_prefix.om`). At omc `2c824805` the same file was error 16. An exact
+  keyword name (`fn continue`) is still error 16.
 - **OM-2 slices:** `part A off n` is only an argument to an unsized `view T *` parameter. As a value
   of its own it is error 9, to a sized parameter error 7, of a global error 19; `off + n` past the end
   traps 3 at run time (`om2_views.om`, `om2_part_trap.om`).
@@ -89,20 +114,16 @@ Changes and confirmations against the rules below, each observed with a program:
 - **Error 24 was not reproduced.** 40 functions of 4,000 checked `add` lines each compiled and ran,
   because trap branches stay short; the check (`disp19`, omc.om line 2465) is defensive. Codes 25 and
   26 are not emitted by any `fail` call at this pin.
-- **Bitcast defect, observed in omc `2c824805`; fix in draft omega-mv #896 (lane OmcCanon), not in
-  the pin.** After `u = uint 4294967295` and `v = bitcast int u`, `eq v -1` is false, `lt v 0` is
-  false and `add v 2` traps 1. Also wrong, each checked with one `eq` program: `int` -1 to `uint`
-  (not 4294967295), `ushort` to and from `short`, `uchar` to and from `byte`, and `f32` -1.0 to
-  `int` (not -1082130432, not below 0). Correct: `ulong` to and from `long`, `f64` to `long`, `f32`
-  to `uint` (3212836864), `int` to `f32`. The bitcast branch in `seed/omc/omc.om` (line 6105)
-  returns its register without the `canon` step (line 2531) that values narrower than 64 bits need.
-  Until a fixed compiler is pinned, never `bitcast` between narrow integer types or from `f32` to
-  `int`; decode signed values arithmetically (section 10, `examples/wire_le.om`).
+- **Narrow `bitcast`:** at omc `2c824805`, `bitcast int` of `uint 4294967295` was not -1 and `add` 2
+  trapped 1, and `bitcast uint` of `int -1` was not 4294967295. At omc `62775d2a` those two cases
+  are correct (exit 1 and exit 1; `add` 2 returns 1). `ushort`/`short`, `uchar`/`byte` and `f32` to
+  `int` were not retested on 2026-10-29. Do not assume they are fixed. Decode signed values
+  arithmetically when you have not measured the pair (`examples/wire_le.om`).
 - **`byte` is signed 8-bit** (`i8`, OMEGESE line 109); `char` is not a type (error 3).
-- **Open defect #775 still reproduces (fix in progress in omega-mv).** An empty `text` passed to a
-  `view uchar *` parameter gave `len` 60 (exit 60) in a unit with one other text and 28 with none;
-  the expected value is 0. `len` of the text itself is 0, and passing `part e 0 0` instead gives 0
-  (`examples/empty_text_part.om`).
+- **Empty text through `view uchar *` (omega-mv #775).** A 2026-10-27 report said `len` was 60 with
+  one other text and 28 with none. A two-text unit on 2026-10-29 returned 0 on both `2c824805` and
+  `62775d2a`, so that report was not reproduced. Keep passing `part e 0 0`
+  (`examples/empty_text_part.om`) until an exact failing program exists.
 - **Skill examples rerun:** `fnv1a32.om` compile exit 0, empty stderr; `abc`, `a`, empty and 65535
   zero bytes gave `0be9471a`, `2c290ce4`, `c59d1c81`, `47dac371`, each exit 0; 65536 zero bytes gave
   exit 2 and no output; the prime changed to `16777617` gave `55bedcf5` for `abc`.
@@ -441,12 +462,9 @@ Conversions are **checked**, not truncating. `uchar x` with x = 300 traps 5. Mas
 `bitcast T v` reinterprets bits of the same width; `bool` and different widths are error 7, a bare
 number is error 11 ([omc.om#L4640-L4662](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L4640-L4662)). Every fixture
 uses it between floats and unsigned integers. The code also accepts integer-to-integer of equal
-width, but **results across signedness below 64 bits are wrong in omc `2c824805` (observed; fix in
-draft omega-mv #896, not in the pin)**: `bitcast int` of `uint 4294967295` is not equal to -1 and
-adding 2 to it traps 1; `int` to `uint`, `ushort`/`short`, `uchar`/`byte` and `f32` to `int` fail
-the same way; `ulong`/`long`, `f64` to `long` and `f32` to `uint` are correct (section 0). Do not
-bitcast between narrow integer types or from `f32` to `int`; decode signed values arithmetically
-(section 10).
+width. At omc `2c824805` results across signedness below 64 bits were wrong (section 0). At omc
+`62775d2a` the two measured 32-bit pairs are correct; narrower pairs and `f32` to `int` were not
+retested. Do not bitcast an unmeasured pair; decode signed values arithmetically (section 10).
 
 Float to integer conversion is the exception to "checked": it truncates toward zero and saturates at
 the target's limits, and a NaN gives 0, with no trap (observed at `e5b32567`,
