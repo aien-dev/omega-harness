@@ -660,6 +660,19 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
   qualified host ([#L739-L743](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L739-L743)).
 - Evidence for any host claim: compiler sha256, source sha256, output binary sha256, exact command,
   exit status, and the observed bytes. A program that ignores a negative result is not evidence.
+- Measured 2026-10-25 while building a disk image with the seed compiler `seed/out/omc` sha256
+  `c99eda2465036c0637a444689a65dd7fc736e4fa8a8b4cf3456b0ce1b57f8996` (omega branch
+  `feat/allen-imac-competition` `c3fb79697`, off main `55f9b0af`). Except where noted, these are NOT
+  re-measured at the current pin (omc `2c824805…`). The failures that cost the most wasted compiles:
+  - `fopen` returns `long`, but `read`, `write`, `fclose`, `fsync`, `fseek`, `ftrunc` and `fchmod`
+    take `fd` as `int`: `read int fi A 0 n`. `fseek`'s offset and `ftrunc`'s length are `long`, so a
+    `ulong` constant must be converted explicitly (`ftrunc int fo long IMGLN`); a plain `ulong`
+    value there is error 7, not a quiet narrowing.
+  - There are no implicit conversions in any argument position: mixing a `ulong` value with a
+    `uchar` array element (`xor c get A i`) is error 7 until you write `xor c ulong get A i`
+    (reproduced at omc `2c824805…`: `d = xor c get A 0` is error 7, `xor c ulong get A 0` compiles).
+  - Host words and `global` need program mode: without `fn main` the unit compiles in function mode
+    and every host word is error 9 with an empty output file, which reads like a broken pin.
 
 ## 10. Wire serialization (only what the pin defines)
 
