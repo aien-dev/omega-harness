@@ -11,8 +11,15 @@ Skills can't make agents flawless. What these do is turn the mistakes agents kee
 | [`omega-communication`](skills/omega-communication/SKILL.md) | Status labels, reports, PR text, agent handoffs, receipts, wire formats, corrections |
 | [`aien-repositories`](skills/aien-repositories/SKILL.md) | What AIEN builds, who decides what, and which repository owns a task |
 | [`crumb-protocol`](skills/crumb-protocol/SKILL.md) | Directory coordination: read and respect crumbs, claim and release locks, keep committed crumbs fresh, answer `CRUMB-VERIFY` and `crumb-doctor` |
+| [`wolfram-math`](skills/wolfram-math/SKILL.md) | Mandatory Wolfram for every computation: MCP setup an agent can do alone, verification calls, failure handling |
 
 The skills use the Agent Skills layout (`skills/<name>/SKILL.md` with `name` and `description` frontmatter), so any agent that reads that layout picks them up.
+
+## Human-Directed Agentic Engineering
+
+Development follows Human-Directed Agentic Engineering (HDAE): humans define goals, architecture, constraints, acceptance criteria and stopping points; agents implement, execute checks, diagnose failures and revise within those boundaries. Human review retains responsibility for claims, acceptance and release decisions. These skills make the agent's inner loop explicit without transferring the human's authority to a model.
+
+For the documented method and systems-software case study, see Gregory M. Kurtzer, *Ginux: Building an Independent Kernel That Runs Linux Userspace through Human-Directed Agentic Engineering* (2026), [doi:10.5281/zenodo.23682548](https://doi.org/10.5281/zenodo.23682548). Project authorship, compiler pins and historical evidence remain unchanged.
 
 ## Install
 
@@ -38,15 +45,46 @@ cp -R omega-harness/skills/* ~/.agents/skills/   # pick the directory for your a
 
 These skills cover working in Omega itself. Conversion between Omega and other languages belongs to [`omega-bridge`](https://github.com/aien-dev/omega-bridge). It converts a declared, checked subset and refuses to attempt universal conversion. You can run an MCP server in front of it if you want automated conversion, but that wrapper doesn't let it convert anything beyond that subset.
 
+Merged [omega-bridge #32](https://github.com/aien-dev/omega-bridge/pull/32) localizes private
+ABI1/ABI2 runtime symbols so independent generated translation units link without collisions.
+[#33](https://github.com/aien-dev/omega-bridge/pull/33) adds conservative integer-scalar
+freestanding output without pthread, mmap, heap or TLS; [#35](https://github.com/aien-dev/omega-bridge/pull/35)
+extends finite aggregate frame/output pools with checked refusal. Section 2 pins main
+`2efdd48cd0c7c232064d5870e77660a5a75966e1` and records host evidence and negative controls.
+Merged host-exercised source is not deployment or GPU qualification.
+
+The merged [omega-mv WebAssembly backend (#787)](https://github.com/aien-dev/omega-mv/pull/787)
+is a compiler backend for the existing scalar OSC IR v1 wire format, not a foreign-source
+converter. Its seeded Omega writer and read-only Node oracle boundary are documented in
+`omega-encoding` section 0 and `omega-harness` sections 2-3. Backend merge:
+`3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`; boolean IR prerequisite #786:
+`87489da90a1a7a750fd4a7f9eeb005b1221721f6`.
+
+The [SPIR-V backend (#804)](https://github.com/aien-dev/omega-mv/pull/804)
+merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`: an Omega-written OpenCL Kernel
+emitter, a PoCL CPU parity gate and a minimal OpenCL IL demo. `omega-harness`
+section 3 records the exact exercised source, toolchain, ABI, refusal boundary
+and evidence. CPU execution is not GPU or DPC++ qualification.
+
 ## Check the examples yourself
 
 The examples run on Linux AArch64 hosts only:
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv.git omega-src
-sha256sum omega-src/seed/out/omc   # 734f0a39319fbfa930bcc62cb30dbf06d47d78e126372b74f5baf478e6126b61 at the pin
-omega-src/seed/out/omc < skills/omega-encoding/examples/fnv1a32.om > fnv; echo "compile rc=$?"
-chmod +x fnv && printf abc | ./fnv | od -An -tx1   # 0b e9 47 1a
+sha256sum omega-src/seed/out/omc   # 62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b at main bf54b19f (2026-10-29); 734f0a39... at the 2026-10-25 pin 55f9b0af
+omega-src/seed/out/omc < skills/omega-encoding/examples/fnv1a32.om > fnv 2> fnv.err
+compile_rc=$?
+printf 'compile rc=%s\n' "$compile_rc"
+cat fnv.err
+if [ "$compile_rc" -eq 0 ]; then
+    chmod +x fnv
+    printf abc > fnv.in
+    ./fnv < fnv.in > fnv.out
+    run_rc=$?
+    printf 'run rc=%s\n' "$run_rc"
+    if [ "$run_rc" -eq 0 ]; then od -An -tx1 fnv.out; fi  # 0b e9 47 1a
+fi
 ```
 
 The `omega-encoding` skill (section 13) records the full set of observed results and the negative controls.
@@ -55,6 +93,6 @@ The `omega-encoding` skill (section 13) records the full set of observed results
 
 **The agent that makes a change updates the guides.** If your work changes the Omega language, the compiler or its pin, build or gate commands, the encoder or bridge, repository ownership or status, or this harness, update the matching skill in the same piece of work. Then open a PR here with the evidence. If you can't, open an issue saying what is now stale. `omega-harness` section 6 has the full map of which change goes in which skill.
 
-Each skill names the omega-mv commit it was checked against (main `55f9b0af47de70a3d06357985cf99ae3e45c016f`, 2026-10-25) and lists the known places where the sources disagree. When the compiler changes, recheck the cited lines, rerun the examples, then update the pins. Do not edit old evidence. Contributions follow the [shared AIEN agent rules](https://www.aienos.com/agents/RULES.md).
+Each skill names the omega-mv commit it was checked against and lists known disagreements. Historical sections retain their dated pins. `omega-encoding` section 0 adds scoped pins for the IR/wasm backend, the merged Omega 1.0 roadmap, and main `91b3c932` (compiler `189ada82…3b54`): executable contracts, expanded capacity and the f32 return fix. The batch has host evidence, not GPU qualification. When the compiler changes, recheck cited lines, rerun examples, then update pins. Do not edit old evidence. Contributions follow the [shared AIEN agent rules](https://www.aienos.com/agents/RULES.md).
 
 Written by Drake Stapleton with AIEN agents. Apache License 2.0.
