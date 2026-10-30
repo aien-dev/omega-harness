@@ -643,6 +643,22 @@ reproduced with the omega MCP `run` tool (pin `e5b32567`, compiler `2c824805…0
   `^fn ` lines, so it is full: adding one function makes `om4 < omc.om` print
   `om4: line 15610: error 14` and the seed chain breaks. Fold single-call helpers into their caller,
   or extend om4, before adding any function. Check with `grep -c '^fn ' seed/omc/omc.om`.
+- **IR-mode capacity and nested call arguments: PENDING, not on omega-mv main**
+  ([omega-mv#889](https://github.com/aien-dev/omega-mv/pull/889), draft, rechecked 2026-10-30 at head
+  `916a082a90e09de4df04cbeb57dadc84939954ec`, committed omc sha256
+  `34768ee8f2779347c0cfa49a1b8a82b8d110b14123a7693774d4e1e435c944c6`; harness issue #142). Per that PR's
+  OMEGESE diff and gate comment (author-stated, not observed here), main's omc stops an IR-mode (`ir`)
+  function at 64 registers, 32 literals, 32 blocks and 256 instructions (error 14), and miscompiles a call
+  nested in a later argument of another call: for `ret add2 uint 30 add2 uint 4 uint 5` it passes 4, not
+  30, as `add2`'s first argument. #889 raises the
+  limits to the OSC IR v1 format's own (480 registers, each distinct literal taking one; 512 blocks; 4096
+  instructions; 480 names in scope; 64 open blocks; error 14 beyond) and keeps the earlier arguments.
+  Observed with that omc (host only): its `seed/omc/gate-ir.sh` exited 0, with `call_nested_arg` and
+  `capacity_100_literals` (100 distinct literals, 40 `if` blocks) byte-identical to the C oracle and
+  accepted by checker2, and `capacity_481_literals` error 14. Main's omc `62775d2a…` gives
+  `omc: line 36: error 14` for the 100-literal unit and, for `call_nested_arg`, IR bytes that differ from
+  the oracle (sha256 prefix `47d5c7b0` against `09f9f859`). Until #889 merges, keep IR-mode functions
+  under the old limits and bind a nested call's result to a name before passing it.
 
 ## 9. Host I/O: counts, errors, evidence
 
