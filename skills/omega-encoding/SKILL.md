@@ -562,7 +562,17 @@ it, or decode signed values arithmetically (section 8).
 ## 6. Names, scope, registers
 
 - Function names: up to 63 characters. Every other name (variable, parameter, global, text, const,
-  struct, field): **at most 8 characters**, else error 13 ([#L423](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L423), gate15 `e13_long_variable`).
+  struct, field): **at most 8 characters** on main's omc `62775d2a…` (omega-mv main `6d482de0`, rechecked
+  2026-10-30: `counter_a = int 20` is `omc: line 2: error 13`), else error 13 ([#L423](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L423), gate15 `e13_long_variable`).
+- PENDING, not merged or pinned: draft [omega-mv #837](https://github.com/aien-dev/omega-mv/pull/837)
+  (head `f1b9ecb5d13f3b7303c055a187fff06e802eb952`, base `integ/omc-batch3`, source-only: its committed
+  `seed/out/omc` is still the old `2c824805…`) raises every such name to 63 bytes, compared in full.
+  Rebuilt from that head with `sh seed/omega-from-seed.sh` on 2026-10-30 (`RC=0`, `PASS omc fixpoint
+  21d34e12eb6516a2c5f3fc160ccb0feca5054786c57def055056c04270c302fa`); with that compiler
+  `counter_a = int 20`, `counter_b = int 1`, `ret add counter_a counter_b` ran with exit 21, a 63-byte
+  local compiled and ran, a 64-byte local is error 13, and an IR-mode parameter `counter_a` is still
+  error 13. IR-mode locals and parameters, `abstract`/`layout` names and layout fields stay at 8, and so
+  does om4. Until #837 lands and is pinned, keep names at 8.
 - A new name may not equal a visible name, a function or a struct (error 10). A name first written
   inside `if` / `else` / `while` / `for` dies at its `end`; assign it before the block to carry it out.
 - Reserved words cannot be names. Besides the obvious ones, the table reserves `len read write text
@@ -614,6 +624,17 @@ From OMEGESE section 3 and 4 ([#L58-L60](https://github.com/aien-dev/omega-mv/bl
   limit is 1000000 passes. One more pass traps 4. The condition is recomputed before every pass.
 - `for i T K` runs i = 0..K-1. A literal K needs no hidden guard; a name or expression K gets the
   1000000-pass guard.
+- **Pending, not merged or pinned ([omega-mv #848](https://github.com/aien-dev/omega-mv/pull/848), ready for
+  review, base `main`, head `f58bb1f480353dbf87d91f861401b2d5143c2099`, reseeded omc sha256
+  `8b974ce32a1d4952a1b1e018de7619c52a0df19346ba124cfbe970262303952d`):** an explicit `bound N` may be
+  1..9223372036854775807 (a number or a `ulong` const); `bound 0` and `bound 9223372036854775808` stay
+  error 8. The 1000000 default and trap 4 stay, and `for` with a computed count keeps its 1000000-pass
+  guard. Observed with that omc on 2026-10-30 (host only): `const B ulong 3000000` then
+  `while lt x 2000000 bound B` counting to 2000000 ran with exit 54 (`rem x 97`);
+  `bound 1500000` on the same loop trapped 4 (exit 104); `bound 9223372036854775807` compiled and ran.
+  Main's omc `62775d2a…` refuses all three with error 8. Until #848 is pinned, a loop that needs more
+  than 999999 passes must be split into nested loops; after it, write a `for` with a computed count
+  above 1000000 as `while lt i n bound N`.
 - `break` and `continue` (`omc` only, gate7); `continue` in a `while` re-runs the condition and bound.
 - Choose N from a proof, not a guess. Example: a read loop where every pass adds at least one byte to
   a 65536-byte buffer needs at most 65536 passes. Write that reasoning in a `note`.
@@ -717,7 +738,7 @@ per code; the message format is `fn fail` ([omc.om#L122-L148](https://github.com
 
 | Code | Meaning | Code | Meaning |
 |---|---|---|---|
-| 1, 2 | compiler I/O | 13 | non-function name over 8 characters |
+| 1, 2 | compiler I/O | 13 | non-function name over 8 characters (over 63 once #837 is pinned) |
 | 3 | unknown name or field | 14 | capacity at `91b3c932`: 8192 names, 4096 functions, 512 nested blocks, 1024 nesting depth, 8 MiB input/output |
 | 4 | line ends too early | 15 | missing `end` |
 | 5 | extra words on the line | 16 | syntax / unknown word |
