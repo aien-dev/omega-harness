@@ -592,7 +592,8 @@ From OMEGESE 9.4 and 9.7 ([#L449-L474](https://github.com/aien-dev/omega-mv/blob
   run-time-sized arrays. No heap and no `free` (decision 24; `free` is error 9).
 - Array parameters state type and length exactly: `a view uchar 64` / `a edit uchar 64` (error 7 for
   any other length), so there are no length-generic array parameters; use fixed sizes, an integer
-  `const`, or a global. A view or a `text` is read-only (error 20 on `put` or `read` into it).
+  `const`, or a global. A view or a `text` is read-only (error 20 on `put`, `read` or `pread` into
+  it; see section 9).
 - `get A i`, `put A i v`, `len A`. A constant index outside the array is error 21; any other index is
   checked at run time (trap 3). No word yields an address or adds to one.
 - `text NAME "bytes"`: read-only `uchar` array; escapes only `\n \t \\ \"` (error 22 otherwise).
@@ -642,6 +643,18 @@ reproduced with the omega MCP `run` tool (pin `e5b32567`, compiler `2c824805…0
 Base words ([#L476-L486](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L476-L486)): `read fd A off n`,
 `write fd A off n`, `pread`/`pwrite fd A off n pos`. Native host words ([#L624-L747](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L624-L747)):
 files, directories, clocks, sockets, poll, processes, arguments, environment, random.
+
+**pread/pwrite writability (landed via [omega-mv#904](https://github.com/aien-dev/omega-mv/pull/904), `e2662fff`).**
+At omega-mv main `bf54b19f` (omc sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b`),
+`pwrite` only reads its array, so it accepts a `text` or a `view`; `pread` writes its array, so
+`pread` into a `text` or an unsized `view` is error 20, as for `read`. Observed 2026-10-30 on the
+AArch64 host with main `seed/out/omc` (`omc < file`): `seed/omc/om2/s4/v-bad-pread-text.om` gives
+`omc: line 5: error 20` (rc 20); `seed/omc/om2/s4/v-pwrite-text.om` compiles (rc 0) and runs with
+exit 0, writing `ABC\n` to stdout. Host evidence only.
+
+Historical note: up to omc `2c824805…` (omega-mv `e5b32567`, the omega MCP pin) the check sat on
+the wrong word: `pwrite` from a `text` was error 20 and `pread` into a `text` compiled and returned
+`-EFAULT` at run time. Code written for that pin copied a text into a `new` array before `pwrite`.
 
 - Types: `fd`, flags, modes, pids are `int`; offsets, counts, capacities `ulong`; file positions and
   intervals `long`; buffers are `uchar` arrays. Every result is `long`.
