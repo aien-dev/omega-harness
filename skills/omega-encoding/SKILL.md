@@ -650,6 +650,17 @@ Base words ([#L476-L486](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de7
 `write fd A off n`, `pread`/`pwrite fd A off n pos`. Native host words ([#L624-L747](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L624-L747)):
 files, directories, clocks, sockets, poll, processes, arguments, environment, random.
 
+**cpufence / cpurelax: PENDING [omega-mv#946](https://github.com/aien-dev/omega-mv/pull/946) (draft, not merged; not on main).**
+On branch `w1/939-cpu-barrier` (omc sha256 `19ea5f7403138e19640d47a9957ba494a5c94a1966ef0f46663b047a2d7fb835`)
+these are operand-free statements. `cpufence` (keyword 178) is a full host CPU barrier, AArch64 `DSB SY`
+and x86-64 `MFENCE`. `cpurelax` (179) is a spin-wait hint with no ordering, `YIELD` and `PAUSE`.
+Unlike every other host word they compile in function mode too. An operand gives error 5, use as a
+value or at top level gives error 16, use as a name gives error 5, after `ret` gives error 17, and IR
+mode gives error 16. The branch proves this with `seed/host/cpufence.sh`: a fixture that exits 42
+natively and under qemu-x86_64, objdump instruction deltas, and a nop-fence mutant that is caught.
+These are host results only. Until #946 merges, main's omc refuses both words (error 4), so do not
+write them against the main pin.
+
 **pread/pwrite writability (landed via [omega-mv#904](https://github.com/aien-dev/omega-mv/pull/904), `e2662fff`).**
 At omega-mv main `bf54b19f` (omc sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b`),
 `pwrite` only reads its array, so it accepts a `text` or a `view`; `pread` writes its array, so
