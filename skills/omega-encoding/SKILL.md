@@ -662,6 +662,23 @@ Historical note: up to omc `2c824805…` (omega-mv `e5b32567`, the omega MCP pin
 the wrong word: `pwrite` from a `text` was error 20 and `pread` into a `text` compiled and returned
 `-EFAULT` at run time. Code written for that pin copied a text into a `new` array before `pwrite`.
 
+**PENDING, not on omega-mv main: `execpure` and descriptor closing in `execprog`**
+([omega-mv#970](https://github.com/aien-dev/omega-mv/pull/970), open, not draft, not merged; rechecked
+2026-10-30 at head `bce3daa8f5b2975f01ffe2d57d9946fc16bf0a92`, committed omc sha256
+`05cb0746eaf0c69cf681d068202ca61e5626fc92b37546567831f74a7913d7b4`). `execpure A off n` is host word 198
+(AArch64 only; `target x86linux` is error 25): it decodes the packet as `execprog` does, pins the
+executable as descriptor 3, applies a fixed strict stdio profile (Landlock execute/read beneath that file,
+no-new-privs, seven `prlimit64` ceilings, a seccomp filter allowing only `read` on 0, `write` on 1 and 2,
+`exit`, `exit_group` and `execveat` on 3) and calls `execveat(AT_EMPTY_PATH)`. It returns only on failure,
+with the first failing step's negative errno, and has no weaker fallback. `execprog` also changes: it now
+closes every descriptor at or above 3 with `close_range(3, UINT_MAX, CLOSE_RANGE_UNSHARE)` before exec,
+so a child no longer inherits them. Observed with that omc (host only): the PR's
+`seed/qualification/security673/pure-launch.om` launching a static omc program that exits 7 gave exit 7;
+launching `/nonexistent/x` printed `PURE_LAUNCH_REFUSED` and exited 2 (ENOENT); a child that reads
+descriptor 3 got EPERM (exit 1) under `execpure`, and EBADF (exit 9) under `execprog` with the parent's
+descriptor 3 open. Main's omc `62775d2a…` refuses `execpure` with error 3, and its `execprog` child read
+the inherited descriptor 3 (exit 50). Do not use `execpure`, or rely on the close, against the main pin.
+
 - Types: `fd`, flags, modes, pids are `int`; offsets, counts, capacities `ulong`; file positions and
   intervals `long`; buffers are `uchar` arrays. Every result is `long`.
 - A result is a **count or minus the Linux errno**. `read` may return fewer bytes than asked, 0 at
