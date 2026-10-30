@@ -45,7 +45,7 @@ prefixed with `target x86linux` compiled with exit 0 to an x86-64 static ELF tha
 | Item | Value |
 |---|---|
 | Repository | `github.com/aien-dev/omega-mv`, branch `fix/accepted-peer-metadata` (draft #918) |
-| Source commit | `ae0c6b6ee547e82ae797d1b2954792512c13b31a`, main `62d1d0d668f897386a0e311374f8dbcc5c32dde8` merged in |
+| Source commit | `8f0c9c1da8869a7be0aa551d5399a3a44847c512`, main `6d482de0e7b83fe947a1597e0515f0ccf194e3a0` merged in |
 | Compiler source `seed/omc/omc.om` | 15,643 lines, 512 functions, sha256 `6a2916cd329ddeb918e7e568ef6688abb77690aed341cf403d5f691800a2ae63` |
 | Compiler `seed/out/omc` | sha256 `4ef67f1861f7dbae8863e001e60525b708770b5ad0b7e16e8b8e71b9bf4d7924` (size-history row `RM-peername`) |
 

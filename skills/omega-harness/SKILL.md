@@ -132,7 +132,7 @@ remain dated history.
 
 Pending peername candidate (checked 2026-10-30): omega-mv draft
 [#918](https://github.com/aien-dev/omega-mv/pull/918), branch `fix/accepted-peer-metadata`,
-head `ae0c6b6ee547e82ae797d1b2954792512c13b31a` (main `62d1d0d6` merged in). Not merged or
+head `8f0c9c1da8869a7be0aa551d5399a3a44847c512` (main `6d482de0` merged in). Not merged or
 deployed. `seed/omc/omc.om`: 15,643 lines, sha256
 `6a2916cd329ddeb918e7e568ef6688abb77690aed341cf403d5f691800a2ae63`; `seed/out/omc`: sha256
 `4ef67f1861f7dbae8863e001e60525b708770b5ad0b7e16e8b8e71b9bf4d7924`. Use only the compiler
