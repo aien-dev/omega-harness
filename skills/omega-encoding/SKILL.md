@@ -609,6 +609,30 @@ From OMEGESE section 3 and 4 ([#L58-L60](https://github.com/aien-dev/omega-mv/bl
 - No loop runs forever and recursion is bounded by the 8 MiB stack. A long-running service needs an
   explicit epoch/restart design, not a bigger bound.
 
+### Compiler limits checked at main `bf54b19fa` (2026-10-29)
+
+Checked with main's `seed/out/omc` (sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b`)
+and `seed/rung4/om4.bin` (`d0da40e4…19efab`) on the Linux AArch64 host; facts 2, 3, 5 and 6 were also
+reproduced with the omega MCP `run` tool (pin `e5b32567`, compiler `2c824805…029f`). Host evidence only.
+
+- **Value slots.** `fn alloc` ([omc.om#L2848-L2855](https://github.com/aien-dev/omega-mv/blob/bf54b19fa590e8ae925c0e80815516dbf41e7326/seed/omc/omc.om#L2848-L2855))
+  fails error 12 when `npar + nslot >= 16`. There is no spilling: split the function. Fifteen
+  `aN = int N` names summed in one nested `add` chain already give `omc: line 17: error 12`.
+- **Loop guard.** `for i ulong k` with a name `k = ulong 1000001` compiles and exits 104 (trap 4,
+  LOOP_BOUND); `k = ulong 1000000` exits 0. A literal count is unguarded: `for i ulong 2000000` exits 0.
+- **Float literal mantissa.** The digits of a float literal, read without the dot, must fit in
+  2^63-1 = 9223372036854775807 (Wolfram `2^63-1`). `922337203685477580.7f64` compiles;
+  `92233720368547758.08f64` and `9223372036854775807.0f64` are error 8.
+- **Forward calls** are allowed: `main` calling `f` defined after it compiles and exits 7.
+- **Hex.** OM-1 rejects `0x10` with error 6; under `om2` the same unit compiles and exits 16.
+- **x86 target.** A first line exactly `target x86linux` emits an x86-64 ELF; with a leading space it
+  is error 16.
+- **om4 function cap (contributors to `omc.om`).** om4, which compiles the first `omc` from
+  `seed/omc/omc.om`, accepts at most 511 functions plus `main`. Main's `omc.om` has exactly 512
+  `^fn ` lines, so it is full: adding one function makes `om4 < omc.om` print
+  `om4: line 15610: error 14` and the seed chain breaks. Fold single-call helpers into their caller,
+  or extend om4, before adding any function. Check with `grep -c '^fn ' seed/omc/omc.om`.
+
 ## 9. Host I/O: counts, errors, evidence
 
 Base words ([#L476-L486](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L476-L486)): `read fd A off n`,
