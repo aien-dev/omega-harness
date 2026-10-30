@@ -204,7 +204,9 @@ identities, generated-unit/archive hashes, model/config/tokenizer/weight/scale
 content identities, workload and exact command/environment. Reliability repairs
 #173 and #174 (now on main, above) precede candidate qualification. Require correctness, memory, speed,
 reliability, recovery and neighboring-process evidence against that same manifest.
-NVIDIA kernel-driver replacement is a separate active objective: the current path
+NVIDIA kernel-driver replacement is policy (Drake, 2026-10-30; CUDApp#200 pending):
+Aien's own driver replaces `nvidia.ko`/`nvidia-uvm.ko` (aien-gpu `ec9d6d76`,
+omega-gpu-driver `07781415`, aienux#441; IMPLEMENTED, hardware NOT_RUN). The current path
 still uses Linux RM/UVM device nodes, ioctls and mappings through the versioned
 580.173.02 interface headers. Record actual kernel-driver and firmware dependencies
 separately. No userspace zero-CUDA result proves kernel-driver independence or
