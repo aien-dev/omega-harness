@@ -1,6 +1,6 @@
 ---
 name: omega-communication
-description: Communicate Omega and AIEN work precisely: status and evidence labels, reports, PR text, agent handoffs, receipts, semantic needs, wire formats and corrections. Use when reporting, briefing agents, reviewing or publishing claims.
+description: "Communicate Omega and AIEN work precisely: status and evidence labels, reports, PR text, agent handoffs, receipts, semantic needs, wire formats and corrections. Use when reporting, briefing agents, reviewing or publishing claims."
 ---
 
 # Omega communication
@@ -57,3 +57,10 @@ Every serialized format needs field order, width, signedness, endianness, ranges
 ## Corrections
 
 When a statement is wrong, name the false claim, replacement evidence and affected decisions. Preserve historical receipts and old failures; add a correction rather than silently rewriting the record. If a broadly used instruction was stale, update it with source revision and invalidation condition.
+
+Receipt shelves record a correction as a new file beside the receipt, never as an edit to it. Since omega-evidence main `b40b81ce3d7c4bfb260fc08918dd6a2d8e38bdb0` (PR #3, merged 2026-10-26), the convention is an adjacent `<receipt basename>.correction.json`. The first one, `omega_program_core_qualification_receipt.correction.json`, identifies the historical M8 receipt by SHA-256 and Git blob, names both the receipt's stated implementation commit and the later Omega commit whose source matches its digest, and sets the admission disposition to `REFUSED_UNSUPPORTED_PROVENANCE`. Rules that follow:
+
+- Resolve adjacent correction records at the shelf revision you read before accepting a receipt's verdict. A correction's admission disposition overrides the historical status; the receipt bytes stay unchanged.
+- A later commit whose source matches a receipt's digest recovers source bytes, not the original build or execution transcript. Do not requalify the original PASS from it; requalification needs a new run with its own receipt.
+- No correction file is not evidence that provenance was checked. Verify provenance yourself and refuse a mismatch.
+- Check the M8 links offline with `python3 tests/test_m8_correction.py <full omega-mv clone>` in omega-evidence; it also rejects a wrong-source and a false-PASS correction.

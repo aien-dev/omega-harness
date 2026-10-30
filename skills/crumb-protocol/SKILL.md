@@ -94,18 +94,27 @@ Never remove an ignore line, and never edit a crumb in an immutable tree, to mak
 tests/gates/run.sh crumb-verify     # needs the ../aien-architecture sibling; without it the step cannot resolve the tool
 ```
 
-That step archives the aien-architecture commit named in `crumb.lock`, builds `tools/crumb/crumb` from it, and runs `crumb verify .`. The readiness path is the same judgement: `aien-local-ci verify <repo> <sha>` prints the pinned tool and a CURRENT or STALE status, and a repository is READY only when its crumbs are CURRENT.
+That step archives the aien-architecture commit named in `crumb.lock`, builds `tools/crumb/crumb` from it, and runs `crumb verify .`. The readiness path is the same judgement: `aien-local-ci verify <repo> <sha>` prints the pinned tool and a CURRENT or STALE status, and a repository is READY only when its crumbs are CURRENT. That gate step runs inside the untrusted candidate check; the trusted readiness path does not take its checker from the candidate (below).
 
 Failure means the committed crumb text lost its fixed point with the tree at that commit: source changed after the last compile, someone hand-edited generated data, or the layout moved. It is never "the gate is noisy".
 
-Tool skew is the usual cause of a disagreement, because four paths can pick four different builds: the repository gate from `crumb.lock`, the hosted workflow from its own pin, a worker's readiness check from `crumb` on PATH, and your own compile. On this machine `omega-mv` pins `d0f0b95d`, while `aien-sovereign-core-mv`, the hosted workflow and the sandbox install pin `94fffbcf`. Use the pin the repository names. The shim resolves in order: the tree's `crumb.lock`, built from the aien-architecture clone; the in-tree tool when the tree is aien-architecture itself; otherwise the sandbox build.
+Tool skew is the usual cause of a disagreement, because four paths can pick four different builds: the repository gate from `crumb.lock`, the hosted workflow from its own pin, a worker's readiness check, and your own compile. On this machine `omega-mv` pins `d0f0b95d`, while `aien-sovereign-core-mv`, the hosted workflow and the sandbox install pin `94fffbcf`. Use the pin the repository names.
 
-`crumb-doctor` is the operator check that makes these failures visible again, with two families:
+Which tree may choose the checker changed in aien-sovereign-core-mv main `2369d7c834971eb91b8a20bab40b6ca7692064f5` (PR #771, fixing issue #770, merged 2026-10-26). That state is MERGED in source and NOT_DEPLOYED: no trusted verifier, local-CI helper, shim or doctor from it was installed or restarted, so an operator install that predates the cutover still follows the older rule (the candidate tree's `crumb.lock`, else the in-tree tool when the tree is aien-architecture, else the sandbox build). Check the installed copy before relying on either rule. The merged rule:
+
+- Trusted verification (`aien-test verify`) builds a checker only from the trusted BASE revision's `crumb.lock` pin, or from aien-architecture's own trusted base, into a cache namespace separate from older candidate-selected builds. Readiness reports it as `Crumb tool: trusted-base <pin>`. Without a lock at BASE it uses an absolute operator-selected command, never a bare `crumb` resolved in the candidate's working directory. It runs no checker at all for missing or invalid evidence or a blocked plan.
+- The operator shim (`crumb`) and `crumb-doctor` read `crumb.lock` from the target repository's `origin/main`, never its working tree or `HEAD`, and build only a pin that is an ancestor of aien-architecture `origin/main`. Only the aien-architecture clone uses its own `origin/main` tool; other trees use the sandbox build. A pin that cannot be built is an error, never a fallback.
+- A candidate that changes `crumb.lock`, `tools/crumb/`, the hosted verification workflow, `tools/aien-local-ci/install.sh` or `tests/gates/run.sh` needs operator promotion onto trusted main. Its proposed tool is never built or run as the signer to obtain a verdict.
+- `aien-run-exec` gives `host` and `qemu` jobs fresh PID namespaces with their own `/proc`, under a shared execution lock; a `gb10` job takes that lock exclusively and keeps the host PID and `/proc` view that its ancestor-flock reservation proof needs, so it cannot overlap a job whose processes it would see.
+
+`crumb-doctor` is the operator check that makes these failures visible again. Before the cutover it has two families, `SIBMAP` and `AGREE`; the merged source above checks:
 
 | Check | Meaning |
 |---|---|
 | `SIBMAP` | Every sibling map a worker reads equals `origin/main`'s map from the trusted clone, and covers every sibling and pin the repositories' gates ask for. |
-| `AGREE` | The gate tool, the hosted pin and each worker's `crumb` give the same `crumb verify` verdict on `origin/main` and on open PRs that change a crumb tool pin. |
+| `AGREE` | On `origin/main`, the trusted gate tool and the hosted pin give the same `crumb verify` verdict. Before the cutover it also ran each worker's `crumb` and the tools of open PRs that change a crumb tool pin. |
+| `READY` | Merged source only: `aien-local-ci verify` on `origin/main` reports the trusted status and the trusted-base tool. |
+| `PROMOTE` | Merged source only: an open PR changing a checker pin or tool fails as "operator promotion required"; its tools are inspected as metadata and never executed. |
 
 It prints `PASS`/`FAIL`/`INFO` lines, exits 0 when everything passes and 1 otherwise, and with `--alert` maintains the single `CRUMB-DRIFT:` line in the operator alert, which is what surfaces in tool output and chat.
 
