@@ -873,7 +873,8 @@ check proves nothing.
    `seed/omc/omc.om`. Its status there is DRAFT, x86 execution is EMULATED (QEMU) only and native
    x86 qualification is NOT_RUN (`docs/X86-LINUX.md` lines 3 and 286).
 6. Documents disagree with the code at this pin; trust the code and name the conflict:
-   OM_COMPLETION FR-5 still says mmap/ioctl are absent, and `seed/host/MAPPING.md`
+   OM_COMPLETION FR-5 says mmap/ioctl are absent through main `62d1d0d6` (omega-mv draft PR #944 corrects
+   it to the shipped words, ids 166-177 in `seed/omc/genkw.awk`), and `seed/host/MAPPING.md`
    ([#L66-L68](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/host/MAPPING.md#L66-L68)) still calls the device words a proposal not
    on `main`, while `omc.om` reserves `devctl mapnew ... mapbind` (ids 166-177) and README
    ([#L27](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L27)) says they are on `main`. GPU launch and model execution through
