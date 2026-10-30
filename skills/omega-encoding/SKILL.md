@@ -740,12 +740,20 @@ OM-2 units add or extend codes ([OMEGESE 9.13](https://github.com/aien-dev/omega
 (branch displacement). Merged contracts (#807 through #768) add error **30**, diagnostic
 `obligation=contract` (section 11a).
 
-PENDING aien-dev/omega-mv#965 (draft, not merged): one registry `seed/omc/error-codes.reg` lists every
-code; gate15 covers 1..25 and 27..30 at exact lines, checked by `seed/omc/codereg.om`; OMEGESE §9.14 is
-the table. Codes 24..30: 24 AArch64 branch displacement out of range; 25 unknown target or AArch64-only
-path on another target; 26 unused; 27 fresh element read before written; 28 seal outside its
-constructor or unsupported holds; 29 external layout out of bounds; 30 contract syntax misplaced,
-including any `requires`/`ensures`/`invariant` line in IR mode (#791; base omc reads `requires` as a local).
+PENDING aien-dev/omega-mv#965 (draft, not merged; rechecked 2026-10-30 at head
+`595050a01763c94622b2629dbc200fa92fc8fcf2`, committed omc sha256
+`6ad704d124bdc62657f3759c9c7f5197ccca157f57544dd5659a49deeac374f8`, self-rebuild byte-identical): one
+registry `seed/omc/error-codes.reg` lists every omc code 1..30 plus irwasm exit codes 20..28 as a
+separate namespace; gate15 covers 1..25 and 27..30 at exact lines, checked by `seed/omc/codereg.om`;
+OMEGESE §9.14 is the table. Codes 24..30: 24 AArch64 branch displacement out of range; 25 unknown target
+or AArch64-only path on another target; 26 unused; 27 fresh element read before written; 28 seal outside
+its constructor or unsupported holds; 29 external layout out of bounds; 30 contract syntax misplaced,
+including any `requires`/`ensures`/`invariant` clause line in IR mode (#791). Only the clause form is
+error 30: `ensures = ulong 1` in IR still assigns a local named `ensures`. Observed with that omc: the
+three IR clause lines (`requires lt x 10`, `ensures lt x 10`, `invariant lt x 10`) are each
+`omc: line 3: error 30`, and `ensures = ulong 1` / `ret ensures` compiles (55 bytes of IR). Main's omc
+`62775d2a…` compiles the `requires` and `ensures` lines as locals (exit 0) and gives error 13 for
+`invariant` (a 9-byte IR name); the assignment form gives identical IR bytes under both compilers.
 
 Limits met while porting CUDApp's encoder and cubin writer (aien-dev/CUDApp#143, merged
 `2fab72fde0`), rechecked with omega-mv main `bf54b19f` (`seed/out/omc` sha256 `62775d2a...`):
