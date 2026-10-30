@@ -12,7 +12,6 @@ cannot express, and before encoding bytes, integers or host I/O in Omega.
 
 Merge status, 2026-10-29: compiler batch #904 merged at `e2662fffbce1c21ef09da71c0d8808133a6af8ab`;
 x86 integration #923 merged at `bf54b19fa590e8ae925c0e80815516dbf41e7326`.
-The tested x86 compiler/source hashes below are unchanged by those merges.
 Earlier pending labels describe the recorded pre-merge tests. Native x86
 execution remains NOT_RUN; merging is not hardware qualification.
 
@@ -20,26 +19,46 @@ The quantity and diagnostic audit is merged through omega-mv #914 at main
 `d94a503f7aae57d09697046405da2e9a5895be6d`. The older candidate observations
 below remain dated history, not claims about the newer integration.
 
-### Pending integrated x86 candidate (observed 2026-10-28)
+### Current main pin (checked 2026-10-29)
 
-Compiler draft [#923](https://github.com/aien-dev/omega-mv/pull/923), source
-`7ab5fdd067884fd3044155084b39163da1be5c8a`, integrates current main and batch 3
-(#904). Source `seed/omc/omc.om` has SHA256
-`96d51b63c8f451661ac715395078e04f39195e50c9e8fe37746cda121e4d7a1e`;
-compiler `seed/out/omc` has SHA256
-`62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b`.
-The seed gate passed, including GATE5. Both guide examples compiled with empty
+| Item | Value |
+|---|---|
+| Repository | `github.com/aien-dev/omega-mv`, branch `main` |
+| Commit | `bf54b19fa590e8ae925c0e80815516dbf41e7326` (merge of #923, 2026-10-28) |
+| Compiler source `seed/omc/omc.om` | 15,624 lines, sha256 `96d51b63c8f451661ac715395078e04f39195e50c9e8fe37746cda121e4d7a1e` |
+| Compiler `seed/out/omc` | sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b` (equals `seed/out/omc.sha256`; last `seed/omc/size-history.tsv` row `FR9-acceptance-fixes`) |
+| Seed loader `seed/rung0/seed0.hex` | sha256 `baaf081fe6055a768485c5d25d7435681ce00b04cfa80b26c48169f78944e14d` |
+
+Hashes were read with `git show origin/main:<path> | sha256sum`; the compiler was not rebuilt
+for this note. Both guide examples were rerun on 2026-10-29 with that `seed/out/omc` on a
+Linux AArch64 host: `fnv1a32.om` compiled with exit 0 and empty stderr, and `abc` gave
+`0b e9 47 1a`, exit 0; `trap_narrow.om` compiled with exit 0 and ran with exit 105; deleting
+only its unmasked store (negative control) changed the run exit to 44. The same `fnv1a32.om`
+prefixed with `target x86linux` compiled with exit 0 to an x86-64 static ELF that printed
+`0b e9 47 1a` with exit 0 under `qemu-x86_64` 8.2.2: EMULATED, not native x86.
+
+### x86 integration as tested before merge (observed 2026-10-28)
+
+Then-draft [#923](https://github.com/aien-dev/omega-mv/pull/923), source
+`7ab5fdd067884fd3044155084b39163da1be5c8a`, integrated main and batch 3
+(#904). Its `seed/omc/omc.om` and `seed/out/omc` hashes equal the current main
+pin above. The seed gate passed, including GATE5. Both guide examples compiled with empty
 stderr: `fnv1a32.om` on `abc` exited 0 with bytes `0b e9 47 1a`;
 `trap_narrow.om` exited 105, while removing its unmasked store exited 44.
 
-The exact first line `target x86linux` selects the pending backend. Quantity
+The exact first line `target x86linux` selects the x86 backend. Quantity
 negation and complement refuse with error 7 on both targets. Empty text remains
 sized with length zero and emits no literal bytes; bounds checks still apply.
 Target-specific diagnostic contracts preserve the extra x86 stack-check records
 and exact growth-refusal records. See the source's `docs/X86-LINUX.md` and
 `seed/omc/x86-diagnostic-contracts.json`. Historical failed experiments and
 frozen compatibility rows remain separate from current acceptance.
-This candidate is not merged and does not establish native x86 qualification.
+At main `bf54b19f`, `docs/X86-LINUX.md` is headed "Status: DRAFT; native x86
+qualification NOT_RUN". Its last complete differential (section "Current acceptance
+contracts", source `7ab5fdd0`, QEMU, EMULATED) reported 15179 PASS, 4 NOT_RUN,
+222 EXCLUDED and no FAIL cases, aggregate verdict FAIL because NOT_RUN is not PASS;
+`00ebdee8` then passed the two text-write cases (5 PASS), leaving two invalid-fd ioctl
+cases unrun. Merged in source; not native x86 qualification.
 
 ### Historical quantity/check/next candidate (observed 2026-10-28)
 
@@ -201,9 +220,13 @@ rebuilt for this note.
 - **Gate coverage at main:** `seed/wasm/gate-irwasm.sh` and `seed/qualification/om2/gate.om` are
   merged but no `tests/gates/*.gate` runs them (RM1, #790). `tests/gates/run.sh seed` passing says
   nothing about OM-2 fixtures or irwasm; run those yourself and report them separately.
-- **Open OM-2 defect** [#775](https://github.com/aien-dev/omega-mv/issues/775): an empty `text`
-  passed to a `view uchar *` parameter was reported to see the next text's bytes (`len` 32, not 0).
-  Do not pass an empty text to an unsized view until it is closed.
+- **OM-2 defect** [#775](https://github.com/aien-dev/omega-mv/issues/775), closed 2026-10-29: an
+  empty `text` passed to a `view uchar *` parameter was reported to see the next text's bytes
+  (`len` 32, not 0). Fixed by #897 inside the #904 merge `e2662fff`, an ancestor of main
+  `bf54b19f`: an empty `text` is now a sized array of length 0. On 2026-10-29, with main
+  `seed/out/omc` `62775d2a...712b` (AArch64 host), `seed/omc/om2/s4/v-text-empty.om` compiled
+  and ran with exit 0, and `v-bad-text-empty.om` refused with `omc: line 5: error 21`. Compiler
+  pins in this file older than the #904 batch predate the fix.
 
 ### Merged compiler batch: contracts, capacity and f32 returns
 
@@ -228,9 +251,11 @@ returns now work: internal void return code 12 is distinct from f32 value type 1
 `gate8.sh` exercises f32 values and rejects void-as-value (7) and f32 fallthrough (18).
 Consumers must explicitly migrate and qualify their own pins; a main merge does not deploy them.
 
-### Pending compiler batch 3 (PROPOSED, not merged)
+### Compiler batch 3 (merged #904; superseded on main by #923)
 
-Draft [omega-mv#904](https://github.com/aien-dev/omega-mv/pull/904), integrated on 2026-10-28 at
+[omega-mv#904](https://github.com/aien-dev/omega-mv/pull/904) merged at
+`e2662fffbce1c21ef09da71c0d8808133a6af8ab`; that merge carries the same `omc.om` and
+`seed/out/omc` hashes as the tested source below. Tested on 2026-10-28 at
 `7bce2a4fddc43268ac2af09cddc4a5a67d78312d` over main `d94a503f7`, merges #896
 (integer `bitcast` re-extension), #897 (empty `text` sized `nm_len 0`, view count 0; closes the
 #775 defect above), #898 (function names that start with a keyword) and #903 (`pread`/`pwrite`
@@ -238,7 +263,7 @@ destination writable check) and reseeds `seed/out/omc` to sha256
 `1811d4047f118440cc35e995261af6768b606148cb17e18c42158afd15fcad58` (12,577 source lines, 418
 functions, size-history row `RM-batch3-current`). Compiler source SHA-256:
 `d33ef5cab603f85a5cbcbdfdd55391f2ce0448bfcbc5fecbf0393599b636ef04`.
-Status: HOST_TESTED, not merged or deployed. The targeted regression cases, seed/GATE5,
+Status when recorded: HOST_TESTED before merge; merged in source, not deployed. The targeted regression cases, seed/GATE5,
 OM-2 s1 through s4 and their mutants, current-language quantity cases, diagnostic experiment,
 bindings/parity, JSON/HTTP, WebAssembly, CPU OpenCL, IR-trap checks and local TLS suites pass.
 The frozen C2 corpus still fails its six historical assertions; its capacity and batch2
@@ -246,7 +271,8 @@ replacement manifests pass. TLS live-internet parity and GPU gates are NOT_RUN.
 The earlier `397346de` receipt remains immutable history in `evidence/BATCH-397346de/`.
 At this new pin, the guide's FNV example with `abc` outputs `0be9471a` (exit 0), the narrowing
 example exits 105, and removing its unmasked store exits 44. All compile with empty stderr.
-Until the proposal merges, do not cite this candidate pin as main or as x86 qualification.
+Main has since moved to the x86 integration compiler `62775d2a...712b` (section 0); cite
+`1811d404...ad58` only as the #904 merge pin, never as current main or as x86 qualification.
 
 
 Re-check recipe (read only, in a fresh clone, never in a shared working tree another agent may be using):
@@ -771,16 +797,23 @@ check proves nothing.
    Python and call the result Omega. Say exactly which word or capacity is missing.
 5. Missing is not impossible. Omega is meant to be extended. State the gap as an extension proposal:
    the hardware or OS need, the proposed word and types, refusal codes, and the gate that would test
-   it. Known decision-blocked gaps at this pin ([OM_COMPLETION.md#L62-L72](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OM_COMPLETION.md#L62-L72)):
+   it. Known decision-blocked gaps at `55f9b0af` ([OM_COMPLETION.md#L62-L72](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OM_COMPLETION.md#L62-L72)),
+   unchanged at main `bf54b19f` ([#L65-L73](https://github.com/aien-dev/omega-mv/blob/bf54b19fa590e8ae925c0e80815516dbf41e7326/docs/one_layer/OM_COMPLETION.md#L65-L73)):
    packed structs (FR-2), imports (FR-3, units concatenate), threads/atomics (FR-6), C ABI/shared
-   objects (FR-7), x86-64 (FR-9), heap (decision 24).
+   objects (FR-7), heap (decision 24). x86-64 (FR-9) is no longer missing: since main `bf54b19f`
+   (#923, 2026-10-28) `target x86linux` selects an x86-64 Linux static-ELF backend in
+   `seed/omc/omc.om`. Its status there is DRAFT, x86 execution is EMULATED (QEMU) only and native
+   x86 qualification is NOT_RUN (`docs/X86-LINUX.md` lines 3 and 286).
 6. Documents disagree with the code at this pin; trust the code and name the conflict:
    OM_COMPLETION FR-5 still says mmap/ioctl are absent, and `seed/host/MAPPING.md`
    ([#L66-L68](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/host/MAPPING.md#L66-L68)) still calls the device words a proposal not
    on `main`, while `omc.om` reserves `devctl mapnew ... mapbind` (ids 166-177) and README
    ([#L27](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L27)) says they are on `main`. GPU launch and model execution through
    them are not qualified. (README line 5's old "candidate branches" wording was corrected on main by
-   #801.)
+   #801.) At main `bf54b19f`, `OM_COMPLETION.md` lines 72 and 80 still call FR-9 a draft with its
+   full fixture differential NOT_RUN, while `docs/X86-LINUX.md` lines 431-438 record the complete
+   EMULATED differential at `7ab5fdd0` (15179 PASS, 4 NOT_RUN, 222 EXCLUDED, no FAIL cases,
+   aggregate FAIL). Cite X86-LINUX.md and name the conflict.
 
 ## 13. Examples
 
