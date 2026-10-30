@@ -249,7 +249,9 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
   contract checks. No DPC++, Level Zero, GPU or Alpha qualification is implied.
   The standalone acceptance gate is not wired into protected gate manifests.
 
-### CUDApp portable backend (PENDING: draft CUDApp#138, not merged)
+### CUDApp portable backend (CUDApp#138, merged `0c782c44af`)
+
+Paths below are on CUDApp main (present at `cc0908bdc0`).
 
 - Target status lives in one place: `backend/targets.om` (`targets doctor`, printed by
   `make doctor OMC=/abs/omc`). Only the GB10 (sm_121) is SUPPORTED. Every other GPU row (other NVIDIA
@@ -260,7 +262,7 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
 - FP32 SPIR-V comes from `backend/spirv/emit.om` (hand-built words; omc IR mode has no floats until E3,
   omega-mv#883), unlike the scalar-ulong irspirv above. Its CPU launcher is migration-pending C until
   E2 (checked shared-library calls, omega-mv#888).
-- The gfx1151 HSACO in that branch is an LLVM ORACLE fixture for the loader, not an AMD encoder.
+- The gfx1151 HSACO on CUDApp main is an LLVM ORACLE fixture for the loader, not an AMD encoder.
 - Gate: `make test-multitarget OMC=…` with negative controls; receipts
   `evidence/MULTITARGET-20261027T0638Z/` (host EXERCISED, 63 checks, CUDApp `0ec44766`). Never say a
   vendor is "supported" or "runs" from these host runs.
