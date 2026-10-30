@@ -721,6 +721,14 @@ OM-2 units add or extend codes ([OMEGESE 9.13](https://github.com/aien-dev/omega
 (branch displacement). gate15 pins only codes 3..23 (roadmap RM8, #797). Merged contracts
 (#807 through #768) add error **30**, diagnostic `obligation=contract` (section 11a).
 
+Limits met while porting CUDApp's encoder and cubin writer (aien-dev/CUDApp#143, merged
+`2fab72fde0`), rechecked with omega-mv main `bf54b19f` (`seed/out/omc` sha256 `62775d2a...`):
+an array parameter of length 16777216 compiles and 16777217 is error 23, so one `.om` buffer holds at
+most 16 MiB of `uchar`; `text` inside a function-mode unit is error 9 (both OBSERVED, identical on
+omc `2c824805`). AUTHOR-CLAIMED, not rechecked: `global` inside a function-mode unit is error 9, and
+omega-bridge `431fff0a` `native c` exits 110 when an entry's array length is written as a `const`
+name (write the literal in the entry signature).
+
 ## 11a. Executable contracts (merged #807 through #768)
 
 Source: OMEGESE section 12 and `seed/omc/contracts/` at main
