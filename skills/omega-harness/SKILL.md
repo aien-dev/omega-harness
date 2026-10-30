@@ -113,6 +113,7 @@ say so and stop rather than estimating.
   `87489da90a1a7a750fd4a7f9eeb005b1221721f6`. It is written in seeded Omega.
   See `omega-encoding` section 0 for tested hashes, exact limits and refusal boundary.
   Source merge status does not establish browser deployment.
+- No outside dependency is adopted silently (Drake, 2026-10-25). When the work needs one, code it in seeded Omega and route any conversion through `aien-dev/omega-bridge` — which, per `docs/CAPABILITIES.md` and `docs/NATIVE-ABI.md`, emits checked C and Python from a bounded `.om` subset and lets foreign callers call compiled Omega units. It does **not** import arbitrary C or Python (`Python/C input conversion is not implemented`), so an existing host implementation cannot be pulled in; a missing converter is a concrete extension proposal, not an assumption. A host binary, library or language runtime that remains in the build or production path gets its exact version, what it does for us, and the Omega replacement recorded next to the artifact. Verification oracles are exempt: the pinned compiler, QEMU/OVMF and read-only checkers (mtools, sgdisk, fsck.vfat, git, gh) stay in use.
 
 ## 3. Compile, execute, challenge
 
@@ -158,6 +159,7 @@ fi
   row for each distinct compiler change: the qty compiler and the check/next
   compiler have separate rows, even when they arrive in the same PR. A final
   matching row does not excuse omitting an intermediate compiler change.
+- **Seed-chain bootstrap challenge (merged in [omega-mv #863](https://github.com/aien-dev/omega-mv/pull/863), merge `52eba8831aa0b8db9fa2f2e13289920be4fa85f6`).** The public command that rebuilds omc from the 408-byte seed without rewriting tracked files is `git clone https://github.com/aien-dev/omega-mv && cd omega-mv && sh seed/challenge/run.sh`. The script extracts `git archive 369dbc96` (seed/rung0..4, seed/omc) into `build/seed/challenge/src`, then builds seed0 → hex1 → asm2 → om4 → omc stage1/2/3, where each rung is built by the freshly built rung below it. It checks every input and rung against `seed/challenge/expected.txt`, whose values were read from the committed files with `git show <pin>:<path> | sha256sum` (omc `2c824805…`, 325,524 bytes). Exit codes: 0 `CHALLENGE PASS`, 1 FAIL, 2 usage, 3 NOT_RUN (not AArch64 Linux, or pin missing). In a `git clone --depth 1` the pin is missing; first run `git fetch --depth 1 origin 369dbc96daa1684db2d7c2c7085bbf16b3fd77ee` (omega-mv `seed/challenge/CHALLENGE.md`, commit `d764f076`). `--tree DIR` and `--expect FILE` run negative controls. Observed 2026-10-27: a pass on the Spark from a fresh clone of merged main `52eba883` (challenge 0.53 s wall, chain 362 ms), and a pass on GitHub `ubuntu-24.04-arm` (chain 359 ms) together with three controls that fail as required (tampered hex1, wrong omc value, forged log). The public runner and result inbox are in [aien-dev/omega-seed-challenge](https://github.com/aien-dev/omega-seed-challenge): `challenge.yml`, the "I reproduced it" issue form, and `results/*.log` checked by `check-result.sh`. A pass is a fixed-output reproducibility match. It is not general self-hosting and not diverse double compilation, and a log check proves consistency, not that the run happened.
 - Run the changed path and compare exact expected bytes, status and state; a successful compile proves nothing about behavior. Also exercise the failure or refusal boundary most likely to regress. If that is impractical, say exactly what was not run.
 - Run a negative control: change an expected value or feed invalid input, and confirm the check fails. A verifier that also accepts its negative control has not established anything.
 - Qualification case files (`.cases` in omega-mv) are executed by a conductor, not run directly. More than one conductor exists under `seed/qualification/`, and picking the wrong one looks like a failing gate. Read the conductor's `main` for its argument count first. Observed 2026-10-25 with compiler `734f0a39319fbfa930bcc62cb30dbf06d47d78e126372b74f5baf478e6126b61`: `seed/qualification/om2/gate.om` takes four arguments (`omc pinhash casesfile scratchdir`) and summarises as `OM2GATE PASS cases=N pass=N fail=N invalid=N not_run=N`; `seed/qualification/security673/gate669.om` accepts at most one argument and exits 90 under a four-argument call. A usage status such as 90 from a conductor is INVALID setup, never a qualified refusal.
@@ -249,6 +251,24 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
   contract checks. No DPC++, Level Zero, GPU or Alpha qualification is implied.
   The standalone acceptance gate is not wired into protected gate manifests.
 
+### CUDApp portable backend (CUDApp#138, merged `0c782c44af`)
+
+Paths below are on CUDApp main (present at `cc0908bdc0`).
+
+- Target status lives in one place: `backend/targets.om` (`targets doctor`, printed by
+  `make doctor OMC=/abs/omc`). Only the GB10 (sm_121) is SUPPORTED. Every other GPU row (other NVIDIA
+  generations, AMD gfx9-12, Intel Xe, Apple, Qualcomm, Arm, Imagination, Broadcom, Vortex) is PLANNED,
+  hardware NOT_RUN. PoCL and lavapipe rows are HOST-ONLY CPUs, never GPU evidence.
+- `targets load FORMAT FILE [ENTRY|gfx]` is the `ob_code_load` admission check (SPIRV_CL, SPIRV_VK,
+  AMDGPU_HSACO, SM121_RAW; MSL_SOURCE/AARCH64 refused as PLANNED, CUBIN reserved).
+- FP32 SPIR-V comes from `backend/spirv/emit.om` (hand-built words; omc IR mode has no floats until E3,
+  omega-mv#883), unlike the scalar-ulong irspirv above. Its CPU launcher is migration-pending C until
+  E2 (checked shared-library calls, omega-mv#888).
+- The gfx1151 HSACO on CUDApp main is an LLVM ORACLE fixture for the loader, not an AMD encoder.
+- Gate: `make test-multitarget OMC=…` with negative controls; receipts
+  `evidence/MULTITARGET-20261027T0638Z/` (host EXERCISED, 63 checks, CUDApp `0ec44766`). Never say a
+  vendor is "supported" or "runs" from these host runs.
+
 ## 4. Effects and authority
 
 - A proposed program or effect description does not authorize running it. Confirm capability and privilege at the execution boundary. Model confidence and semantic identity grant no authority.
@@ -257,6 +277,7 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
 - Hardware and live services need the operator's current authorization procedure. Host and emulator checks never qualify hardware. Machine-specific operator rules belong in that machine's local instructions, not in public guidance.
 - Escalate to an independent reviewer for hard-to-reverse changes to authority, protocols or gates, for contradictory evidence, or when two distinct fixes have failed. A model review is not an execution receipt.
 - For the native GPU swarm, follow the [realization-record evidence boundary](../omega-communication/SKILL.md#native-gpu-realization-records-2026-10-28). A unit test calling an isolated cache or selector is not proof that the existing runtime records the selected code. Exercise the actual generated binding and consuming cache/command-list path, with stale-generation, wrong-artifact and missing-qualification controls. Keep device and whole-model tests NOT_RUN until their authorized execution; never populate production candidates from synthetic host records.
+- **Fix it, don't file it** (Drake, 2026-10-25). A defect you can reproduce is a defect you chase in the same piece of work, including one you found while reviewing someone else's lane: read the code, build the smallest reproduction, change it, prove it, ship it. Reporting a blocker you have not tried to fix, or handing a reproduced bug to an "owner", is unfinished work. Stop only for a real external gate (authorization, a user decision, an exhausted check) and name it after the attempt.
 
 ## 5. Communicate and learn
 
