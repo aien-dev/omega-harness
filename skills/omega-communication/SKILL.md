@@ -96,17 +96,24 @@ selection stays refused or on the qualified incumbent when any required proof is
 The individual source pins above identify their measured contract revisions; their
 pending wording must not override the merged integration status of #169. Conversely,
 merged source must not promote synthetic host evidence into hardware qualification.
-The separate [capacity repair #173](https://github.com/aien-dev/CUDApp/pull/173)
-remains a draft dependency, not a merged consumer pin. Its final host-accepted
-source is `ca441c5a92f5a951a67de00aeddae0e077f10216`: all 52 host targets pass.
-Instruction-slot exhaustion must refuse with result 2 instead of reaching a
+The [capacity repair #173](https://github.com/aien-dev/CUDApp/pull/173) and
+[command-lifetime repair #174](https://github.com/aien-dev/CUDApp/pull/174) landed on
+CUDApp main as separate commits rather than through their own PRs (both closed
+2026-10-29): `8717565d5936b1631a07b6a89d480577edc9b4a3` (command-list lifetime race
+and host-acceptance repair, [#179](https://github.com/aien-dev/CUDApp/pull/179)) and
+its child `a25fb9f1129bf2d49baba19fa71646a784569d5d` (capacity defects and
+clean-output build). Checked 2026-10-30 with `git diff`: across the 14 files #173
+changed from `c6977b49`, `a25fb9f1` matches #173's final head
+`ca441c5a92f5a951a67de00aeddae0e077f10216` except
+`tests/test_omega_gpu_session_platform.c`, whose only difference is #179's change;
+`a25fb9f1` adds further capacity and clean-output fixes. #173's host contract stands:
+instruction-slot exhaustion must refuse with result 2 instead of reaching a
 branch-patch or tail-store bounds trap (103); actual `nv_staged` recomposition
 must refuse without changing caller code. Reset the generated adapter's failure
 sentinel before every invocation, including repeated calls and recovery: a prior
 success must not mask a later omitted status write. Missing-status call-one,
-call-two and recovery mutants each fail with status 1. This host acceptance does
-not accept the still-unaccepted #174 command-lifetime prerequisite or freeze the
-combined consumer lock.
+call-two and recovery mutants each fail with status 1. Landing on main is source
+integration with host evidence, not device or full-model qualification.
 The independent [consumer recovery #924](https://github.com/aien-dev/omega-mv/pull/924)
 preserves the original staged source/index and remains a draft. Its host acceptance
 at `cafb7be0` retains canonical weak-identity archive members in Visor machine tests
@@ -114,8 +121,8 @@ and stages before tensor mutation runners. Numeric CPU/GB10-host models, program
 FP32/realization/identity, tensor/store/ASan/mutants and Visor host controls pass
 against the reviewed #169 source `7a354dbda9eddd405610fdcabf4fc4e24c1a0f47`.
 Manifest provenance/refusal mutants also pass on the synthetic chip-run seam.
-This is exercised old-pin consumer compatibility, not acceptance of a combined
-#173/#174 artifact or a physical inference run.
+This is exercised old-pin consumer compatibility, not acceptance of the main
+`a25fb9f1` consumer or a physical inference run.
 
 The existing 35B Core consumer follow-through is tracked in
 [Core MV #797](https://github.com/aien-dev/aien-sovereign-core-mv/issues/797).
@@ -161,13 +168,15 @@ recording any lock line.
 
 Status vocabulary for the 35B consumer chain: capacity
 [#173](https://github.com/aien-dev/CUDApp/pull/173), command-lifetime
-[#174](https://github.com/aien-dev/CUDApp/pull/174) and shape/MoE
-[#175](https://github.com/aien-dev/CUDApp/pull/175) are each
-`EXERCISED_HOST_UNMERGED`. A local merge of exactly those heads is a combined
-host candidate, not main, not merged and not device-qualified; record it by its
-parent heads, its own merge commit and its measured archive, and keep it separate
-from the canonical merged #169 path. The x86 compiler, bridge and guide changes
-remain separate dependencies of that chain.
+[#174](https://github.com/aien-dev/CUDApp/pull/174) and shape/MoE runner
+[#175](https://github.com/aien-dev/CUDApp/pull/175) are on CUDApp main
+(`8717565d` via #179, then `a25fb9f1`): merged source with host evidence, not
+device-qualified. Historical: before 2026-10-29 they were `EXERCISED_HOST_UNMERGED`
+and a local merge of their heads was recorded as a separate combined host candidate;
+cite main commits now, not that candidate. The x86 dependency has landed (below);
+[#924](https://github.com/aien-dev/omega-mv/pull/924),
+[CUDApp #97](https://github.com/aien-dev/CUDApp/pull/97) and
+[Core MV #797](https://github.com/aien-dev/aien-sovereign-core-mv/issues/797) remain pending.
 
 Shape-aware selection and grouped MoE acceptance must cover the actual recorded owner,
 not just a selector fixture. The complete ordered operation binds every relevant
@@ -182,9 +191,9 @@ is distinct from the live operation-instance digest. Actual-owner host controls,
 protected evaluator execution, independent numerical/model-quality/full-cost results,
 physical paired large-M/grouped runs and full-model qualification are separate claims.
 Absent physical evidence remains NOT_RUN.
-The standalone grouped host runner compatibility repair is
-[draft #175 at `491da3c`](https://github.com/aien-dev/CUDApp/pull/175), stacked on
-capacity candidate `ca441c5a92f5a951a67de00aeddae0e077f10216`.
+The standalone grouped host runner compatibility repair was
+[draft #175 at `491da3c`](https://github.com/aien-dev/CUDApp/pull/175); #175 was closed
+because the runner repair is on main in #179 (`8717565d`).
 It compiles the included incumbent graph with the production GNU11 dialect while
 retaining strict C11 for the generated native caller. Its reproduced strict-C11
 `strnlen` build failure and repaired index/admission/refusal/mutant PASS are host
@@ -193,7 +202,7 @@ runner evidence only, not a new runtime implementation or device result.
 For the existing Q36 35B candidate, freeze Core/Omega/CUDApp source and executable
 identities, generated-unit/archive hashes, model/config/tokenizer/weight/scale
 content identities, workload and exact command/environment. Reliability repairs
-#173 and #174 precede candidate qualification. Require correctness, memory, speed,
+#173 and #174 (now on main, above) precede candidate qualification. Require correctness, memory, speed,
 reliability, recovery and neighboring-process evidence against that same manifest.
 NVIDIA kernel-driver replacement is a separate active objective: the current path
 still uses Linux RM/UVM device nodes, ioctls and mappings through the versioned
@@ -210,12 +219,14 @@ host controls are not hardware qualification or production activation. Keep
 the standalone private driver, this adapter branch, and the separate public
 Omega driver bootstrap experiments as distinct source/evidence subjects.
 
-The x86 binding work [omega-bridge #37](https://github.com/aien-dev/omega-bridge/pull/37)
-and companion [guide #116](https://github.com/aien-dev/omega-harness/pull/116)
-also depend on [compiler #923](https://github.com/aien-dev/omega-mv/pull/923).
-Keep their guides pending until the exact compiler and caller acceptance is recorded;
-emulated boundary checks are not native x86 execution. Neither dependency changes the
+The x86 compiler [omega-mv #923](https://github.com/aien-dev/omega-mv/pull/923) merged at
+`bf54b19fa590e8ae925c0e80815516dbf41e7326`; the x86 binding landed as
+[omega-bridge #40](https://github.com/aien-dev/omega-bridge/pull/40) (`ed420fcb`, superseding
+closed #37), and [guide #116](https://github.com/aien-dev/omega-harness/pull/116) merged at
+`515f15b1`. omega-mv `docs/X86-LINUX.md` is still DRAFT with native x86 NOT_RUN;
+emulated boundary checks are not native x86 execution. None of these changes the
 production resolver defaults or authorizes GPU execution or production activation.
+Device and full-model execution for this chain remain NOT_RUN.
 
 
 ## Corrections
