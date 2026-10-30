@@ -19,6 +19,12 @@ Companion skills in this package:
 - `omega-communication`: status labels, reports, handoffs and corrections.
 - `aien-repositories`: what AIEN builds and which repository owns a task.
 
+## Development method: Human-Directed Agentic Engineering
+
+Use Human-Directed Agentic Engineering (HDAE) to describe the development workflow. Humans define the goal, architecture, constraints, acceptance criteria and stopping points. Agents implement, execute checks, diagnose failures and revise inside that boundary. Return architectural decisions, acceptance and release decisions to human review; an agent or advisor cannot enlarge its own authority.
+
+This wording follows the method and systems-software case study documented by Gregory M. Kurtzer, *Ginux: Building an Independent Kernel That Runs Linux Userspace through Human-Directed Agentic Engineering* (2026), [doi:10.5281/zenodo.23682548](https://doi.org/10.5281/zenodo.23682548). It does not rename Omega, change compiler pins, rewrite earlier evidence or establish that an unrun gate passed.
+
 ## 1. Orient before acting
 
 1. Identify the owning repository with `aien-repositories`. Record its actual remote, default branch and exact source commit, then read its `AGENTS.md` (or `CLAUDE.md`) and the target directory's `.crumb`. Read `crumb-protocol` before editing, creating or moving a directory, or when a gate reports a stale crumb: it covers reading a crumb, claiming and releasing locks, whispers and regenerating committed crumbs. An open PR, a local branch and a deployed service are three different states.

@@ -1,6 +1,6 @@
 ---
 name: aien-repositories
-description: What AIEN builds and which repository owns a task: mission, doctrine, plan authority, task routing, evidence and status discipline, known source drift. Use before choosing an AIEN repository or making a cross-repository or status claim.
+description: "What AIEN builds and which repository owns a task: mission, doctrine, plan authority, task routing, evidence and status discipline, known source drift. Use before choosing an AIEN repository or making a cross-repository or status claim."
 ---
 
 # AIEN: mission, ownership and evidence
