@@ -737,8 +737,15 @@ OM-2 units add or extend codes ([OMEGESE 9.13](https://github.com/aien-dev/omega
 [`spec/omegese-om2.md` section 8](https://github.com/aien-dev/omega-mv/blob/19f014f2178ca9cd3473728fe00a475a2398c409/spec/omegese-om2.md#L225)):
 27 initialization (`fresh`), 28 constructor discipline (`seal`, `holds`), 29 external `layout`;
 14 also covers expansion fuel (`obligation=growth`) and a 33rd `export`; 24 keeps its OM-1 meaning
-(branch displacement). gate15 pins only codes 3..23 (roadmap RM8, #797). Merged contracts
-(#807 through #768) add error **30**, diagnostic `obligation=contract` (section 11a).
+(branch displacement). Merged contracts (#807 through #768) add error **30**, diagnostic
+`obligation=contract` (section 11a).
+
+PENDING aien-dev/omega-mv#965 (draft, not merged): one registry `seed/omc/error-codes.reg` lists every
+code; gate15 covers 1..25 and 27..30 at exact lines, checked by `seed/omc/codereg.om`; OMEGESE §9.14 is
+the table. Codes 24..30: 24 AArch64 branch displacement out of range; 25 unknown target or AArch64-only
+path on another target; 26 unused; 27 fresh element read before written; 28 seal outside its
+constructor or unsupported holds; 29 external layout out of bounds; 30 contract syntax misplaced,
+including any `requires`/`ensures`/`invariant` line in IR mode (#791; base omc reads `requires` as a local).
 
 Limits met while porting CUDApp's encoder and cubin writer (aien-dev/CUDApp#143, merged
 `2fab72fde0`), rechecked with omega-mv main `bf54b19f` (`seed/out/omc` sha256 `62775d2a...`):
