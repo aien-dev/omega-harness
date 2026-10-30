@@ -519,8 +519,13 @@ bound in an outer `if`, then load inside it.
   (`x = 5` for a new `x`), is error 11: write `x = uint 5` ([#L94-L100](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L94-L100), gate15 `e11_ambiguous`).
 - Integer literals: decimal only, optional leading `-`, at most 20 digits, and the value must fit the
   type it takes (error 8), e.g. `long` -2^63..2^63-1, `ulong` 0..2^64-1. A non-digit (`12a`,
-  `0x10`) is error 6 ([#L443-L446](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L443-L446)). No hex, no octal,
+  `0x10`) is error 6 ([#L443-L446](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L443-L446)). In an OM-1 unit (and IR mode) there is no hex, no octal,
   no character literals: write byte 65, not `'A'`. `true` / `false` are the bools.
+- Hex literals, OM-2 units only (`om2` first non-note line; #750, `spec/omegese-om2.md` section 2): `0x`
+  then 1..16 lowercase digits `0-9a-f`, value unsigned, typed by the place under the decimal range rule
+  (`int 0xffffffff` is error 8: no two's-complement reinterpretation). Error 6: `-0x..`, `0X`, no
+  digits, 17+ digits, uppercase, `_`, any other character. `0x2a` and `42` compile to identical bytes;
+  signed minima need decimal. Fixtures: `seed/omc/om2/hex/` (omega-mv main 62d1d0d6, omc 62775d2a; gate PR #951).
 - Shift with a bare left operand takes the shift amount's type: `shl 1 sh` with `sh` a `uchar` shifts
   a `uchar`. Write `shl ulong 1 sh` when you mean 64 bits ([#L97-L99](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L97-L99)).
 - Float literals: `digits.digits[e[+|-]digits][f32|f64]`, a digit on both sides of the dot; exact
