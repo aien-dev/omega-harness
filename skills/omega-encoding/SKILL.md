@@ -362,7 +362,11 @@ it, or decode signed values arithmetically (section 8).
   send recv random fork cwd chdir umask accept listen connect waitio memfd mapget mapset`. `bits min
   max abs sqrt` are deliberately **not** reserved (gate11). Check the keyword table, not memory.
 - **PENDING, not on omega-mv main** ([omega-mv#875](https://github.com/aien-dev/omega-mv/pull/875), draft,
-  head `ff39027f2`, omc sha256 `924f41f5a7afc51404d054d606c2bba2e0c26e6ac1144e8d117b79ac2a7529be`): two
+  rechecked 2026-10-30 at head `efd1b4e04d0c054d06c6102b3ab9c3f8ec728d7c`, omc sha256
+  `00386bf9ec7bd5718891e92367653593ac70a30554daf601decd48f8d8065aa7`; earlier head `ff39027f2`, omc
+  `924f41f5…`). Keyword ids: `dit` 225, `scrub` 226, program-mode value words (`seed/omc/omc.om` L1310
+  at that head). Both are emitted inline, not as helper functions, because om4 holds 512 functions and
+  `omc.om` is at that limit (L7275-L7276); the head still has 512 `^fn ` lines. Two
   OM-2-only, program-mode-only value words, reserved only in `om2` units. `dit v` (v int 0/1, else trap 3)
   writes PSTATE.DIT and gives the previous bit as a long. `scrub n` (n ulong, a multiple of 16, at most
   1048576, else trap 3; trap 6 when SP - n is below the stack floor) zeroes `[SP - n, SP)`, the dead
