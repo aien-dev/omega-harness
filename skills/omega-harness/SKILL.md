@@ -174,6 +174,91 @@ a wrong-codebook control, type/purity refusals and runtime contracts. The learne
 text, structured operations and a pinned compatible learned producer/decoder.
 No model, GPU, live service or compiler syntax change was used in this work.
 
+### NL3/NL4 canonical latent boundary (source lanes merged)
+
+The canonical LTP0 schema belongs to
+[aien-protocols-mv #71](https://github.com/aien-dev/aien-protocols-mv/pull/71),
+reviewed source `6fb728a14781eb4e5262ffbdc9c2e6be64974f36`, merged as squash
+`703eb1b2fdf72cc03ef9851957d70054957e01fe`; not a second Omega wire format.
+Its `specs/latent-payload/validator.om` SHA-256 is
+`e85d174839f7d0c3406f783ec0fd69d52ce5576bdcca4892c16b21b09f14b003`.
+Compose after `om2 debug`, with the pinned Omega `om/tls/sha2.om`.
+The native API is
+`lpvalid(frame view uchar *, context view uchar *, now ulong, lastseq ulong) -> int`;
+the comma notation here describes the API, not Omega source syntax.
+The receiver owns the exact1024-byte context. Status0 means structural and
+template conformance only: rank/shape/contiguous strides, precision/quantization,
+finite f32 payload, time, seq and receiver challenge, identity/context fields,
+reserved bytes and SHA256 integrity. It does not authenticate a sender, allocate
+a challenge, consume a durable attempt, verify consent against current authority,
+or grant a capability. The source lane's recorded133-case host result belongs
+to that exact source/evidence pair; it is not production qualification.
+
+LTP0 field101 is the producer-node effect class, not a receiver grant.
+Fields192/224 are existing producer MJR1 DAG/input-binding fields.
+Production relation is completed producer MJR1.output_digest ==
+SHA256(whole LTP0) == independently admitted consumer CONTENT.digest, with
+generation and objective/tenant/subject agreement. The consumer's verifier and
+capability admission are independent. Do not invent a self-hashing producer DAG,
+an omitted-operand binding, parent/child authority, or producer-supplied trust
+booleans. Signed MJB/MJR relation and atomic durable replay admission are NOT_RUN.
+
+[omega-mv #920](https://github.com/aien-dev/omega-mv/issues/920) consumes this
+validator and NL1's fixed Hadamard unit, not another implementation:
+train source `0e01c58a41f1a2fb976efa75c1cc554503aa2ee4`,
+`native/neuralese/hadamard.om` SHA-256
+`da4a1b91fcd72b4f5fa3a70461932626acdbc62a9a8d0b9876433f4a44f6ed20`.
+Retain its AGPL-3.0-only license in composed executables. The native NL4
+`nl4-dependencies.json` locks exact source versions, paths and licenses.
+The numerical projection proposes explicit uint operands, output shape and
+resource/effect bounds. Independent receiver expectation must match every typed
+field before ordinary compiled `om2 debug` operations run.
+Only closed pure host-synthetic operations are in scope; all nonzero effect
+classes and native-model profiles refuse. No vector bytes become instructions.
+`NL4R1` is a HOST_SYNTHETIC stream, not an authorized production receipt.
+Never infer learned-channel quality from these deterministic fixed-codebook cases.
+
+The absent bindings are owner proposals, not decoder-created authority:
+[AEGIS #79](https://github.com/aien-dev/aegis-runtime-mv/issues/79) binds the
+existing gateway/capability admission, and
+[protocols #70](https://github.com/aien-dev/aien-protocols-mv/issues/70) binds
+the existing atomic durable microjob reservation after `lpvalid`.
+Effects remain refused until those existing owner paths are actually exercised.
+No new compiler, scheduler, Cortex writer, authority or protocol is needed here.
+
+Compiler hash resolution is source-backed: `d6290c76...` is the committed
+`seed/out/omc` introduced by Omega
+`1fe5976d398646b17acabbf6d9dfae96b017e439`, matching the full hash above.
+Older `2c824805...` (82a399b9) and `49923639...` (ec07d25d) are distinct historical
+binaries, not aliases. Do not compile this candidate with a stale mounted pin
+and claim the result covers the candidate compiler.
+
+NL4 exercised implementation pin:
+`09b1394fe68287eaa10b0d90cf07a9dd00e6cb60`, merged to omega-mv main by train
+[#971](https://github.com/aien-dev/omega-mv/pull/971) squash
+`f56a372aec4909f0601bb4f74ce07b066dd54cf2` (omega-mv #922).
+Its native unchanged OM2GATE conductor observed
+`OM2GATE PASS cases=63 pass=63 fail=0 invalid=0 not_run=0`;
+the inherited #919 suite separately observed 54/54 PASS.
+Rerun 2026-10-31 at omega-mv main `91c83438daec0bdb88bf5c077cae10f3d15d365d`,
+omc sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`,
+validator taken from protocols merge `703eb1b2` (byte-identical, same SHA-256):
+`OM2GATE PASS cases=63 pass=63` (exit 0); one byte appended to the
+`f32-double0` expected fixture gives `OM2GATE FAIL cases=63 pass=62 fail=1` (exit 1).
+The content-addressed HOST_SYNTHETIC receipt is
+`neuralese/nl4-host-results.03b624d6ad393604d958f554fc55844885712ca49f425f98459974846e9e5280.json`.
+Read `neuralese/README.md` and `nl4-dependencies.json` at that exact source for
+reproduction and source/license staging. Do not concatenate the consumer before
+the Hadamard globals: compose entry + Hadamard unit + proposal + validator + SHA2.
+No examples in this guide were changed; no compiler or language pin was changed.
+The protocol source/evidence head was
+`01b5dc3c9f127d988d7c4e5c9ab10ef8dd140d2e`; at merge `703eb1b2` its
+`specs/latent-payload/evidence/host-final.log` still records
+`OM2GATE PASS cases=133 pass=133`. That is host structural conformance, not
+MJB/MJR authority or production qualification. The independent NL6 replay is
+[benchmarks #56](https://github.com/aien-dev/benchmarks-mv/pull/56), merged as
+`b1cefe485099f8c7092055274b1844edcb02726f`.
+
 
 ## 3. Compile, execute, challenge
 
