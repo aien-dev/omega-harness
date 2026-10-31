@@ -14,8 +14,8 @@ For compiler internals, register rules, wire formats and the reasons behind each
 
 | Pin | Value |
 |---|---|
-| omega-mv commit | `3a163bc5eafa5be4b9ca97b7f17046c33f0d9032` |
-| compiler `seed/out/omc` | sha256 `24caacf463cc29c5413d5b2565ef8f88c76e60a585bbad44d2388cb1ac29abb7` |
+| omega-mv commit | `9920aab1413983c2867d02d75b2276341595adb8` |
+| compiler `seed/out/omc` | sha256 `be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a` |
 | language reference | `docs/one_layer/OMEGESE.md` at that commit |
 | host | Linux AArch64 only; omc writes a static AArch64 Linux ELF |
 
@@ -26,7 +26,7 @@ decides; this guide records the known disagreements.
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv && cd omega-mv
-git checkout 3a163bc5eafa5be4b9ca97b7f17046c33f0d9032
+git checkout 9920aab1413983c2867d02d75b2276341595adb8
 sha256sum seed/out/omc      # must print the pinned hash
 sh seed/omega-from-seed.sh  # optional: rebuild omc from the 408-byte loader
 seed/out/omc < prog.om > prog; echo "compile $?"
