@@ -54,6 +54,76 @@ When designing state communication, follow the canonical contract in `spec/seman
 
 Every serialized format needs field order, width, signedness, endianness, ranges, versioning, canonicalization and rejection behavior. Test boundaries and malformed or truncated input.
 
+### Neuralese envelopes and decoded proposals
+
+Keep Omega's name. The Neuralese supplement from omega-mv #919 is on main: it was
+merged by train r1 [#971](https://github.com/aien-dev/omega-mv/pull/971) as
+`f56a372aec4909f0601bb4f74ce07b066dd54cf2` (head `9a173940` unchanged).
+`neuralese/README.md` distinguishes the PROPOSED learned envelope/experiment
+from the IMPLEMENTED / EXERCISED host-only fixed codebook.
+
+- Require immutable producer model/artifact and decoder identities, compatible
+  representation layer/version, dimension/shape, dtype, canonical byte encoding,
+  byte order, framing bound and checksum. A non-model fixture must identify
+  itself as non-model. Same shape does not make models or decoders interchangeable.
+- A checksum authenticates nobody and conveys no execution authority. Keep task
+  context bindings where applicable; unknown identity pairs or malformed data
+  must be refused before any output is executed.
+- Retain envelope bytes, the exact decoded explicit Omega artifact, compiler
+  identity and receiver policy/acceptance evidence. Decoded output re-enters the
+  ordinary checked path with normal contracts, effects and capabilities; it gets
+  no privileged execution. The current pure codebook is not a general native
+  capability sandbox or effectful executor.
+- Report bounded validator/codebook results separately from learned-producer
+  results. No model was run for this supplement; learned reasoning, compression
+  benefits, model interoperability, GPU qualification and deployment are not
+  established by the host codebook's passing cases.
+
+For the canonical LTP0/NL4 lanes (all source dependencies merged), distinguish
+the following explicitly:
+
+- LTP0 structural/template conformance, merged as
+  [protocols #71](https://github.com/aien-dev/aien-protocols-mv/pull/71) squash
+  `703eb1b2fdf72cc03ef9851957d70054957e01fe` (its `specs/latent-payload/validator.om`
+  is byte-identical to the reviewed source `6fb728a14781eb4e5262ffbdc9c2e6be64974f36`,
+  sha256 `e85d1748...b003`), is not a signed producer MJR1 output/consumer CONTENT
+  admission, atomic durable reservation or capability. Its SPEC status stays
+  PROPOSED for endpoint adoption and model communication.
+  Field101 is a producer-node effect class, never receiver authorization.
+- NL4 source `09b1394fe68287eaa10b0d90cf07a9dd00e6cb60` (omega-mv #922, merged by
+  train #971 squash `f56a372aec4909f0601bb4f74ce07b066dd54cf2`) executes only closed
+  pure uint increment/double/identity after receiver-owned typed expectation.
+  The actual result is HOST_SYNTHETIC:63/63 native cases, including 24 positive
+  executions, 27 refusals, 9 killed mutants, two ordinary contract traps and one
+  independent sixteen-payload codec oracle. Inherited #919 cases separately 54/54.
+  Rerun 2026-10-31 at omega-mv main `91c83438daec0bdb88bf5c077cae10f3d15d365d`
+  with omc sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`:
+  `OM2GATE PASS cases=63 pass=63`; an appended byte in the `f32-double0`
+  expected fixture gives `OM2GATE FAIL cases=63 pass=62 fail=1` (exit 1).
+- Preserve raw frame/context/request, exact source/compiler hashes, result channel
+  and exit. `NL4R1 decision op lhs rhs rank dim0 dim1 elements effects result`
+  has decision0 only for an executed success on stdout. A nonzero refusal is
+  stderr, stdout empty, every other numeric field zero. Do not count that as an
+  executed task success or an authorized production receipt.
+- A local expected capability reference or SHA256 checksum grants nothing.
+  Actual native gateway/reservation bindings remain owner proposals AEGIS #79
+  and protocols #70; production authority, durable replay, signed MJB/MJR relation
+  and effectful execution are NOT_RUN.
+- The independent experiment preregistration is design freeze
+  `8ee0a494bf73230c9d37647eb3caea792298fa8d`, published by
+  [benchmarks #56](https://github.com/aien-dev/benchmarks-mv/pull/56), merged as
+  `b1cefe485099f8c7092055274b1844edcb02726f`. Public sixteen-case toy/
+  deterministic codec controls are not the secret held-out campaign and are
+  not independent statistical trials. Preserve failures and refusal channels.
+  Use NL6's independent request/result replay; producer-reported scores are not
+  acceptance evidence. Never tune on a held-out result then call it preregistered.
+  At that merge, `native/neuralese/nl4-independent.json` records an independent
+  rebuild of NL4 source 09b1394 and actual success/refusal replay: exact raw
+  channels match, success exit 0 with result 3 recomputed by `score.om`,
+  foreign-tenant exit 20 with empty stdout and zero-residue refusal on stderr;
+  both checker exits 0. These are HOST_SYNTHETIC boundary checks, not a learned
+  campaign (NOT_RUN) or physical GB10 qualification (BLOCKED).
+
 ### Native GPU realization records (2026-10-28)
 
 The canonical consumer integration is [CUDApp #169](https://github.com/aien-dev/CUDApp/pull/169),

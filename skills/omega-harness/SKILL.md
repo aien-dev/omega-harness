@@ -59,6 +59,8 @@ say so and stop rather than estimating.
   ```
 - Reuse the existing unit composition, error handling, buffer layouts and build patterns. Make bounds, types, ownership, effects and wire encodings explicit. Keep authorization and refusal paths working, not just the happy-path bytes.
 - Migrate the actual consumers before deleting a replaced implementation. Preserve history and immutable evidence. Matching a recorded hash does not prove parity with the current foreign reference; where the contract calls for it, run an independently built oracle.
+- Route by the ownership rule (Drake's forwarded omega-bridge assessment, 2026-10-27; ADR 0042, Accepted by Drake 2026-10-30, merged as [aien-architecture-mv#342](https://github.com/aien-dev/aien-architecture-mv/pull/342) `6b924d4f8e`): **Omega owns computation, CUDApp owns GPU execution, Omega Bridge owns compatibility.** Language, compiler, compiler pin, semantics and kernel contracts go to omega-mv. Encoders, GPU code generation, cubin writing, disassembly, the driver client, submission and the GPU runtime go to `aien-dev/CUDApp`, even where omega-mv still carries a copy (CUDApp#106, #107, #108, #10, all open). Conversion, bindings, framework attachments and GPU artifact negotiation go to omega-bridge, which never encodes, launches or ships a compiler. A new copy of another repository's owned code needs an ADR amendment first.
+- Existing code stays where it is (Drake, 2026-10-27: "keep the repos we've got, but then we make new repos that are connected to the bigger repos"). Do not move, split or rewrite code already in omega-mv, CUDApp, omega-bridge or aienos.com; the copies above stay until Drake decides otherwise. A new standalone server, kit, bench, library or app gets its own aien-dev repository (check `gh repo list aien-dev` for near-duplicates first) that pins its parent by tag or sha, names it in `.crumb`/`.goals.json` (`scaffold-project`, `crumb-protocol`), and is linked both ways (parent README "Connected repos" line). One tool, one job: stdin or files in, plain text or JSONL on stdout, diagnostics on stderr, meaningful exit codes. omega-mv takes only language, compiler and gate changes; aienos.com only the page that consumes a component.
 - Conversion between Omega and other languages is not this skill's job. Route it to `aien-dev/omega-bridge`, which implements checked conversion for a declared subset and refuses universal conversion. An MCP wrapper is optional tooling and does not widen what the bridge can convert. A native binding counts as working for a language only when its caller was built and executed by the bridge's native-call runner (section 3); a binding that was generated but never called is IMPLEMENTED, not EXERCISED.
   Bridge ABI2 rollup [PR #15](https://github.com/aien-dev/omega-bridge/pull/15) merged at
   `826cb8aee4a09b65cc1b2e295b1dc9e50e155253` (2026-10-28), preserving its later main
@@ -106,6 +108,7 @@ say so and stop rather than estimating.
   Zig/Go executions: their logs have individual successful caller lines, not merely aggregate PASS.
   Java, Swift and Node/JavaScript are not callers in these suites. See the
   [coverage clarification and replay receipt hashes](https://github.com/aien-dev/omega-bridge/pull/34#issuecomment-6473079219).
+- MERGED: the Omega Universal Translation adapters (omega-mv #624) from [#755](https://github.com/aien-dev/omega-mv/pull/755) (final head `b8957b878f`) are on omega-mv main via train r2 [#972](https://github.com/aien-dev/omega-mv/pull/972), squash `f5c9bd89ae604a65d7c777a5739c176f41a036ec`. They are seeded-Omega importers and exporters for profile S1 only (`spec/universal/translation-v1.md`): one pure function with 0..6 `u64` inputs, built from constants and `+ - *` modulo 2^64, in C17, Rust, Python, C++17, Zig and Go, plus `retarget` and `lower` (lowering through omc `734f0a39...6b61`, the `T624_OMC_SHA256` pin in `mk/translation.mk`, to a native unit bound by omega-bridge `tools/native`). Each tool reads one unit on stdin and writes stdout only on success. A refusal names itself on stderr and exits with the spec's status (64 bad command or name, 65 malformed envelope, 67 LIMIT, 68 PROFILE_MISMATCH). The tools are not reentrant, so run one process per call. Coverage is 12 directions and 30 directed compositions. MEASURED 2026-10-31 on the host (AArch64, cores 5-9 nice 19) at main `91c83438daec0bdb88bf5c077cae10f3d15d365d`, with `OMEGA_NATIVE_OMC` sha256 `734f0a39...6b61`, `OMEGA_BRIDGE_REPO`=`SA_SEED_REPO` an omega-bridge clone holding `0fc7d866`, Go 1.27.3 and Zig 0.17.0: the G3 chain run stage by stage (`make -f mk/translation.mk test-translation-g2`, then `test-source-aware-v2`, `test-retarget`, `test-cpp-u64`, `test-zig-u64`, `test-go-u64` and `make -f mk/translation-validate.mk test-translation-compose-v2`) all exited 0; compose-v2 reported 30 directed compositions plus 6 same-language round trips, `pass 636 fail 0 not_run 0`. Controls: without `ZIG` the Zig stage refuses (exit 2), and Go 1.25.14 against the `go >= 1.27` module fails the Go stage (exit 2) rather than passing. The earlier independent #623 validation passed at head `2d4c6407`. Anything outside S1 is refused, not approximated. The next profile, S2 (signed i64, comparisons, select), is specified in `spec/universal/translation-s2-v1.md` ([#822](https://github.com/aien-dev/omega-mv/pull/822), merged `56d979c4`) with status PROPOSED and no implementing tool on main; its C import, Rust export and lowering are on open [#839](https://github.com/aien-dev/omega-mv/pull/839) (host-tested, not qualified, not merged). The bridge statement above still holds for the bridge itself.
 - The scalar IR-to-WebAssembly backend is owned by omega-mv, not a foreign-source import:
   [#787](https://github.com/aien-dev/omega-mv/pull/787) merged as
   `3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`, after boolean IR fix
@@ -114,6 +117,151 @@ say so and stop rather than estimating.
   See `omega-encoding` section 0 for tested hashes, exact limits and refusal boundary.
   Source merge status does not establish browser deployment.
 - No outside dependency is adopted silently (Drake, 2026-10-25). When the work needs one, code it in seeded Omega and route any conversion through `aien-dev/omega-bridge` — which, per `docs/CAPABILITIES.md` and `docs/NATIVE-ABI.md`, emits checked C and Python from a bounded `.om` subset and lets foreign callers call compiled Omega units. It does **not** import arbitrary C or Python (`Python/C input conversion is not implemented`), so an existing host implementation cannot be pulled in; a missing converter is a concrete extension proposal, not an assumption. A host binary, library or language runtime that remains in the build or production path gets its exact version, what it does for us, and the Omega replacement recorded next to the artifact. Verification oracles are exempt: the pinned compiler, QEMU/OVMF and read-only checkers (mtools, sgdisk, fsck.vfat, git, gh) stay in use.
+
+### Neuralese supplement: merged reference, not a second execution language
+
+Keep **Omega**. Neuralese is a **PROPOSED** learned-representation supplement,
+not a rename, new compiler mode or latent-reasoning claim. The bounded native
+reference from omega-mv #919 is **MERGED** and **IMPLEMENTED / EXERCISED (host)**,
+not QUALIFIED or DEPLOYED: train r1 [#971](https://github.com/aien-dev/omega-mv/pull/971)
+merged it as `f56a372aec4909f0601bb4f74ce07b066dd54cf2`
+([#919 close comment](https://github.com/aien-dev/omega-mv/pull/919#issuecomment-6529992046)).
+Current pin: omega-mv main `91c83438daec0bdb88bf5c077cae10f3d15d365d`. The original
+evidence pins were documentation `e79566c191ea8ef11888e69ce50d8fadf375d4fd` and clean
+implementation `39e89fb1c2aaed99ddc05ec565274dd05792b70f` on main `6999fa9e6`.
+
+- Read `neuralese/README.md` at the current pin. Bind producer model/artifact and decoder
+  identities, dimension, dtype, canonical byte encoding and checksum explicitly.
+  Different models/layers/decoder revisions are not interchangeable. The current
+  producer is explicitly a hand-authored fixture, not a trained model.
+- Treat every representation as untrusted data. Decode only into explicit Omega
+  operations; preserve the envelope and decoded artifact. Feed the output through
+  the ordinary compiler, kept runtime contracts and receiver's existing
+  effect/capability admission policy. No decoder-created authority or privileged
+  execution path is permitted.
+- The reference codebook emits only pure scalar operations and uses `om2 debug`.
+  Native host words use ambient process permissions, not general capability
+  confinement. This patch is not a sandbox for arbitrary source. An effectful
+  proposal without a checked receiver executor must be refused.
+- First-party implementation and the existing host conductor are `.om`.
+  `neuralese/decode.om` composes with `om/tls/sha2.om`; static independent byte
+  fixtures do not introduce a host decoder or runtime dependency.
+
+The original run used compiler `seed/out/omc` SHA-256
+`d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84` (receipt
+`neuralese/host-results.287fdc263f7af93107c378ba63c92202a0e6c1479cb1ff6971706b423b0b15fb.json`,
+kept unedited on main). The conductor refuses any compiler other than the pinned one,
+so at main `91c83438` use the current omc SHA-256. From a fresh Linux AArch64 clone,
+with the scratch directory absent:
+
+```sh
+mkdir -p build
+if seed/out/omc < seed/qualification/om2/gate.om > build/neuralese-gate; then
+  chmod +x build/neuralese-gate &&
+  build/neuralese-gate seed/out/omc \
+    2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5 \
+    neuralese/host.cases build/neuralese-host
+else
+  exit 1
+fi
+```
+
+MEASURED 2026-10-31 at main `91c83438` (omc `2aec185d...d8d5`):
+`OM2GATE PASS cases=54 pass=54 fail=0 invalid=0 not_run=0`, the same count as the
+original `d6290c76` receipt. Negative control: one byte appended to
+`neuralese/fixtures/positive-1-7.om` gives `decode-positive-1-7 FAIL ... stdout differs
+at byte 128` and `OM2GATE FAIL cases=54 pass=53 fail=1`. Cases include exact
+decoded-source and executed-result checks, seventeen guard-removal mutant kills,
+a wrong-codebook control, type/purity refusals and runtime contracts. The learned-producer experiment remains
+**PROPOSED / NOT_RUN**: same tasks and independent acceptance checks for source
+text, structured operations and a pinned compatible learned producer/decoder.
+No model, GPU, live service or compiler syntax change was used in this work.
+
+### NL3/NL4 canonical latent boundary (source lanes merged)
+
+The canonical LTP0 schema belongs to
+[aien-protocols-mv #71](https://github.com/aien-dev/aien-protocols-mv/pull/71),
+reviewed source `6fb728a14781eb4e5262ffbdc9c2e6be64974f36`, merged as squash
+`703eb1b2fdf72cc03ef9851957d70054957e01fe`; not a second Omega wire format.
+Its `specs/latent-payload/validator.om` SHA-256 is
+`e85d174839f7d0c3406f783ec0fd69d52ce5576bdcca4892c16b21b09f14b003`.
+Compose after `om2 debug`, with the pinned Omega `om/tls/sha2.om`.
+The native API is
+`lpvalid(frame view uchar *, context view uchar *, now ulong, lastseq ulong) -> int`;
+the comma notation here describes the API, not Omega source syntax.
+The receiver owns the exact1024-byte context. Status0 means structural and
+template conformance only: rank/shape/contiguous strides, precision/quantization,
+finite f32 payload, time, seq and receiver challenge, identity/context fields,
+reserved bytes and SHA256 integrity. It does not authenticate a sender, allocate
+a challenge, consume a durable attempt, verify consent against current authority,
+or grant a capability. The source lane's recorded133-case host result belongs
+to that exact source/evidence pair; it is not production qualification.
+
+LTP0 field101 is the producer-node effect class, not a receiver grant.
+Fields192/224 are existing producer MJR1 DAG/input-binding fields.
+Production relation is completed producer MJR1.output_digest ==
+SHA256(whole LTP0) == independently admitted consumer CONTENT.digest, with
+generation and objective/tenant/subject agreement. The consumer's verifier and
+capability admission are independent. Do not invent a self-hashing producer DAG,
+an omitted-operand binding, parent/child authority, or producer-supplied trust
+booleans. Signed MJB/MJR relation and atomic durable replay admission are NOT_RUN.
+
+[omega-mv #920](https://github.com/aien-dev/omega-mv/issues/920) consumes this
+validator and NL1's fixed Hadamard unit, not another implementation:
+train source `0e01c58a41f1a2fb976efa75c1cc554503aa2ee4`,
+`native/neuralese/hadamard.om` SHA-256
+`da4a1b91fcd72b4f5fa3a70461932626acdbc62a9a8d0b9876433f4a44f6ed20`.
+Retain its AGPL-3.0-only license in composed executables. The native NL4
+`nl4-dependencies.json` locks exact source versions, paths and licenses.
+The numerical projection proposes explicit uint operands, output shape and
+resource/effect bounds. Independent receiver expectation must match every typed
+field before ordinary compiled `om2 debug` operations run.
+Only closed pure host-synthetic operations are in scope; all nonzero effect
+classes and native-model profiles refuse. No vector bytes become instructions.
+`NL4R1` is a HOST_SYNTHETIC stream, not an authorized production receipt.
+Never infer learned-channel quality from these deterministic fixed-codebook cases.
+
+The absent bindings are owner proposals, not decoder-created authority:
+[AEGIS #79](https://github.com/aien-dev/aegis-runtime-mv/issues/79) binds the
+existing gateway/capability admission, and
+[protocols #70](https://github.com/aien-dev/aien-protocols-mv/issues/70) binds
+the existing atomic durable microjob reservation after `lpvalid`.
+Effects remain refused until those existing owner paths are actually exercised.
+No new compiler, scheduler, Cortex writer, authority or protocol is needed here.
+
+Compiler hash resolution is source-backed: `d6290c76...` is the committed
+`seed/out/omc` introduced by Omega
+`1fe5976d398646b17acabbf6d9dfae96b017e439`, matching the full hash above.
+Older `2c824805...` (82a399b9) and `49923639...` (ec07d25d) are distinct historical
+binaries, not aliases. Do not compile this candidate with a stale mounted pin
+and claim the result covers the candidate compiler.
+
+NL4 exercised implementation pin:
+`09b1394fe68287eaa10b0d90cf07a9dd00e6cb60`, merged to omega-mv main by train
+[#971](https://github.com/aien-dev/omega-mv/pull/971) squash
+`f56a372aec4909f0601bb4f74ce07b066dd54cf2` (omega-mv #922).
+Its native unchanged OM2GATE conductor observed
+`OM2GATE PASS cases=63 pass=63 fail=0 invalid=0 not_run=0`;
+the inherited #919 suite separately observed 54/54 PASS.
+Rerun 2026-10-31 at omega-mv main `91c83438daec0bdb88bf5c077cae10f3d15d365d`,
+omc sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`,
+validator taken from protocols merge `703eb1b2` (byte-identical, same SHA-256):
+`OM2GATE PASS cases=63 pass=63` (exit 0); one byte appended to the
+`f32-double0` expected fixture gives `OM2GATE FAIL cases=63 pass=62 fail=1` (exit 1).
+The content-addressed HOST_SYNTHETIC receipt is
+`neuralese/nl4-host-results.03b624d6ad393604d958f554fc55844885712ca49f425f98459974846e9e5280.json`.
+Read `neuralese/README.md` and `nl4-dependencies.json` at that exact source for
+reproduction and source/license staging. Do not concatenate the consumer before
+the Hadamard globals: compose entry + Hadamard unit + proposal + validator + SHA2.
+No examples in this guide were changed; no compiler or language pin was changed.
+The protocol source/evidence head was
+`01b5dc3c9f127d988d7c4e5c9ab10ef8dd140d2e`; at merge `703eb1b2` its
+`specs/latent-payload/evidence/host-final.log` still records
+`OM2GATE PASS cases=133 pass=133`. That is host structural conformance, not
+MJB/MJR authority or production qualification. The independent NL6 replay is
+[benchmarks #56](https://github.com/aien-dev/benchmarks-mv/pull/56), merged as
+`b1cefe485099f8c7092055274b1844edcb02726f`.
+
 
 ## 3. Compile, execute, challenge
 
@@ -210,6 +358,7 @@ fi
   were carried over byte-identically. Merge status does not establish deployment or trusted clocks.
 - Record the source revision, the compiler, source and binary hashes, the exact command, the platform, expected versus observed result, and the limits. A local smoke run is not repository qualification, not a merge and not a deployment.
 - Pinned `aien-test` verifier sources must be built from a trusted directory outside the candidate tree (`RUNNER_TEMP` in GitHub Actions), with an explicit separate target directory. Cargo loads configuration from its current directory and ancestors even with `--manifest-path`; source pins alone do not exclude a candidate `.cargo/config.toml`. Cache dependency registries/git only, never the compiled verifier target from a candidate run. Challenge both PR and Alpha commands with a candidate rustc-wrapper and a trusted-source negative control. This workflow correction is merged in [sovereign-core #771](https://github.com/aien-dev/aien-sovereign-core-mv/pull/771), merge `2369d7c8`; that source status does not assert deployment of local verifier services.
+- om/tls coverage commands (merged: omega-mv #862 `audit/tls-coverage`, landed in train #979 `4376c211`; current main `91c83438`, omc sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`). `sh om/tls/test/wycheproof/ledger.sh WYCHEPROOF_DIR LOGDIR` accounts for every test of every C2SP/wycheproof `testvectors_v1` file at `d17cc89f` (347 rows in `ledger.tsv`) as pass, fail, na (with the written reason), not_run or unexplained, reading `LOGDIR/SUITE.log` from the primitive suites (`aesgcm chacha sha2 x25519 ec rsa mlkem ecdh`, each `sh om/tls/test/SUITE/run.sh OMC`); exit 0 PASS, 1 FAIL (a failure, an unexplained test or a ledger error), 3 NOT_RUN (applicable tests absent). A skipped or absent suite is NOT_RUN, never a pass. `sh om/tls/test/wycheproof/ledger-nc.sh WYCHEPROOF_DIR LOGDIR` is its negative control: a deleted row, a planted `FAIL` and an altered header sha256 must each make the ledger exit 1. Observed 2026-10-31 at main `91c83438` with omc `2aec185d`, Spark cores 5-9 at nice 19: all eight suites exit 0 (`SHA2 PASS`, `CHACHA PASS`, `AESGCM PASS`, `X25519 PASS`, `EC PASS`, `RSA PASS`, `MLKEM PASS`, `ECDH PASS`, every mutant detected); `ledger.sh` exit 0 with `WYCHEPROOF-LEDGER PASS files=347 tests=145057 pass=13804 fail=0 na=131253 not_run=0 unexplained=0 errors=0`; `ledger-nc.sh` exit 0, each of row, fail and header `rc=1 detected`; control: `ledger.sh` with an empty LOGDIR exits 3 (`WYCHEPROOF-LEDGER NOT_RUN ... pass=0 ... not_run=13804`). `sh om/tls/test/bogo/run.sh OMC BORINGSSL_DIR GO` builds the pure-.om BoGo client shim and the pinned BoringSSL runner (`om/tls/test/bogo/PINS`: commit, Go version, URL and sha256; Go is a test oracle only) and prints `BOGO-RESULTS tests= pass= fail= na= skip=` plus `na-reason`/`fail-reason` lines. `na` is only two runner-side refusals of a TLS 1.3-only client (`tls12-only`: runner MaxVersion below TLS 1.3; `record-301`: BoringSSL demands 0x0301 on the initial record, which RFC 8446 5.1 does not require); na is never counted as a pass. The runs use `-loose-errors`, so expected-failure tests pass on any error; the negative control therefore re-runs passing candidates without `-loose-errors`, keeps only success-expecting ones, runs them against an echo-corrupting shim and requires `BOGO-NC ... still_pass=0`. Exit 0/1/3 as above. The runner's leaf certificates have an empty subject with a non-critical SAN, which `x509.om` refuses per RFC 5280 4.2.1.6, so run.sh applies `runner-critical-san.patch` to the runner fixture by default; with `BOGO_UNPATCHED=1` handshakes using those leaves fail with `X509_ERR_MALFORMED` (an explained policy difference, not a pass). The BoGo run was not rerun for this refresh (NOT_RUN): heavy runs go to GitHub `ubuntu-24.04-arm` runners, not the Spark.
 
 ### SPIR-V OpenCL Kernel backend
 
@@ -255,6 +404,47 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
   contract checks. No DPC++, Level Zero, GPU or Alpha qualification is implied.
   The standalone acceptance gate is not wired into protected gate manifests.
 
+### Path 3: bounded seeded Omega NVMe read protocol
+
+Merged: [aienux #472](https://github.com/aien-dev/aienux/pull/472) landed on main
+2026-10-30 as `aab6de6d4df4b4d99e764e91303a13d10684f5fe`; its confinement-retention
+[fix #470](https://github.com/aien-dev/aienux/pull/470) landed as
+`2b77170de9693a3204b65dff059e24c2cdecc197`. `native/disk` at the merge commit is
+byte-identical to the exercised source `62393fb2ab03766c4be0273a1388af6d2f7247f8`.
+This is HOST/QEMU EXERCISED, not physical qualification, a bootable storage stack
+or a TRUST-1 Gate 7 pass.
+
+- Use the existing driver compiler pin: omega-mv
+  `397e67040fb74853c6814097fe02ae4e1ebd6f66`, omc SHA256
+  `bcfa582892afca8f65e551fe56867d918d86e84540c7381be8fa9ef18d0cf0f6`.
+  This compatibility pin does not replace the general compiler pin above.
+- From aienux at `aab6de6d`, run `sh native/disk/tests/omega_nvme_test.sh`,
+  with `AIEN_OMC` set to the absolute pinned compiler and
+  `OMEGA_NVME_EVIDENCE` set to a new absolute evidence directory.
+  Observed exit 0 (2026-10-28 on the source, rerun 2026-10-31 at `aab6de6d` with an omc
+  rebuilt from seed at that pin): 37 host cases, seven killed guard-removal mutants and ten
+  disposable-QEMU cases. The C driver is the independently compiled data oracle;
+  the hosted C/QTest relay performs raw memory/register accesses, not the NVMe
+  protocol. QEMU 8.2.2 and GCC 13.3.0 are verification-only dependencies. Any other
+  compiler is refused before a case runs (`compiler pin mismatch`, exit 2).
+- The Omega code owns Identify/manifest parsing, bounded queues and PRPs,
+  head/tail/phase wrap, CID/SQID/SQ-head correlation, successful copy-out and
+  fail-stop DMA retention. The central opcode guard refuses writes and other
+  IO commands; removing it makes a hostile Write reach the model and fails
+  the negative control. Identity, extent, format, completion and timeout
+  refusals remain separately exercised.
+- See `native/disk/tests/omega_nvme_receipt.txt` and
+  `native/disk/OMEGA_NVME_READ.md` for hashes, manifest layout, reuse search,
+  native adapter contract and the exact measurement-first physical procedure.
+  The volatile/MMIO, DMA coherence/lifetime, timer and ownership adapter is an
+  explicit integration prerequisite, not an excuse to call the C kernel binder.
+  The existing binder reaches a write/flush/restore probe and is not read-only.
+- Physical execution stays NOT_RUN until that adapter is exercised and the
+  operator approves the exact device/namespace/extent, recovery/evidence media
+  and service downtime. Do not open the live root block device or transfer its
+  controller while Linux owns it. Capture latency/throughput before any tuning;
+  host/QEMU results are not SSD measurements or hardware safety evidence.
+
 ### CUDApp portable backend (CUDApp#138, merged `0c782c44af`)
 
 Paths below are on CUDApp main (present at `cc0908bdc0`).
@@ -282,6 +472,18 @@ Paths below are on CUDApp main (present at `cc0908bdc0`).
 - Escalate to an independent reviewer for hard-to-reverse changes to authority, protocols or gates, for contradictory evidence, or when two distinct fixes have failed. A model review is not an execution receipt.
 - For the native GPU swarm, follow the [realization-record evidence boundary](../omega-communication/SKILL.md#native-gpu-realization-records-2026-10-28). A unit test calling an isolated cache or selector is not proof that the existing runtime records the selected code. Exercise the actual generated binding and consuming cache/command-list path, with stale-generation, wrong-artifact and missing-qualification controls. Keep device and whole-model tests NOT_RUN until their authorized execution; never populate production candidates from synthetic host records.
 - **Fix it, don't file it** (Drake, 2026-10-25). A defect you can reproduce is a defect you chase in the same piece of work, including one you found while reviewing someone else's lane: read the code, build the smallest reproduction, change it, prove it, ship it. Reporting a blocker you have not tried to fix, or handing a reproduced bug to an "owner", is unfinished work. Stop only for a real external gate (authorization, a user decision, an exhausted check) and name it after the attempt.
+
+### NVIDIA tools and licensed inputs (provenance)
+
+Hardware facts for NVIDIA back ends follow `PROVENANCE.md` in aien-dev/CUDApp (CUDApp#110, merged as `a8878c955ac16c7b507a46e530e4ca102b935b9a`) and aien-dev/omega-mv (omega-mv#874, merged through the train omega-mv#972 as `f5c9bd89ae604a65d7c777a5739c176f41a036ec`; present at omega-mv main `91c83438daec0bdb88bf5c077cae10f3d15d365d`, omc sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`), which quote the clauses (CUDA Toolkit EULA, January 2025 revision, §1.2(1), §1.2(8), §1.1.2(4), §2.1; NVIDIA driver licence §2.1, §2.2; MAX License §1.4, October 21, 2026). Engineering rule, not legal advice:
+
+- Cite public documentation (PTX ISA, CUDA Binary Utilities, open-gpu-doc), permissively licensed source (NVIDIA open kernel module headers, Mesa NAK/NVK, LLVM `ELF.h`, CUTLASS) or a chip receipt for each fact.
+- `nvcc`, `ptxas`, `cuobjdump` and `nvdisasm` are proprietary, internal-use SDK tools. Run them only on inputs we wrote (our probe kernels, our encoder's bytes), only for NVIDIA targets, and record the version and command. Never ship or wrap them.
+- Never disassemble, extract or read the machine code of an NVIDIA binary: libcuda, cuBLAS, cuDNN, TensorRT, NCCL, driver, firmware, or cubins inside NVIDIA libraries, on any machine including rentals.
+- Never carry a fact learned from NVIDIA tool output into a non-NVIDIA back end.
+- Never give MAX source to an AI system to build a substitute for MAX; reading it to interoperate is allowed.
+- Record every stored NVIDIA-tool listing in the repository's `PROVENANCE.md`. A golden copied from tool output is a regression pin, not independent evidence.
+- In public text, describe the work as independently implemented from public documentation and open source, checked with NVIDIA's tools on my own code. Avoid "reverse-engineered NVIDIA's compiler/driver", "CUDA clone" and an unqualified "byte-identical to nvcc".
 
 ## 5. Communicate and learn
 
@@ -312,6 +514,7 @@ Before you finish, check whether your change touched any of these, and update th
 | Status vocabulary, receipts, report or handoff conventions, wire formats | `omega-communication` |
 | Repository purpose, ownership, names, archive state, plan authority, merge or Alpha policy, a resolved or new contradiction | `aien-repositories` |
 | Any aien-dev repository's purpose, status or links, or a new repository | that repository's entry in [aien-dev/sovereign-intelligence](https://github.com/aien-dev/sovereign-intelligence) `index/curated.yml` (layer, evidence, one-line purpose), in the same piece of work |
+| A new source of hardware facts, a new use of an NVIDIA SDK tool, or stored NVIDIA-tool output | that repository's `PROVENANCE.md`, and section 4 here if the rule changed |
 | These skills, their install method or their layout | the README and the affected skill |
 
 How to do it:
