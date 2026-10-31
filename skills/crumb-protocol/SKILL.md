@@ -157,3 +157,13 @@ crumb list .        # no lock of yours left behind
 ```
 
 State what you ran and what it returned. A crumb change is part of the change under review, so it travels in the same commit or pull request as the work that caused it, and the exact numbers belong in what you report.
+
+## 11. Invariants that name their check (core main since `b7f2250a`)
+
+Merged to core main on 2026-10-31 as `b7f2250a` (core#887, DRA-95). The merge came from the `ready-to-merge` label with no review; a post-merge review found no reason to revert. Every invariant in a shipped-path `.crumb` ends with `Check: <command>`, naming the test or script that enforces it, for example `"A reused KV block never exposes the previous sequence's KV. Check: cargo test -p aien-kv-cache --test kv_lifecycle_qualification -- --exact freed_block_reuse_never_exposes_previous_sequence_kv"`. An invariant with no check you can name and run does not go in the crumb; list it in the PR as unenforced instead.
+
+These crumbs are hand-written and do not parse as the `DirCrumb` struct that `spark-crumbs` and the `aien` CLI read. Until a loader fix merges, `spark-crumbs show`, `sniff` or `record`, and `aien` nest, sniff or show, run in such a directory, overwrite its `.crumb` with an auto-sensed one, and `crumb verify` still passes. Do not run them there; if one ran, restore the file with `git checkout -- <dir>/.crumb` before committing.
+
+`om/crumb-coverage/run.sh` (Omega, omc pinned in `om/crumb-coverage/omega.pin`, omega-mv `b3346c2e`) counts tracked directories, directories with a `.crumb`, and directories with at least one invariant whose `Check:` resolves to an existing test function or repository script, and lists every check that does not resolve. Without `AIEN_OMC` hashing to the pin it exits 77 NOT_RUN. Measured 2026-10-31 on core main `b7f2250a`: `tracked_dirs 780`, `crumb_dirs 41`, `enforced_dirs 28`, `invariants 46 resolved 46 unresolved 0`; `--self-test` PASS. Before the merge, main `43495111` had 17 of 780 directories with a crumb and 0 enforced.
+
+The coverage report is advisory: no gate runs it, and `CRUMB-VERIFY` checks only that crumbs are current, not that their checks pass. Resolving a check proves the named test exists, not that it passes; run it. The `.crumb.local` wording in section 1 and the binding-rules change are tracked in aien-dev/omega-harness#158 pending DRA-97 and DRA-98.
