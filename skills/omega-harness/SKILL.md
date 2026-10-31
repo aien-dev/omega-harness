@@ -285,7 +285,7 @@ Paths below are on CUDApp main (present at `cc0908bdc0`).
 
 ### NVIDIA tools and licensed inputs (provenance)
 
-Hardware facts for NVIDIA back ends follow `PROVENANCE.md` in aien-dev/CUDApp (#110) and aien-dev/omega-mv (#874), which quote the clauses (CUDA Toolkit EULA, January 2025 revision, §1.2(1), §1.2(8), §1.1.2(4), §2.1; NVIDIA driver licence §2.1, §2.2; MAX License §1.4, October 21, 2026). Engineering rule, not legal advice:
+Hardware facts for NVIDIA back ends follow `PROVENANCE.md` in aien-dev/CUDApp (CUDApp#110, merged as `a8878c955ac16c7b507a46e530e4ca102b935b9a`) and aien-dev/omega-mv (omega-mv#874, merged through the train omega-mv#972 as `f5c9bd89ae604a65d7c777a5739c176f41a036ec`; present at omega-mv main `91c83438daec0bdb88bf5c077cae10f3d15d365d`, omc sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`), which quote the clauses (CUDA Toolkit EULA, January 2025 revision, §1.2(1), §1.2(8), §1.1.2(4), §2.1; NVIDIA driver licence §2.1, §2.2; MAX License §1.4, October 21, 2026). Engineering rule, not legal advice:
 
 - Cite public documentation (PTX ISA, CUDA Binary Utilities, open-gpu-doc), permissively licensed source (NVIDIA open kernel module headers, Mesa NAK/NVK, LLVM `ELF.h`, CUTLASS) or a chip receipt for each fact.
 - `nvcc`, `ptxas`, `cuobjdump` and `nvdisasm` are proprietary, internal-use SDK tools. Run them only on inputs we wrote (our probe kernels, our encoder's bytes), only for NVIDIA targets, and record the version and command. Never ship or wrap them.
