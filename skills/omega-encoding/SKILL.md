@@ -445,6 +445,17 @@ disagree, `omc` is what compiles your program:
   call may name any function in the unit; recursion is allowed in program mode and refused (error 9)
   in function mode ([OMEGESE#L409-L417](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L409-L417)). IR mode
   (a leading `ir` line) again allows earlier functions only ([#L755-L763](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L755-L763)).
+- **IR-mode `TYPE value` casts** (merged on omega-mv main as [omega-mv#967](https://github.com/aien-dev/omega-mv/pull/967),
+  squash commit `96ea448add639f8448a4787ef36a2ade06a1a244`, 2026-10-31; harness issue #141). In IR mode a
+  cast reads its operand at the operand's own type, so it converts an operand of any scalar type; a bare
+  number is range-checked against the cast's type (error 8); bool to or from a number is refused (error 9),
+  a bool comes only from a comparison. Pinned by `seed/omc/gate-ir.sh`. Observed (host only) with omc
+  sha256 `e4d84bc3ff5c91b83ce9a156d262eb28c9563e43374537293129898da093b7a6` built from seed at omega-mv
+  main `d39450a23b5936a0aafd35cc23ca70e5468fd4c0`: `ret ulong sub c 48` and `ret long sub c -128`
+  compile; `ret uchar 256` and `ret ulong sub c 300` (c uchar) are error 8; `ret bool c` and
+  `ret ulong eq a b` are error 9. The general pin of this skill (omega-mv `91c83438`, omc `2aec185d…`)
+  predates #967: it gives error 7 for the two widening casts and for `ret ulong eq a b`, and compiles
+  `ret bool c`. Do not rely on the new rule until the pin moves past `96ea448a`.
 - `new` lengths: C path 1..64 ([#L85](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L85)); `omc` 1..16777216
   per array and at most 4 MiB of local arrays per program ([#L460-L463](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L460-L463), gate12).
 - Unread names: the C path refuses a name that is written and never read ([#L37-L38](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L37-L38)).
