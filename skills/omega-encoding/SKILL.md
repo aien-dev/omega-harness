@@ -1,6 +1,6 @@
 ---
 name: omega-encoding
-description: Write .om that the seeded Omega compiler actually accepts: syntax, types, traps, bounds, register limits, host I/O, byte encoding, compiler errors, verified examples. Use before writing, reviewing or explaining any Omega program.
+description: "Write .om that the seeded Omega compiler actually accepts: syntax, types, traps, bounds, register limits, host I/O, byte encoding, compiler errors, verified examples. Use before writing, reviewing or explaining any Omega program."
 ---
 
 # Omega encoding: writing `.om` that the seeded compiler actually accepts
@@ -10,8 +10,163 @@ cannot express, and before encoding bytes, integers or host I/O in Omega.
 
 ## 0. Pin and how to re-check it
 
-The general-language citations below retain their dated historical pin. The newer,
-scope-specific pin immediately below is the tested and merged IR/wasm backend.
+Merge status, 2026-10-29: compiler batch #904 merged at `e2662fffbce1c21ef09da71c0d8808133a6af8ab`;
+x86 integration #923 merged at `bf54b19fa590e8ae925c0e80815516dbf41e7326`.
+Earlier pending labels describe the recorded pre-merge tests. Native x86
+execution remains NOT_RUN; merging is not hardware qualification.
+
+The quantity and diagnostic audit is merged through omega-mv #914 at main
+`d94a503f7aae57d09697046405da2e9a5895be6d`. The older candidate observations
+below remain dated history, not claims about the newer integration.
+
+### Current main pin (checked 2026-10-31)
+
+| Item | Value |
+|---|---|
+| Repository | `github.com/aien-dev/omega-mv`, branch `main` |
+| Commit | `3a163bc5eafa5be4b9ca97b7f17046c33f0d9032` (squash of [#857](https://github.com/aien-dev/omega-mv/pull/857), `for ... bound N` and the IR loop ranges, 2026-10-31) |
+| Compiler source `seed/omc/omc.om` | 16,422 lines, 495 `^fn ` lines, sha256 `0ed35c70437d498cbce3deb661bb24ba4753ec16a8890450a482aaea147bca2a` |
+| Compiler `seed/out/omc` | sha256 `24caacf463cc29c5413d5b2565ef8f88c76e60a585bbad44d2388cb1ac29abb7`, 517,768 bytes (equals `seed/out/omc.sha256`; last `seed/omc/size-history.tsv` row `forbound-857-main`) |
+| Seed loader `seed/rung0/seed0.hex` | sha256 `baaf081fe6055a768485c5d25d7435681ce00b04cfa80b26c48169f78944e14d` |
+
+Merges after `91c83438d` (omc `2aec185d…d8d5`) that change the compiler, oldest first: #967
+(`96ea448ad`, IR-mode `TYPE` casts read the operand at its own type, section 4), #948 (`dc0d06e95`,
+B/BL imm26 displacements checked by the shared `bdisp`, section 4 error 24 entry), #875
+(`236787439`, OM-2 words `dit` 225 / `scrub` 226, section 6), #918 (`2d848d939`, host word
+`peername` 224, section 9), #853 (`4722cba58`, floats in V registers, codegen only; see the `scrub`
+entry in section 6), #848 (`157bab57c`, `while ... bound N` up to 2^63-1, section 8) and #857
+(`3a163bc5e`, `for ... bound N`, IR loop ranges, section 8). #990, #992 and #989 touch tests and
+docs only. `seed/rung0`, `seed/rung4/om4.s`, `seed/rung4/om4.bin` (sha256 `d0da40e4…19efab`),
+`seed/omega-from-seed.sh` and `seed/omc/gate12.sh` are unchanged between `91c83438d` and
+`3a163bc5e`. `omc.om` went from 512 to 495 `^fn ` lines with #853, so the om4 cap (section 8) has
+17 free entries at this pin.
+
+Observed 2026-10-31 on a Linux AArch64 host in a clean detached worktree at `3a163bc5e`:
+`sh seed/omega-from-seed.sh` exited 0 (`RC=0`) and left `seed/out/omc` at exactly `24caacf4…abb7`
+with a clean `git status`. Both guide examples were rerun with that omc: `fnv1a32.om` compiled with
+exit 0 and empty stderr to a binary byte-identical to the one `2aec185d` emits; `abc`, `a` and empty
+input gave `0b e9 47 1a`, `2c 29 0c e4`, `c5 9d 1c 81`, exit 0; 65536 zero bytes gave no output,
+exit 2; the wrong-prime control (`16777617`) gave `55 be dc f5` for `abc`. `trap_narrow.om`
+compiled with exit 0 and empty stderr and ran with exit 105; deleting only its unmasked store
+(negative control) changed the run exit to 44. The same `fnv1a32.om` prefixed with
+`target x86linux` printed `0b e9 47 1a` with exit 0 under `qemu-x86_64` 8.2.2: EMULATED, not
+native x86.
+
+The omega MCP tools (`compile`, `run`) use an older pin: omega-mv `e5b32567`, omc `2c824805…029f`.
+Their results do not describe main's omc `24caacf4…`; for main, run `git show main:seed/out/omc`
+directly.
+
+### Previous pin `91c83438` (2026-10-31, history)
+
+| Item | Value |
+|---|---|
+| Commit | `91c83438daec0bdb88bf5c077cae10f3d15d365d` (squash of [#965](https://github.com/aien-dev/omega-mv/pull/965), error-code registry and IR error 30, 2026-10-31) |
+| Compiler source `seed/omc/omc.om` | 15,952 lines, 512 `^fn ` lines, sha256 `92eb49f35715147ccb6c6b00a96b9cb38d7f7383de14d4f6521d2e07eaad465c` |
+| Compiler `seed/out/omc` | sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`, 495,668 bytes (last `seed/omc/size-history.tsv` row `error-registry-965`) |
+
+Three merges after `4376c2112` (omc `62775d2a…712b`) changed the compiler: #946 (`d94617177`, host
+words `cpufence` 199 / `cpurelax` 200), #970 (`1db941627`, `execpure` word 198 and `close_range`
+before `exec`; omc `7a8b84fcc07808a52e6cbb65aa7450c754b3ad62eeddf9ec64cc0edd0938b2de`) and #965
+(`91c83438d`: error-code registry and IR error 30, section 11; float literal scans and the untyped
+long float literal miscompile, section 4). The `omc.om` line links in this file are permalinks to the
+commit they name; on main the line numbers have moved.
+
+Observed 2026-10-31 on a Linux AArch64 host in a fresh clone at `91c83438d`: the committed
+`seed/out/omc` hashed to `2aec185d…d8d5`; `seed/rung4/om4.bin` alone compiled that `omc.om` with exit 0
+to a 495,668-byte binary with the same sha256; `sh seed/omega-from-seed.sh` exited 0 (`RC=0`) and
+left `seed/out/omc` at exactly `2aec185d…d8d5`. Both guide examples were rerun with that omc, with
+the same results as with the previous main omc `7a8b84fc…` (both compilers emit byte-identical
+`fnv1a32.om` binaries): `fnv1a32.om` compiled with exit 0 and empty stderr; `abc`, `a` and empty
+input gave `0b e9 47 1a`, `2c 29 0c e4`, `c5 9d 1c 81`, exit 0; 65536 zero bytes gave no output,
+exit 2; the wrong-prime control (`16777617`) gave `55 be dc f5` for `abc`. `trap_narrow.om`
+compiled with exit 0 and ran with exit 105; deleting only its unmasked store (negative control)
+changed the run exit to 44. The same `fnv1a32.om` prefixed with `target x86linux` compiled with
+exit 0 to an x86-64 ELF that printed `0b e9 47 1a` with exit 0 under `qemu-x86_64` 8.2.2:
+EMULATED, not native x86.
+
+### x86 integration as tested before merge (observed 2026-10-28)
+
+Then-draft [#923](https://github.com/aien-dev/omega-mv/pull/923), source
+`7ab5fdd067884fd3044155084b39163da1be5c8a`, integrated main and batch 3
+(#904). Its `seed/omc/omc.om` and `seed/out/omc` hashes equal the main pin `bf54b19fa`
+(omc `62775d2a…712b`, main until #946). The seed gate passed, including GATE5. Both guide examples compiled with empty
+stderr: `fnv1a32.om` on `abc` exited 0 with bytes `0b e9 47 1a`;
+`trap_narrow.om` exited 105, while removing its unmasked store exited 44.
+
+The exact first line `target x86linux` selects the x86 backend. Quantity
+negation and complement refuse with error 7 on both targets. Empty text remains
+sized with length zero and emits no literal bytes; bounds checks still apply.
+Target-specific diagnostic contracts preserve the extra x86 stack-check records
+and exact growth-refusal records. See the source's `docs/X86-LINUX.md` and
+`seed/omc/x86-diagnostic-contracts.json`. Historical failed experiments and
+frozen compatibility rows remain separate from current acceptance.
+At main `bf54b19f`, `docs/X86-LINUX.md` is headed "Status: DRAFT; native x86
+qualification NOT_RUN". Its last complete differential (section "Current acceptance
+contracts", source `7ab5fdd0`, QEMU, EMULATED) reported 15179 PASS, 4 NOT_RUN,
+222 EXCLUDED and no FAIL cases, aggregate verdict FAIL because NOT_RUN is not PASS;
+`00ebdee8` then passed the two text-write cases (5 PASS), leaving two invalid-fd ioctl
+cases unrun. Merged in source; not native x86 qualification.
+
+**Error 25 on x86 at main `62d1d0d66` (observed 2026-10-30, compile only; rechecked 2026-10-31 at `4376c2112`).** `docs/X86-LINUX.md`
+([#L201-L202](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/docs/X86-LINUX.md#L201-L202))
+defines error 25 as an unsupported target/emission path. In `seed/omc/omc.om` at that commit it is
+raised by the target-line parser for any `target` word other than `x86linux`
+([#L15549-L15550](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omc/omc.om#L15549-L15550);
+`target x86efi` gives `omc: line 1: error 25`), by `emit` when a nondefault target reaches the
+AArch64 emitter ([#L571-L574](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omc/omc.om#L571-L574)),
+by `hostval`, `xhost` and `xio` on a target mismatch
+([#L6807-L6809](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omc/omc.om#L6807-L6809),
+[#L14663-L14665](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omc/omc.om#L14663-L14665),
+[#L15398-L15400](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omc/omc.om#L15398-L15400)),
+and by the `xcc` condition-code fallthrough ([#L14841](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omc/omc.om#L14841)).
+The device and mapping words 166..177 are **not** refused on x86: `xhost` dispatches them to x86
+helpers (`xhdev`, `xhmnew`, `xhmbind`, `xhmdrop`, `xhmcopy`, `xhmmio`;
+[#L14679-L14707](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omc/omc.om#L14679-L14707)).
+`seed/host/tests/device.om`, `mapping.om` and `devcall.om`, each prefixed with `target x86linux`,
+compiled with exit 0 to x86-64 ELF files with main's omc, at `62d1d0d66` and again at `4376c2112`
+(where `target x86efi` still gave `omc: line 1: error 25`, exit 25). They were not run, so no x86
+execution of device words is claimed. The VFIO words `vfioctl`/`vfiomap` are not on main (pending
+draft [omega-mv#878](https://github.com/aien-dev/omega-mv/pull/878), open on 2026-10-31).
+At main `91c83438d` (omc `2aec185d…`, 2026-10-31) and again at main `3a163bc5e` (omc `24caacf4…`,
+2026-10-31) `target x86efi` still gives `omc: line 1: error 25`, exit 25 (observed); `vfioctl` is
+still absent from `omc.om` at `3a163bc5e` and #878 is still open. Since #970, `docs/X86-LINUX.md`
+also lists `execpure` (word 198) among the `xhost` error-25 refusals on x86 (source text, not run
+here).
+
+### Historical quantity/check/next candidate (observed 2026-10-28)
+
+| Item | Value |
+|---|---|
+| Repository | `github.com/aien-dev/omega-mv`, PR #911 head |
+| Commit | `1fe5976d398646b17acabbf6d9dfae96b017e439` |
+| Compiler source `seed/omc/omc.om` | 12,520 lines, sha256 `3f937160c823d3a90a6b4cc296f00f517f36ede7fd27a06505c998985ec62240` |
+| Compiler `seed/out/omc` | sha256 `d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84` |
+| Seed loader `seed/rung0/seed0.hex` | sha256 `baaf081fe6055a768485c5d25d7435681ce00b04cfa80b26c48169f78944e14d` |
+
+Host-only observations below used a fresh clone checked out detached at this commit.
+Hash and count commands: `sha256sum seed/omc/omc.om seed/out/omc seed/rung0/seed0.hex`
+and `wc -l seed/omc/omc.om`; their observed values are in this table.
+The fresh-clone `sh seed/omega-from-seed.sh` run exited 0 and printed:
+
+```text
+PASS seed0 408 bytes, rebuilds itself
+PASS hex1 776 bytes, born from seed0
+PASS asm2 2464 bytes, born from hex1
+PASS om4 om4.bin 14224 bytes
+PASS omc fixpoint d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84
+PASS fwd exit 0
+PASS fwd runs, exit 7
+PASS mut exit 0
+PASS mut runs, exit 0
+PASS cycle exit 9
+PASS assign exit 7
+RC=0
+```
+This reproduces the independently recorded binary digest, not an independent
+correctness proof or a full gate5/host qualification.
+
+
+### Historical general-language pin (2026-10-25)
 
 | Item | Value |
 |---|---|
@@ -23,6 +178,162 @@ scope-specific pin immediately below is the tested and merged IR/wasm backend.
 | Language document `docs/one_layer/OMEGESE.md` | blob `89a27d2e68519eb45c103abb23dfe05a68d8ad69` |
 
 Every citation links to that commit: `https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/<path>#L<n>`.
+
+### Rerun at omega-mv `3a163bc5` (2026-10-31)
+
+The example gate pins main `3a163bc5eafa5be4b9ca97b7f17046c33f0d9032` (#857), `seed/out/omc`
+sha256 `24caacf463cc29c5413d5b2565ef8f88c76e60a585bbad44d2388cb1ac29abb7`. With the previous tree
+and only the pin moved, the gate against that binary ended `GATE FAIL examples=99 pass=97 fail=2`:
+`mistake_bound_range.om` (`while ... bound 1000000`, valid since #848) and `mistake_for_bound.om`
+(`for ... bound 10`, valid since #857) both compiled with exit 0 where error 8 and error 5 were
+expected. `mistake_bound_range.om` now uses `bound 9223372036854775808` (error 8, line 4);
+`mistake_for_bound.om` became `for_bound.om` (exit 10); `trap4_for_bound.om` (a value count 11 over
+`bound 10`, exit 104) and `mistake_ir_bound.om` (`ir`, `while ... bound 1000001`, error 8, line 5)
+are new. On 2026-10-31, Linux AArch64, `examples/gate.sh` against `24caacf4…abb7` printed
+`GATE PASS examples=101 pass=101 fail=0` (exit 0). Negative controls on a scratch copy each ended
+`GATE FAIL examples=101 pass=100 fail=1` with exit 1: `bound 9223372036854775807` in
+`mistake_bound_range.om` (`compile exit 0, expected 8`) and `bound 4` in `for_bound.om`
+(`exit 104, expected 10`). The gate pointed at the previous omc `2aec185d…d8d5` was refused with
+exit 2. The section below is the previous pin.
+
+### Rerun at omega-mv `91c83438` (2026-10-31, previous pin)
+
+The example gate then pinned main `91c83438daec0bdb88bf5c077cae10f3d15d365d` (#965), `seed/out/omc`
+sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`. On 2026-10-31, Linux
+AArch64, `examples/gate.sh` against that binary printed `GATE PASS examples=98 pass=98 fail=0`
+(exit 0) with no expectation changed. The rerun also showed that code 25 is emitted (it has been
+since the x86 integration `bf54b19f`): `target foo` as the first line is `omc: line 1: error 25`
+under both `2aec185d` and the pre-#965 `7a8b84fc`. `examples/err25_target.om` now records it, and
+the gate printed `GATE PASS examples=99 pass=99 fail=0` (exit 0); with its first line changed to
+`target x86linux` (a known target) that example fails (`compile exit 0, expected 25`). Negative
+controls on a scratch copy of the 99-program tree each ended `GATE FAIL examples=99 pass=98 fail=1`
+with exit 1: `const N ulong 16` changed to 15 in `examples/consts.om` (stdout `15` instead of
+`16`), and one byte appended to `consts.stdout`. The gate pointed at the pre-#965 omc `7a8b84fc…`
+was refused with exit 2. The 2026-10-29 section below is the previous pin.
+
+### Rerun at omega-mv `bf54b19f` (2026-10-29)
+
+The example gate now pins this compiler. On 2026-10-29, Linux AArch64, `examples/gate.sh` against
+`seed/out/omc` sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b` printed
+`GATE PASS examples=98 pass=98 fail=0` after the keyword-prefix expectation was updated. The same
+gate pinned to `2c824805…029f` had passed 98/98 with the old expectation. A copy of the new gate
+pointed at `2c824805` was refused (exit 2).
+
+| Item | Value |
+|---|---|
+| Commit | `bf54b19fa590e8ae925c0e80815516dbf41e7326` (2026-10-28, merge of PR #923) |
+| `seed/omc/omc.om` | 15,624 lines, sha256 `96d51b63c8f451661ac715395078e04f39195e50c9e8fe37746cda121e4d7a1e` |
+| `seed/out/omc` | sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b` |
+| `seed/rung0/seed0.hex` | sha256 `baaf081fe6055a768485c5d25d7435681ce00b04cfa80b26c48169f78944e14d` (unchanged) |
+| `docs/one_layer/OMEGESE.md` | blob `90fa5d0c32757da6e7c271e96406b75105ba8008` |
+
+Two defects recorded at `e5b32567` are fixed in this compiler (the #904 integration, `e2662fff`):
+`fn continue_x` compiles and the program exits 7 (`examples/defect_keyword_prefix.om`); `bitcast int`
+of `uint 4294967295` compares equal to -1 and `add` 2 returns 1, and `bitcast uint` of `int -1`
+compares equal to 4294967295. At `2c824805` those three programs were error 16, exit 2 and exit 2,
+and `add` 2 trapped 1. `fn continue` is still error 16. The #775 empty-text report was not
+reproduced: a two-text unit passing `text e ""` to `view uchar *` returned len 0 on both compilers.
+Keep the `part e 0 0` workaround until that report has an exact failing program. Other
+"observed at e5b32567" lines below are dated history; the example suite still matches them.
+
+### Historical rerun at omega-mv `e5b32567` (2026-10-27)
+
+Every example and rule in this file that a program can show was rerun on 2026-10-27 with the
+compiler below, on a Linux AArch64 host only. The 2026-10-29 section above is current where it
+disagrees with this list.
+
+| Item | Value |
+|---|---|
+| Commit | `e5b32567a7aff3ce594e3254a622a846a6cd190b` (2026-10-26, merge of PR #868) |
+| `seed/omc/omc.om` | 12,040 lines, sha256 `7703da00055fc0c7a91fcae43071df76a3f277dbe867cb284a3bdff3bedb7e1b` |
+| `seed/out/omc` | sha256 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f` |
+| `seed/rung0/seed0.hex` | sha256 `baaf081fe6055a768485c5d25d7435681ce00b04cfa80b26c48169f78944e14d` (unchanged) |
+| `docs/one_layer/OMEGESE.md` | blob `119c559557e4f227dee348c0e0e1240c71a42df3` |
+
+The executable record is [`examples/gate.sh`](../../examples/gate.sh): it refuses any other compiler
+hash, then compiles and runs 98 programs (`examples/*.om` and this skill's `examples/*.om`) against
+exact expected stdout bytes, exit statuses and compiler stderr lines. Observed:
+`GATE PASS examples=98 pass=98 fail=0`. Negative controls on a copy each ended `GATE FAIL` with
+exit 1: one changed digit in an expected stdout, an expected exit 105 changed to 104, an expected
+stderr line number changed, a removed `.expect` file, and a changed program body; a compiler with one
+appended byte was refused with exit 2. Arithmetic expectations were checked with Wolfram
+(`examples/WOLFRAM.md`).
+
+Changes and confirmations against the rules below, each observed with a program:
+
+- **Hex literals are OM-2 only.** In an OM-1 unit `uint 0x10` is error 6. After an `om2` line it is
+  16; `0X10` (uppercase prefix) is error 6, and the value must fit the type: `int 0xffffffff` is
+  error 8 (`examples/om2_hex_rotr.om`, `mistake_om2_upper_hex.om`, `mistake_om2_int_hex.om`).
+- **`+` is refused.** `y = x + 1` is error 5 and a value starting with `+` is error 3
+  (`mistake_infix.om`). OMEGESE 9.9's "`+ - * /`" is still wrong at this pin.
+- **Float to integer truncates toward zero and saturates; it never traps.** `long 1.0e30f64` is
+  9223372036854775807, `long -1.0e30f64` is -9223372036854775808, `long -5.75f64` is -5,
+  `uint -5.5f64` is 0, `uchar 300.0f64` is 255, and a NaN converts to 0 (`float_to_int.om`). Integer
+  to integer conversion stays checked (trap 5).
+- **The `=` of an assignment is optional** (OMEGESE line 24), so `return x` compiles as an assignment
+  to a new name `return`. In a value function the missing `ret` then shows as error 18
+  (`mistake_return.om`).
+- **`for ... bound N` and the bound range** (since #848 and #857, pinned at `3a163bc5`): `for i ulong
+  n bound 10` compiles (`for_bound.om`, exit 10) and a count past the bound traps 4
+  (`trap4_for_bound.om`); a bound is 1..9223372036854775807, so `bound 0` and `bound
+  9223372036854775808` are error 8 (`mistake_bound_range.om`), and in IR mode it is 1..1000000
+  (`mistake_ir_bound.om`). `trap` takes 1..14 (`trap 15` and `trap 0` are error 8; `trap 14` exits
+  114).
+- **Names:** an 8-character variable compiles and 9 is error 13; a 63-character function name
+  compiles and 64 is error 13. `len` or `stat` as a variable is error 16, `free` is error 9, and
+  `bits` is an ordinary name.
+- **Placement:** a `struct` line after the first `fn` is error 9; `new` inside a block is error 9; a
+  variable `new` length is error 16; `main` with a parameter is error 9. A `const` in function mode
+  compiles.
+- **Parameter slots, not parameter count.** Parameters fill x0..x5: an OM-2 unsized `view T *` /
+  `edit T *` takes two slots (pointer, count), every other parameter one, a sized array included
+  (OMEGESE 9.13 "Parameter slots"). Observed: 3 sized views plus 3 scalars compile and run; 2 unsized
+  views plus 2 scalars compile; 2 unsized views plus 3 scalars, or 7 scalars, are error 9 on the `fn`
+  line (`examples/om2_param_slots.om`, `mistake_om2_param_slots.om`, `mistake_seven_params.om`).
+- **Function names of 9..63 bytes are not keywords by their first 8 bytes** (fixed in the #904
+  integration, measured 2026-10-29 at omc `62775d2a`). `continue_x` compiles and returns 7
+  (`examples/defect_keyword_prefix.om`). At omc `2c824805` the same file was error 16. An exact
+  keyword name (`fn continue`) is still error 16.
+- **OM-2 slices:** `part A off n` is only an argument to an unsized `view T *` parameter. As a value
+  of its own it is error 9, to a sized parameter error 7, of a global error 19; `off + n` past the end
+  traps 3 at run time (`om2_views.om`, `om2_part_trap.om`).
+- **Errors 1 and 2 reproduce:** a directory as the compiler's stdin gives exit 1,
+  `omc: line 0: error 1`; stdout on `/dev/full` gives exit 2 with the line after the last input line
+  (`omc: line 5: error 2` for a 4-line unit). A 33rd `export fn` in an OM-2 unit is error 14; exports
+  are function mode, so an `export` beside `fn main` is error 9.
+- **Error 24 needs more than 1 MiB of code inside one loop.** 40 functions of 4,000 checked `add`
+  lines each compiled and ran, because each function's branches stay short. One `while` loop with
+  270000 copies of `x = add x 1` was refused with `omc: line 270006: error 24` (the loop's `end`);
+  with 140000 copies it compiled. The check is `disp19` (omc.om line 2465 at `e5b32567`, line 2956
+  at `91c83438`): a conditional branch reaches at most 2^18 - 1 words forward. The recipe is in
+  `writing-omega` section 11. Rerun 2026-10-31 with omc `2c824805` and with the then pin omc
+  `2aec185d`: both give exit 24 and that line for 270000 copies, and exit 0 for 140000 copies (the
+  program then exits 0). At `e5b32567`, codes 25 and 26 are not emitted by any `fail` call. Since
+  #948 (`dc0d06e95`, pinned at `3a163bc5`) every B.cond/CBZ/CBNZ imm19 and every B/BL imm26 site goes
+  through one checked `bdisp` ([omc.om#L2982-L2992](https://github.com/aien-dev/omega-mv/blob/3a163bc5eafa5be4b9ca97b7f17046c33f0d9032/seed/omc/omc.om#L2982-L2992));
+  the 8 MiB output ceiling (error 14) keeps every B/BL inside its 128 MiB reach, so imm26 error 24
+  is a defence no legal program reaches (`seed/qualification/security673/README.md`). Observed
+  2026-10-31 at `3a163bc5e`: that directory's `gate669.om`, built with omc `24caacf4…`, ended
+  `GATE669 PASS bounded Linux AArch64 execution and independent decoding only` (exit 0, host only).
+- **Narrow `bitcast`:** at omc `2c824805`, `bitcast int` of `uint 4294967295` was not -1 and `add` 2
+  trapped 1, and `bitcast uint` of `int -1` was not 4294967295. At omc `62775d2a` those two cases
+  are correct (exit 1 and exit 1; `add` 2 returns 1). `ushort`/`short`, `uchar`/`byte` and `f32` to
+  `int` were not retested on 2026-10-29. Do not assume they are fixed. Decode signed values
+  arithmetically when you have not measured the pair (`examples/wire_le.om`).
+- **`byte` is signed 8-bit** (`i8`, OMEGESE line 109); `char` is not a type (error 3).
+- **Empty text through `view uchar *` (omega-mv #775).** A 2026-10-27 report said `len` was 60 with
+  one other text and 28 with none. A two-text unit on 2026-10-29 returned 0 on both `2c824805` and
+  `62775d2a`, so that report was not reproduced. Keep passing `part e 0 0`
+  (`examples/empty_text_part.om`) until an exact failing program exists.
+- **Skill examples rerun:** `fnv1a32.om` compile exit 0, empty stderr; `abc`, `a`, empty and 65535
+  zero bytes gave `0be9471a`, `2c290ce4`, `c59d1c81`, `47dac371`, each exit 0; 65536 zero bytes gave
+  exit 2 and no output; the prime changed to `16777617` gave `55bedcf5` for `abc`.
+  `trap_narrow.om` compiled with exit 0 and ran with exit 105, and 44 without the unmasked store. The
+  section 13 inline refusal gave exit 7, `omc: line 3: error 7`.
+- **Section 11a contract fixtures rerun** from `seed/omc/contracts/`: `ok.om` exit 0, `requires.om`
+  exit 109, `release.om` exit 0 and byte-identical to `erased.om`; `diagproof.om` stderr
+  `omc-check 1 erased line=3 rule=constant-true kind=requires`, `diagrelease.om` stderr
+  `omc-check 1 erased line=3 rule=release kind=requires`, each compile exit 0.
 
 ### Merged IR/wasm backend (2026-10-26)
 
@@ -138,9 +449,13 @@ rebuilt for this note.
 - **Gate coverage at main:** `seed/wasm/gate-irwasm.sh` and `seed/qualification/om2/gate.om` are
   merged but no `tests/gates/*.gate` runs them (RM1, #790). `tests/gates/run.sh seed` passing says
   nothing about OM-2 fixtures or irwasm; run those yourself and report them separately.
-- **Open OM-2 defect** [#775](https://github.com/aien-dev/omega-mv/issues/775): an empty `text`
-  passed to a `view uchar *` parameter was reported to see the next text's bytes (`len` 32, not 0).
-  Do not pass an empty text to an unsized view until it is closed.
+- **OM-2 defect** [#775](https://github.com/aien-dev/omega-mv/issues/775), closed 2026-10-29: an
+  empty `text` passed to a `view uchar *` parameter was reported to see the next text's bytes
+  (`len` 32, not 0). Fixed by #897 inside the #904 merge `e2662fff`, an ancestor of main
+  `bf54b19f`: an empty `text` is now a sized array of length 0. On 2026-10-29, with main
+  `seed/out/omc` `62775d2a...712b` (AArch64 host), `seed/omc/om2/s4/v-text-empty.om` compiled
+  and ran with exit 0, and `v-bad-text-empty.om` refused with `omc: line 5: error 21`. Compiler
+  pins in this file older than the #904 batch predate the fix.
 
 ### Merged compiler batch: contracts, capacity and f32 returns
 
@@ -165,6 +480,29 @@ returns now work: internal void return code 12 is distinct from f32 value type 1
 `gate8.sh` exercises f32 values and rejects void-as-value (7) and f32 fallthrough (18).
 Consumers must explicitly migrate and qualify their own pins; a main merge does not deploy them.
 
+### Compiler batch 3 (merged #904; superseded on main by #923)
+
+[omega-mv#904](https://github.com/aien-dev/omega-mv/pull/904) merged at
+`e2662fffbce1c21ef09da71c0d8808133a6af8ab`; that merge carries the same `omc.om` and
+`seed/out/omc` hashes as the tested source below. Tested on 2026-10-28 at
+`7bce2a4fddc43268ac2af09cddc4a5a67d78312d` over main `d94a503f7`, merges #896
+(integer `bitcast` re-extension), #897 (empty `text` sized `nm_len 0`, view count 0; closes the
+#775 defect above), #898 (function names that start with a keyword) and #903 (`pread`/`pwrite`
+destination writable check) and reseeds `seed/out/omc` to sha256
+`1811d4047f118440cc35e995261af6768b606148cb17e18c42158afd15fcad58` (12,577 source lines, 418
+functions, size-history row `RM-batch3-current`). Compiler source SHA-256:
+`d33ef5cab603f85a5cbcbdfdd55391f2ce0448bfcbc5fecbf0393599b636ef04`.
+Status when recorded: HOST_TESTED before merge; merged in source, not deployed. The targeted regression cases, seed/GATE5,
+OM-2 s1 through s4 and their mutants, current-language quantity cases, diagnostic experiment,
+bindings/parity, JSON/HTTP, WebAssembly, CPU OpenCL, IR-trap checks and local TLS suites pass.
+The frozen C2 corpus still fails its six historical assertions; its capacity and batch2
+replacement manifests pass. TLS live-internet parity and GPU gates are NOT_RUN.
+The earlier `397346de` receipt remains immutable history in `evidence/BATCH-397346de/`.
+At this new pin, the guide's FNV example with `abc` outputs `0be9471a` (exit 0), the narrowing
+example exits 105, and removing its unmasked store exits 44. All compile with empty stderr.
+Main has since moved to the x86 integration compiler `62775d2a...712b` and then to `2aec185d…d8d5` (section 0); cite
+`1811d404...ad58` only as the #904 merge pin, never as current main or as x86 qualification.
+
 
 Re-check recipe (read only, in a fresh clone, never in a shared working tree another agent may be using):
 
@@ -181,6 +519,96 @@ Status words used here: **implemented** (in `omc.om` at the pin), **gated** (a c
 or fixture checks it), **author-verified** (the repository records a run; not re-run for this note),
 **proposed** (described, not on `main`). Nothing here is hardware qualification, and nothing here is
 deployed anywhere.
+### `qty`: checked quantities, not modular words
+
+At the current candidate pin, `qty` is distinct from `ulong`. Do not silently mix
+quantity arithmetic with modular words. Save this as `qty-overflow.om`:
+
+```text
+fn main to int
+a = qty 18446744073709551615
+b = qty 1
+c = add a b
+ret int 0
+end
+```
+
+Use the section 1a compile/run recipe with `prog.om` replaced by `qty-overflow.om`.
+Observed: compile exit 0, empty stderr; run exit 101, empty stdout and stderr.
+The boundary literal is copied from the pinned `tests/quantity/qty_add_overflow.om`.
+
+Negative control: change only `a = qty 18446744073709551615` to `a = qty 0`
+and `ret int 0` to `ret int c`. Observed: compile exit 0, run exit 1,
+empty stdout/stderr. The trap is not an unconditional program exit.
+
+For the modular contrast, replace both `qty` spellings with `ulong` and return
+`int c`. Observed: compile exit 0, run exit 0, empty stdout/stderr: `ulong`
+still wraps. Mixed operands are refused, not coerced:
+
+```text
+fn main to int
+a = qty 1
+b = ulong 1
+c = add a b
+ret int 0
+end
+```
+
+Observed: compile exit 7, empty stdout, stderr:
+
+```text
+omc: line 4: error 7
+```
+
+### `check` and `next`: text diagnostics and prefix context
+
+These are leading input lines to the seeded compiler, not command-line flags
+and not the legacy C `omegese next` interface. At the current candidate pin:
+
+```sh
+printf 'check\nfn main to int\nret true\nend\n' | seed/out/omc
+```
+
+Observed stdout (exit 7):
+
+```text
+omega-diag v1
+om1 TYPE span=19-23 FINAL REPAIRABLE code=7 line=2 expect=value found=true
+```
+
+Observed stderr:
+
+```text
+omc: line 3: error 7
+```
+
+Negative control: replace `ret true` with `ret 0`. Observed exit 0, empty stderr,
+stdout exactly `omega-diag v1` followed by a newline. Check mode emits diagnostics,
+not an executable. Its record line is relative to the program after the leading
+mode line; the ordinary stderr line includes that mode line.
+
+```sh
+printf 'next\nfn main to int\na = ulong 3\nwhile lt a 9\n' | seed/out/omc
+```
+
+Observed exit 0, empty stderr, stdout:
+
+```text
+omega-query v1
+scope: function
+constructs: ret if while for trap exit put end note break continue
+names:
+a ulong local
+functions:
+fn main to int
+```
+
+This is prefix context (scope, constructs, visible names and signatures), not a
+promise of an exact next-token mask. The unfinished loop above is intentional.
+Negative control: compare the observed query with a copy whose name line is
+`a ulong param`. Observed comparison: unequal (`REJECTED`), so a local/parameter
+kind error is detectable.
+
 
 ## 1. Which language is which
 
@@ -191,7 +619,7 @@ deployed anywhere.
 | WebAssembly MVP backend `seed/wasm/irwasm.om` | OMEGESE section 11.1; scalar OSC IR v1 only | merged; gate not in any manifest (#790) |
 | Executable contracts (`requires`, `ensures`, `invariant`, `result`) | OMEGESE section 12; section 11a here | merged in #768, including #807; host-exercised |
 | The seeded compiler `omc`, written in `.om` | `seed/omc/omc.om`, built `seed0 -> hex1 -> asm2 -> om4 -> omc` by `sh seed/omega-from-seed.sh` | on `main` since PR #696 ([README.md#L27](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L27)) |
-| Keyword table, the authority for reserved words | `fn kw` in `seed/omc/omc.om` ([#L375](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L375)); same list in `seed/omc/genkw.awk` ([#L16](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/genkw.awk#L16)), parity checked by `seed/omc/gate18.sh` | gated |
+| Keyword table, the authority for reserved words | `fn kw` in `seed/omc/omc.om` ([#L375](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L375) at `55f9b0af`, [#L765](https://github.com/aien-dev/omega-mv/blob/e5b32567a7aff3ce594e3254a622a846a6cd190b/seed/omc/omc.om#L765) at `e5b32567`, [#L818](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/seed/omc/omc.om#L818) and `fn kw2` [#L1328](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/seed/omc/omc.om#L1328) at `91c83438`); same list in `seed/omc/genkw.awk` ([#L16](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/genkw.awk#L16) at `55f9b0af`; [#L16-L18](https://github.com/aien-dev/omega-mv/blob/e5b32567a7aff3ce594e3254a622a846a6cd190b/seed/omc/genkw.awk#L16-L18) at `e5b32567`, which adds `flock` 197 and a second list for `peercred`, `pollfds`, `sendmsg`; [#L17-L20](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/seed/omc/genkw.awk#L17-L20) at `91c83438`, whose second list adds `qty`, `cpufence`, `cpurelax`), parity checked by `seed/omc/gate18.sh` | gated |
 | C translator `tools/omegese/omegese.c` and `omegese next` | OMEGESE sections 1-8 | legacy referee and token-mask tool, not the compiler |
 | `spec/omega-language-v0.md` (`let x: u8 = ...`, `fn f(x: T) -> T { }`, `//` comments) | Visor console line language, lowered by C in `src/language/` ([#L1-L13](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/spec/omega-language-v0.md#L1-L13)) | history; never write `.om` in that syntax |
 | C under `src/`, including `src/compiler/` | `main` | unfinished migration ([README.md#L50](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L50)) |
@@ -204,6 +632,19 @@ disagree, `omc` is what compiles your program:
   call may name any function in the unit; recursion is allowed in program mode and refused (error 9)
   in function mode ([OMEGESE#L409-L417](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L409-L417)). IR mode
   (a leading `ir` line) again allows earlier functions only ([#L755-L763](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L755-L763)).
+- **IR-mode `TYPE value` casts** (merged on omega-mv main as [omega-mv#967](https://github.com/aien-dev/omega-mv/pull/967),
+  squash commit `96ea448add639f8448a4787ef36a2ade06a1a244`, 2026-10-31; harness issue #141). In IR mode a
+  cast reads its operand at the operand's own type, so it converts an operand of any scalar type; a bare
+  number is range-checked against the cast's type (error 8); bool to or from a number is refused (error 9),
+  a bool comes only from a comparison. Pinned by `seed/omc/gate-ir.sh`. Observed (host only) with omc
+  sha256 `e4d84bc3ff5c91b83ce9a156d262eb28c9563e43374537293129898da093b7a6` built from seed at omega-mv
+  main `d39450a23b5936a0aafd35cc23ca70e5468fd4c0`: `ret ulong sub c 48` and `ret long sub c -128`
+  compile; `ret uchar 256` and `ret ulong sub c 300` (c uchar) are error 8; `ret bool c` and
+  `ret ulong eq a b` are error 9. The previous pin of this skill (omega-mv `91c83438`, omc `2aec185d…`)
+  predates #967: it gives error 7 for the two widening casts and for `ret ulong eq a b`, and compiles
+  `ret bool c`. The current pin `3a163bc5` includes #967: observed 2026-10-31, the IR unit
+  `fn dig c uchar to ulong` / `ret ulong sub c 48` compiles with omc `24caacf4…` (124 bytes of IR) and
+  is `omc: line 3: error 7` with `2aec185d…`.
 - `new` lengths: C path 1..64 ([#L85](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L85)); `omc` 1..16777216
   per array and at most 4 MiB of local arrays per program ([#L460-L463](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L460-L463), gate12).
 - Unread names: the C path refuses a name that is written and never read ([#L37-L38](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L37-L38)).
@@ -212,6 +653,12 @@ disagree, `omc` is what compiles your program:
 
 Language rule: `.om` is the only forward first-party implementation language. C, Rust and shell that
 remain are unfinished migration, not exemptions ([README.md#L50](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L50)).
+- **Tokenization is not a language rule:** Language design optimizes for verified programs produced
+  per unit of inference cost (measured on held-out tasks by first-attempt correctness, successful
+  compilation, verified behavior, latency, and total compute cost). Fitting words into single tokens
+  under particular tokenizers (e.g. Qwen3) is an empirical measurement and cost consideration, not a
+  binding rule of Omega or Omegese. The compiler-guided interface remains portable across models and
+  tokenizers.
 
 ## 1a. Compile and run (Linux AArch64 host only)
 
@@ -260,13 +707,27 @@ end
   indentation. `note` is the only comment form; the rest of its line is not read
   ([omc.om#L4873](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L4873)).
 - `fn NAME (PARAM TYPE)* to TYPE|void` ... `end`. At most 6 parameters (error 9). `main` takes none.
+  In an OM-2 unit the limit is 6 parameter *slots*: an unsized array (`view T *`, `edit T *`) takes 2,
+  so a 7th slot is error 9 on the `fn` line (observed with omc `befb8199`, 2026-10-26, building
+  omega-mv `om/tls`). Pack small fixed inputs into one array. A scalar or a sized array
+  (`view uchar 8`) takes one slot: `fn f a view uchar * b view uchar * c ulong d ulong to ulong`
+  (6 slots) compiles, adding `e ulong` is `line 2: error 9`, and two `view uchar 8` plus three `ulong`
+  (5 slots) compiles in both OM-2 and OM-1. `part B OFF LEN` (OM-2) is an argument form only:
+  binding it to a local (`r = part b 0 4`) is error 9; pass `part` directly in the call (exit 4 for a
+  4-byte part). In an OM-1 unit the same call is `error 3` (unknown name). First probed on omc `2c82480596bb…`
+  (omega-mv `audit/tls-integration` 9472e9615); all rechecked 2026-10-31 with main omc
+  `62775d2a…712b` at omega-mv `4376c2112`.
 - A unit with `fn main` is a static AArch64 Linux ELF (program mode). Without `fn main` the output is
   bare function words (function mode): it compiles with exit 0 but is **not runnable**. Host words
   and `global` are error 9 there, and `text` is program-mode only ([#L400-L407](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L400-L407), [#L454-L459](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L454-L459), [#L629](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L629)).
 - Program exit status = `main`'s value mod 256 (0 for void main). `exit v` (v `int`) ends at once.
   A runtime trap exits **100 + code**. Keep your own exit codes below 100, or a result is
   indistinguishable from a trap ([#L404-L407](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L404-L407), [#L484](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L484)).
-- A value-returning function used as a statement is error 7. Bind the result: `w = write 1 buf 0 n`.
+- A value-returning function used as a statement is error 7; a bare host word used as a statement
+  (`write 1 m 0 3` on its own line) is error 16 (observed 2026-10-26, omc `befb8199...a1d` at omega-mv
+  `19f014f2`; rechecked 2026-10-31 with main omc `62775d2a…712b` at omega-mv `4376c2112`: bare
+  `write` gives `omc: line 3: error 16`, a bare call of a value-returning `fn` gives error 7, and the
+  bound form prints and exits 0). Bind the result either way: `w = write 1 buf 0 n`.
 - A function with a return type whose `end` is reachable is error 18. `ret`, `break`, `continue`,
   `trap` and `exit` end the path; a line after them in the same block is error 17.
 
@@ -291,7 +752,8 @@ Evaluation is innermost first, left to right ([#L137-L141](https://github.com/ai
 
 There are no infix operators. `+ - * /` are not keywords (they are absent from the keyword table);
 OMEGESE 9.9 ([#L564](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L564)) writes "`+ - * /`" but its own
-float fixtures use `add sub mul div` (`seed/omc/tests/float/arith.om`). Write the words.
+float fixtures use `add sub mul div` (`seed/omc/tests/float/arith.om`). Write the words. Observed at
+`e5b32567`: `y = x + 1` is error 5 (`examples/mistake_infix.om`).
 
 `and` / `or` evaluate **both** sides; there is no short circuit ([#L104](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L104)).
 `and lt i len a eq get a i 0` still loads `a[i]` when `i` is out of range and traps 3. Test the
@@ -311,12 +773,44 @@ bound in an outer `if`, then load inside it.
   (`x = 5` for a new `x`), is error 11: write `x = uint 5` ([#L94-L100](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L94-L100), gate15 `e11_ambiguous`).
 - Integer literals: decimal only, optional leading `-`, at most 20 digits, and the value must fit the
   type it takes (error 8), e.g. `long` -2^63..2^63-1, `ulong` 0..2^64-1. A non-digit (`12a`,
-  `0x10`) is error 6 ([#L443-L446](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L443-L446)). No hex, no octal,
-  no character literals: write byte 65, not `'A'`. `true` / `false` are the bools.
+  `0x10`) is error 6 ([#L443-L446](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L443-L446)). In an OM-1 unit: no hex, no octal,
+  no character literals: write byte 65, not `'A'` (error 3). OM-2 units (first non-`note` line `om2`)
+  also take lowercase hex, `0xdeadbeef`, which must still fit its type (`int 0xffffffff` is error 8,
+  `0X10` is error 6; observed at `e5b32567`; full rule in the next item). An `om2` unit with
+  `x = uint 0x10` compiled and the program exited 16; the same line without `om2` is error 6 (omc
+  `befb8199...a1d`, 2026-10-26; same results 2026-10-31 with main omc `62775d2a…712b` at omega-mv
+  `4376c2112`; see also **Hex** in section 8).
+  `true` / `false` are the bools.
+- Hex literals, OM-2 units only (`om2` first non-note line; `spec/omegese-om2.md` section 2): `0x`
+  then 1..16 lowercase digits `0-9a-f`, value unsigned, typed by the place under the decimal range rule
+  (`int 0xffffffff` is error 8: no two's-complement reinterpretation). Error 6: `-0x..`, `0X`, no
+  digits, 17+ digits, uppercase, `_`, any other character. `0x2a` and `42` compile to identical bytes;
+  signed minima need decimal. An OM-1 unit, IR mode included, has no hex literal (error 6). Fixtures:
+  `seed/omc/om2/hex/` (gate PR #951, merged by train r3 #979 as `4376c2112`). Rerun 2026-10-31 at
+  main `91c83438d` with omc `2aec185d…`: `hex.cases` gives `OM2GATE PASS cases=51 pass=51`, and
+  `mutants.cases` gives the expected `OM2GATE FAIL cases=8 pass=3 fail=5` (each `tok_hex` mutant killed).
 - Shift with a bare left operand takes the shift amount's type: `shl 1 sh` with `sh` a `uchar` shifts
   a `uchar`. Write `shl ulong 1 sh` when you mean 64 bits ([#L97-L99](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L97-L99)).
 - Float literals: `digits.digits[e[+|-]digits][f32|f64]`, a digit on both sides of the dot; exact
   decimal-to-binary rounding; overflow to infinity is error 8 ([#L555-L563](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L555-L563)).
+  Two compiler defects in float literals are fixed at main `91c83438d` (#965, omc `2aec185d…`;
+  source [`fparse`/`fexp`/`fbits`](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/seed/omc/omc.om#L1908-L1913)
+  and [`fspan`](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/seed/omc/omc.om#L2252-L2255)).
+  Observed 2026-10-31 on the AArch64 host, with omc `7a8b84fc…` (main before #965) as the control:
+  - **Miscompile: float literal of 64 or more characters without an `f32`/`f64` suffix.** Such a
+    literal is converted late, once its type is known, from a stored span `pos*64+len`; a length of
+    64 or more spilled into the position, so the wrong input text was read (the `fspan` note above).
+    `x = f64 2.0` / `y = add <61 zeros>1.5 x` / `ret int y` (a 64-character literal) exits 2 with
+    `7a8b84fc` and 3 with `2aec185d`; 70 zeros: 2 and 3; 60 zeros (63 characters) and plain `1.5`:
+    3 with both. The type word does not avoid it: `add f64 <70 zeros>1.5 x` and
+    `x = f64 <70 zeros>1.5` / `add x f64 2.0` also gave 2 with `7a8b84fc` and 3 with `2aec185d`.
+    The suffixed `add <70 zeros>1.5f64 x` gave 3 with both. A binary built by an older omc from
+    such a literal computed with the wrong value; recompile it.
+  - **Literals longer than about 1000000 characters.** The digit scans ran under the 1000000-pass
+    loop guard, so the compiler itself trapped 4 (exit 104, no diagnostic) on such a literal. Now
+    they compile: `x = f64 <1000001 zeros>3.5` / `ret int x` exits 3, `1.5e<1000001 zeros>1` gives
+    15, `add f64 0.<1000001 zeros>1 f64 7.0` gives 7 (each compile 104 with `7a8b84fc`). The
+    mantissa limit below still applies: `7.<1000001 zeros>1` is error 8 with both compilers.
 - Named constants: `const NAME TYPE LITERAL` at top level, visible only after their definition, also
   usable as array lengths, `trap` codes and `while` bounds ([#L602-L622](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L602-L622)).
 
@@ -348,8 +842,13 @@ Conversions are **checked**, not truncating. `uchar x` with x = 300 traps 5. Mas
 `bitcast T v` reinterprets bits of the same width; `bool` and different widths are error 7, a bare
 number is error 11 ([omc.om#L4640-L4662](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L4640-L4662)). Every fixture
 uses it between floats and unsigned integers. The code also accepts integer-to-integer of equal
-width (`bitcast int u`), but no fixture covers that; prove it with your own fixture before relying on
-it, or decode signed values arithmetically (section 8).
+width. At omc `2c824805` results across signedness below 64 bits were wrong (section 0). At omc
+`62775d2a` the two measured 32-bit pairs are correct; narrower pairs and `f32` to `int` were not
+retested. Do not bitcast an unmeasured pair; decode signed values arithmetically (section 10).
+
+Float to integer conversion is the exception to "checked": it truncates toward zero and saturates at
+the target's limits, and a NaN gives 0, with no trap (observed at `e5b32567`,
+`examples/float_to_int.om`).
 
 ## 6. Names, scope, registers
 
@@ -365,6 +864,43 @@ it, or decode signed values arithmetically (section 8).
   new free own view edit global note exit const bound` and every host word, including `stat link bind
   send recv random fork cwd chdir umask accept listen connect waitio memfd mapget mapset`. `bits min
   max abs sqrt` are deliberately **not** reserved (gate11). Check the keyword table, not memory.
+  A reserved word used as a name is **error 16** (unknown word), not error 10, so the message does
+  not say "reserved". Observed on omc `2c824805…` (omega-mv `e5b32567`), host only: `fn f len ulong
+  to ulong` gives `omc: line 1: error 16`, and a local `len = ulong 3` gives `omc: line 2: error 16`.
+  The same program with the parameter renamed to `n` compiles (exit 0). Use `n`, `cnt` or `size`.
+- **`dit` and `scrub`: merged in [omega-mv#875](https://github.com/aien-dev/omega-mv/pull/875) as
+  `2367874399001efdc7f1ff345fb327469bc1a135` (2026-10-31), committed omc sha256
+  `3862655902e3bb9f502ebca2e1e5e5edb6175bf512be731a63c700a6dce8d355`; included in the current pin
+  `3a163bc5` (omc `24caacf4…`).** Keyword ids: `dit` 225, `scrub` 226 in `fn kw2`, the OM-2 table
+  ([omc.om#L1329](https://github.com/aien-dev/omega-mv/blob/2367874399001efdc7f1ff345fb327469bc1a135/seed/omc/omc.om#L1329),
+  [#L1384-L1388](https://github.com/aien-dev/omega-mv/blob/2367874399001efdc7f1ff345fb327469bc1a135/seed/omc/omc.om#L1384-L1388)).
+  Both are emitted inline, not as helper functions, because om4 holds 512 functions and `omc.om` is at
+  that limit ([#L7525-L7526](https://github.com/aien-dev/omega-mv/blob/2367874399001efdc7f1ff345fb327469bc1a135/seed/omc/omc.om#L7525-L7526));
+  the merge commit has 512 `^fn ` lines. Two OM-2-only, program-mode-only, AArch64-only value
+  words, reserved only in `om2` units. `dit v` (v int 0/1, else trap 3) writes PSTATE.DIT and gives the
+  previous bit as a long. `scrub n` (n ulong, a multiple of 16, at most 1048576, else trap 3; trap 6 when
+  SP - n is below the stack floor) zeroes `[SP - n, SP)`, the dead general registers (free pool
+  registers, X16, X7, X18-X26, X29) and V0-V31, and gives 0. Refusals: function mode error 9, a wrong
+  operand type error 7, use as a name or as a bare statement (`scrub 16` on its own line) in an `om2`
+  unit error 16, `target x86linux` error 25; `ir` with `om2` is already error 16. Observed with omc
+  `38626559…` on 2026-10-31 (host only), each fixture of `seed/omc/om2/s5/` at `23678743` run directly:
+  `dit-ok` exit 0, `dit-two`/`dit-neg`/`scrub-odd`/`scrub-big` trap 3 (exit 103), `scrub-floor` exit
+  106, `scrub-ctl` exit 10 (its negative control), `scrub-mem`/`scrub-live`/`scrub-emit`/`om1-names`
+  exit 0, the refusal fixtures 9/7/16 as above, `scrub-emit` output sha256 `5ba83eaf…` as in
+  `s5.cases`, and `dit-ok` behind `target x86linux` error 25. The previous pin omc `2aec185d…` does not know
+  the words: every fixture that uses them is error 3, while `dit-name`/`scrub-name` (the words as
+  names) compile as in OM-1, and `scrub-ctl`/`om1-names` behave as with `38626559…`.
+  Rerun 2026-10-31 with the pinned omc `24caacf4…` (host only): every `s5` fixture gives the same exit
+  as with `38626559…` above, `scrub-emit` output sha256 `5ba83eaf…` again, and `dit-ok` behind
+  `target x86linux` is `omc: line 6: error 25`; the previous pin `2aec185d…` still gives error 3 for
+  the fixtures that use the words.
+  **Defect at this pin: `scrub` destroys live floats.** #853 (floats in V registers) merged after
+  #875, but the `scrub` emitter still zeroes all of V0-V31 and its note still says floats live in X
+  registers ([omc.om#L7837-L7875](https://github.com/aien-dev/omega-mv/blob/3a163bc5eafa5be4b9ca97b7f17046c33f0d9032/seed/omc/omc.om#L7837-L7875)).
+  Observed 2026-10-31: `om2` / `f = f64 1.5` / `g = f64 2.5` / `k = scrub 16` / `h = add f g` /
+  `if ne h f64 4.0` / `ret 50` / `end` / `ret int k` exits 50 with omc `24caacf4…` and 0 with omc
+  `38748442…` (omega-mv `2d848d939`, before #853). Do not hold a float across `scrub` at this pin;
+  the omega-mv fix is pending.
 - **16 registers per function** (pool x0-x6, x8-x15, x17; [omc.om#L82-L91](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L82-L91)).
   Parameters, every live name, the hidden counter of each open `while` / value-count `for`, and the
   temporaries of the current statement all draw from it; error 12 when the next one is not available
@@ -379,55 +915,193 @@ From OMEGESE 9.4 and 9.7 ([#L449-L474](https://github.com/aien-dev/omega-mv/blob
 - `global NAME T N`: zero-filled pool in the program image, N 1..16777216, at most 1 GiB of pools
   total (error 23), program mode only. Globals are visible in every function.
 - **A global is never passed as an argument** (error 19). A function works on a global by naming it
-  directly; parameters carry scalars and local arrays only. The arrays of one call must be distinct
+  directly; parameters carry scalars and local arrays only. Two `part`s of one array, or an array and
+  a part of it, in one call are also error 19 (omc `befb8199`). The arrays of one call must be distinct
   names (error 19).
 - `NAME = new T N v`: local stack array, N elements each v, only in a function's outermost block
   (error 9 inside a block), at most 4 MiB of local arrays (error 23). **N must be a literal or an
   integer `const`**; a variable length is error 16 (gate16 `len_varname`), so there are no
   run-time-sized arrays. No heap and no `free` (decision 24; `free` is error 9).
 - Array parameters state type and length exactly: `a view uchar 64` / `a edit uchar 64` (error 7 for
-  any other length), so there are no length-generic array parameters; use fixed sizes, an integer
-  `const`, or a global. A view or a `text` is read-only (error 20 on `put` or `read` into it).
+  any other length), so OM-1 has no length-generic array parameters; use fixed sizes, an integer
+  `const`, or a global. OM-2 (`om2` first line) adds unsized views, `a view T *`: one function took
+  arrays of 5 and 9 bytes and `len a` returned each length (exit 14; omc `befb8199...a1d`, 2026-10-26;
+  also `examples/om2-tour.om` at omega-mv `19f014f2`; rechecked 2026-10-31 with main omc
+  `62775d2a…712b` at omega-mv `4376c2112`: exit 14, and the OM-1 form is `line 1: error 16`). A view
+  or a `text` is read-only (error 20 on `put`, `read` or `pread` into it; see section 9).
 - `get A i`, `put A i v`, `len A`. A constant index outside the array is error 21; any other index is
   checked at run time (trap 3). No word yields an address or adds to one.
 - `text NAME "bytes"`: read-only `uchar` array; escapes only `\n \t \\ \"` (error 22 otherwise).
+  There is no `\r`: protocols that need CR LF (HTTP, SMTP) write the CR at run time
+  (omega-mv `om/tls/test/tls/client.om` `cl_crlf`).
 - Structs: fields are 8-byte cells, no padding, no packed layouts (a `uint` field still takes 8
   bytes). `read`/`write`/`len` of a struct are error 7. Never treat a struct as a wire layout.
 
 ## 8. Loops and bounds
 
-From OMEGESE section 3 and 4 ([#L58-L60](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L58-L60), [#L131-L135](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L131-L135)) and [omc.om#L5493-L5494](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L5493-L5494):
+From OMEGESE section 3 and 4 ([#L58-L60](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L58-L60), [#L131-L135](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L131-L135)) and [omc.om#L5493-L5494](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L5493-L5494);
+the bound ranges below are those of the pin `3a163bc5` (OMEGESE [#L63-L69](https://github.com/aien-dev/omega-mv/blob/3a163bc5eafa5be4b9ca97b7f17046c33f0d9032/docs/one_layer/OMEGESE.md#L63-L69),
+[#L140-L149](https://github.com/aien-dev/omega-mv/blob/3a163bc5eafa5be4b9ca97b7f17046c33f0d9032/docs/one_layer/OMEGESE.md#L140-L149);
+`s_while` [omc.om#L8853-L8854](https://github.com/aien-dev/omega-mv/blob/3a163bc5eafa5be4b9ca97b7f17046c33f0d9032/seed/omc/omc.om#L8853-L8854),
+`sf_num` [#L8912-L8915](https://github.com/aien-dev/omega-mv/blob/3a163bc5eafa5be4b9ca97b7f17046c33f0d9032/seed/omc/omc.om#L8912-L8915),
+`ir_bound` [#L13162-L13163](https://github.com/aien-dev/omega-mv/blob/3a163bc5eafa5be4b9ca97b7f17046c33f0d9032/seed/omc/omc.om#L13162-L13163)):
 
-- `while COND bound N`: at most N body passes, N 1..999999 (error 8 outside). Without `bound` the
-  limit is 1000000 passes. One more pass traps 4. The condition is recomputed before every pass.
+- `while COND bound N`: at most N body passes, N 1..9223372036854775807 (2^63-1), a number or an
+  integer const; 0 and 9223372036854775808 are error 8 on the loop's line. Without `bound` the limit
+  is 1000000 passes. One more pass traps 4. The condition is recomputed before every pass. Merged as
+  omega-mv #848 (`157bab57`); before it (pins up to `91c83438`, omc `2aec185d`) the range was
+  1..999999 and `bound 1000000` was error 8.
 - `for i T K` runs i = 0..K-1. A literal K needs no hidden guard; a name or expression K gets the
-  1000000-pass guard.
-- **Merged on omega-mv main, not yet this skill's pin (omega-mv #848, squash `157bab57`, omc
-  `90c8884c`):** an explicit `bound N` may be 1..9223372036854775807 (a number or a `ulong` const).
-  The 1000000 default and trap 4 stay. Until the pin above moves past `157bab57`, a loop that needs
-  more than 999999 passes must be split into nested loops.
-- **Pending, not pinned (omega-mv #857, draft, on main `157bab57`):** `for i T K bound N` takes the same N
-  (1..2^63-1, a number or integer const; 0 and 2^63 are error 8); more than N passes trap 4. Exercised
-  2026-10-26 on candidate compiler 8d2f0706 (gate16, C2 5870/5876, 811 .om differ=0). Until it is
-  pinned, a `for` with a computed count above 1000000 must be written `while lt i n bound N`.
-  The same PR makes IR-mode `for` with a value count carry the guard (before, checker2 rejected it).
-  In IR mode it keeps the C oracle's ranges: `bound N` is 1..1000000, and a number or integer-const
-  `for` count is 0..1000000; outside them (a minus sign included) is error 8 on the loop's line.
-  On main `157bab57` IR mode still accepts `while ... bound 1000001` and `for i ulong 1000001`, and
-  checker2 rejects that output (C2-LOOP-UNBOUNDED). Exercised 2026-10-31 on candidate omc `24caacf4`
-  (#857 head 4670831d, merged with main: gate-ir, gate16, 1237-file plain/IR/x86linux/x86efi
-  differential against `90c8884c` with 3 IR differences, all value-count guards checker2 now accepts).
+  1000000-pass guard. `for i T K bound N` (omega-mv #857, `3a163bc5`) takes the same N as `while`;
+  with a bound every count, literal or not, traps 4 after N passes. Before #857 `for` took no `bound`
+  word (error 5).
+- IR mode (`ir` first line) keeps the C oracle's ranges so that checker2 proves every guard: `bound N`
+  on `while` or `for` is 1..1000000, and a number or integer-const `for` count is 0..1000000; outside
+  them (a minus sign included) is error 8 on the loop's line. An IR `for` with a value count (a name)
+  now carries the hidden 1000000-pass guard; before #857 it was emitted unguarded and checker2
+  rejected it (C2-LOOP-UNBOUNDED).
+- Observed 2026-10-31, Linux AArch64 host, omc `24caacf4…abb7` (negative control: the previous pin
+  omc `2aec185d…d8d5`): `while lt i 1500000 bound 2000000` exits 83 = 1500000 mod 89 (old: error 8);
+  `bound 9223372036854775807` and `bound 1000000` compile and run (old: error 8); `bound 0` and
+  `bound 9223372036854775808` are `omc: line 3: error 8` on both; `const BIG ulong 5000000` as the
+  bound runs 1100000 passes (exit 49 = 1100000 mod 89; old: error 8); `bound 5` with 10 passes wanted
+  and 1000001 passes with no bound both exit 104 (trap 4) on both. `for i ulong 1234567 bound 1300000`
+  exits 48 = 1234567 mod 89 (old: error 5); `for i ulong 11 bound 10` and the same with `k = ulong 11`
+  as the count exit 104 (old: error 5); `for ... bound 0` and `bound 9223372036854775808` are error 8
+  (old: error 5); `for i ulong 2000000` without a bound still runs unguarded (exit 81 = 2000000 mod
+  89). IR mode: `while ... bound 1000000` compiles (old: error 8), `bound 1000001` is error 8 on both;
+  `for i ulong 1000000` compiles, `for i ulong 1000001` is error 8 (old: compiled); `for i ulong 3
+  bound 10` compiles and `bound 1000001` is error 8 (old: error 5 for both); `for i ulong k` with
+  `k = ulong 3` grows from 162 to 225 bytes of IR (the guard). Wolfram:
+  `{Mod[1500000,89], Mod[1100000,89], Mod[1234567,89], Mod[2000000,89]}` -> `{83, 49, 48, 81}`.
 - `break` and `continue` (`omc` only, gate7); `continue` in a `while` re-runs the condition and bound.
 - Choose N from a proof, not a guess. Example: a read loop where every pass adds at least one byte to
   a 65536-byte buffer needs at most 65536 passes. Write that reasoning in a `note`.
 - No loop runs forever and recursion is bounded by the 8 MiB stack. A long-running service needs an
   explicit epoch/restart design, not a bigger bound.
 
+### Compiler limits checked at main `bf54b19fa` (2026-10-29; rechecked at `91c83438d` on 2026-10-31)
+
+Checked with main's `seed/out/omc` (sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b`)
+and `seed/rung4/om4.bin` (`d0da40e4…19efab`) on the Linux AArch64 host; facts 2, 3, 5 and 6 were also
+reproduced with the omega MCP `run` tool (pin `e5b32567`, compiler `2c824805…029f`). Host evidence only.
+The first six facts (value slots through x86 target) were rerun on 2026-10-31 with main
+`91c83438d`'s omc `2aec185d…d8d5` and with the previous main omc `7a8b84fc…` (#970): the same exit
+codes and diagnostics with both. The om4 cap was rechecked as stated in its entry; the 4096 cap on
+user programs was not rerun. Float literals longer than about 1000000 characters are a separate,
+fixed limit (section 4).
+
+- **Value slots.** `fn alloc` ([omc.om#L2848-L2855](https://github.com/aien-dev/omega-mv/blob/bf54b19fa590e8ae925c0e80815516dbf41e7326/seed/omc/omc.om#L2848-L2855))
+  fails error 12 when `npar + nslot >= 16`. There is no spilling: split the function. Fifteen
+  `aN = int N` names summed in one nested `add` chain already give `omc: line 17: error 12`.
+- **Loop guard.** `for i ulong k` with a name `k = ulong 1000001` compiles and exits 104 (trap 4,
+  LOOP_BOUND); `k = ulong 1000000` exits 0. A literal count is unguarded: `for i ulong 2000000` exits 0.
+- **Float literal mantissa.** The digits of a float literal, read without the dot, must fit in
+  2^63-1 = 9223372036854775807 (Wolfram `2^63-1`). `922337203685477580.7f64` compiles;
+  `92233720368547758.08f64` and `9223372036854775807.0f64` are error 8.
+- **Forward calls** are allowed: `main` calling `f` defined after it compiles and exits 7.
+- **Hex.** OM-1 rejects `0x10` with error 6; under `om2` the same unit compiles and exits 16.
+- **x86 target.** A first line exactly `target x86linux` emits an x86-64 ELF; with a leading space it
+  is error 16.
+- **om4 function cap: 512 functions in `omc.om` itself (contributors to the compiler).** Rechecked at
+  main `62d1d0d66` on 2026-10-30, at main `4376c2112` on 2026-10-31 and at main `91c83438d` on
+  2026-10-31 (`omc.om` changed, `om4.bin` the same; 512 `^fn ` lines; om4 exit 0, and with one added
+  function `om4: line 15953: error 14`, exit 14). om4 is the seed rung that compiles `seed/omc/omc.om` into the first
+  `omc` (`seed/omega-from-seed.sh`
+  [#L43-L46](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omega-from-seed.sh#L43-L46)).
+  Its function table is 128-byte entries at `0x1840000`
+  ([om4.s#L45](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/rung4/om4.s#L45)),
+  and a new function is refused with `E_FULL` (error 14) once 512 are recorded
+  ([om4.s#L768-L769](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/rung4/om4.s#L768-L769),
+  `cmp.x.i x10 512` / `b.hs E_FULL`; [#L3073-L3075](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/rung4/om4.s#L3073-L3075)).
+  512 entries x 128 bytes fill exactly `0x1840000..0x1850000`, where the state slots begin
+  (Wolfram `IntegerString[16^^1840000 + 512*128, 16]` -> `1850000`). Main's `omc.om` has exactly 512
+  `^fn ` lines (`main` included), so it is full. Observed: om4 compiled main's `omc.om` with exit 0;
+  the same file plus one three-line function gave `om4: line 15625: error 14`, exit 14, and the seed
+  chain stops there. Any omc change that adds a function must fold or remove another one (#875 inlines
+  `dit`/`scrub` for this reason; its `omc.om` note is at L7525-L7526 in the merge commit `23678743`,
+  which still has exactly 512 `^fn ` lines). On 2026-10-30
+  a clean `git merge-tree` of main with draft
+  [#817](https://github.com/aien-dev/omega-mv/pull/817) (head `d0d794d0`) has 532 functions and with
+  draft [#832](https://github.com/aien-dev/omega-mv/pull/832) (head `707faca6`) 526, so both are
+  blocked until 20 and 14 functions are folded (Wolfram `{532-512, 526-512}` -> `{20, 14}`) or the cap
+  is raised. Raising the om4 cap changes a seed rung and is Drake's decision, not a contributor's.
+  Check before every compiler PR: `grep -c '^fn ' seed/omc/omc.om` must print at most 512.
+- **Do not confuse it with omc's cap on user programs.** The compiled `omc` holds 4096 functions per
+  program ([omc.om#L116-L118](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omc/omc.om#L116-L118),
+  refusal [#L7809-L7810](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omc/omc.om#L7809-L7810);
+  gated by `seed/omc/gate12.sh`, 4095 helpers plus `main` accepted, 4096 plus `main` error 14). The
+  "1024 functions" in omega-harness issue #9 described omc on branch `feat/allen-imac-competition`
+  (`7eca2ac3f`, 2026-10-25), not om4 and not current main.
+
 ## 9. Host I/O: counts, errors, evidence
 
 Base words ([#L476-L486](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L476-L486)): `read fd A off n`,
 `write fd A off n`, `pread`/`pwrite fd A off n pos`. Native host words ([#L624-L747](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L624-L747)):
 files, directories, clocks, sockets, poll, processes, arguments, environment, random.
+
+**cpufence / cpurelax: merged in [omega-mv#946](https://github.com/aien-dev/omega-mv/pull/946) as `d94617177`; in the current pin `3a163bc5` / omc `24caacf4`.**
+Rechecked 2026-10-31 at omega-mv main `91c83438daec0bdb88bf5c077cae10f3d15d365d` (omc sha256
+`2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`).
+These are operand-free statements. `cpufence` (keyword 199) is a full host CPU barrier, AArch64 `DSB SY`
+and x86-64 `MFENCE`. `cpurelax` (200) is a spin-wait hint with no ordering, `YIELD` and `PAUSE`.
+Unlike every other host word they compile in function mode too. An operand gives error 5, use as a
+value or at top level gives error 16, use as a name gives error 5, after `ret` gives error 17, and IR
+mode gives error 16. `seed/host/cpufence.sh` proves this: a fixture that exits 42 natively and under
+qemu-x86_64, objdump instruction deltas, and a nop-fence mutant that is caught. These are host results
+only. An omc older than `d94617177` (its parent's omc is `62775d2a…`) does not know either word: the
+fixture fails with error 4 (a bare `cpufence` line read as a name waiting for `=`) and `cpurelax 1` is
+error 11, so check the pin before writing them.
+**Keyword ids:** #946 landed with ids 199/200. Draft [omega-mv#878](https://github.com/aien-dev/omega-mv/pull/878)
+(`vfioctl`/`vfiomap`, with #890 stacked on it) is still open, PENDING, and must take ids that do not
+collide; recheck `fn kw` in `seed/omc/omc.om` at the pin before quoting any id.
+
+**pread/pwrite writability (landed via [omega-mv#904](https://github.com/aien-dev/omega-mv/pull/904), `e2662fff`).**
+At omega-mv main `bf54b19f` (omc sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b`),
+`pwrite` only reads its array, so it accepts a `text` or a `view`; `pread` writes its array, so
+`pread` into a `text` or an unsized `view` is error 20, as for `read`. Observed 2026-10-30 on the
+AArch64 host with main `seed/out/omc` (`omc < file`): `seed/omc/om2/s4/v-bad-pread-text.om` gives
+`omc: line 5: error 20` (rc 20); `seed/omc/om2/s4/v-pwrite-text.om` compiles (rc 0) and runs with
+exit 0, writing `ABC\n` to stdout. Host evidence only.
+
+Historical note: up to omc `2c824805…` (omega-mv `e5b32567`, the omega MCP pin) the check sat on
+the wrong word: `pwrite` from a `text` was error 20 and `pread` into a `text` compiled and returned
+`-EFAULT` at run time. Code written for that pin copied a text into a `new` array before `pwrite`.
+
+**`peername`: bounded peer address of an existing descriptor** (merged in
+[omega-mv#918](https://github.com/aien-dev/omega-mv/pull/918) as `2d848d939`, committed omc
+`38748442…`; in the current pin `3a163bc5` / omc `24caacf4`). `peername fd A off n` is host word 224,
+program mode only. It writes the connected peer's address into `A[off, off+n)` through AArch64
+`getpeername` 205 (not `getsockname` 204) or x86-64 `getpeername` 52 (not 51), with the same slice and
+private 32-bit length convention as `sockname`. Zero capacity is allowed, at the array end too, and
+returns the full length. The result is the full address length (above `n` means truncated) or a
+negative errno. An invalid slice traps 3; a read-only buffer (a view or text) is error 20. It creates
+and connects no descriptor; the caller owns the descriptor's lifetime. The peer is the transport
+endpoint, not an authenticated user; forwarding headers gain no authority from it. Observed
+2026-10-31 (host only) with `seed/host/tests/peername.om` at `3a163bc5e`: omc `24caacf4…` compiles it
+and the run prints `PASS native peername: accepted peer, truncation, empty slices, errno and bounds`,
+exit 0; its mutant arguments 1, 2 and 3 each exit 103; prefixed with `target x86linux` it gives the
+same PASS line and exits under `qemu-x86_64` 8.2.2 (EMULATED, not native x86). The previous pin
+`2aec185d…` gives `omc: line 24: error 3` for that file, and compiles `peername = int 1` as a name
+(at `24caacf4` that is `omc: line 2: error 16`). This supersedes the pending candidate notes of
+harness draft #108 (candidate omc `4ef67f18`/`6a2916cd`).
+
+**`execpure` and descriptor closing in `execprog`** (merged in
+[omega-mv#970](https://github.com/aien-dev/omega-mv/pull/970) as `1db941627`; in the current pin
+`3a163bc5` / omc `24caacf4`; observed below with the then pin `91c83438` / omc `2aec185d`). `execpure A off n` is host word 198
+(AArch64 only; `target x86linux` is error 25): it decodes the packet as `execprog` does, pins the
+executable as descriptor 3, applies a fixed strict stdio profile (Landlock execute/read beneath that file,
+no-new-privs, seven `prlimit64` ceilings, a seccomp filter allowing only `read` on 0, `write` on 1 and 2,
+`exit`, `exit_group` and `execveat` on 3) and calls `execveat(AT_EMPTY_PATH)`. It returns only on failure,
+with the first failing step's negative errno, and has no weaker fallback. `execprog` also changes: it now
+closes every descriptor at or above 3 with `close_range(3, UINT_MAX, CLOSE_RANGE_UNSHARE)` before exec,
+so a child no longer inherits them. Observed 2026-10-31 with omc `2aec185d` (host only): the
+`seed/qualification/security673/pure-launch.om` fixture launching a static omc program that exits 7 gave
+exit 7; launching `/nonexistent/x` printed `PURE_LAUNCH_REFUSED` and exited 2 (ENOENT); a child that reads
+descriptor 3 got EPERM (exit 1) under `execpure`, and EBADF (exit 9) under `execprog` with the parent's
+descriptor 3 open. The omc of `1db941627^` (`0243e4aff`, sha256 `1578b357…`) refuses `execpure` with
+error 3, and its `execprog` child read the inherited descriptor 3 (exit 50). Older pins, including the
+omega MCP pin `2c824805…`, lack both.
 
 - Types: `fd`, flags, modes, pids are `int`; offsets, counts, capacities `ulong`; file positions and
   intervals `long`; buffers are `uchar` arrays. Every result is `long`.
@@ -446,6 +1120,19 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
   qualified host ([#L739-L743](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L739-L743)).
 - Evidence for any host claim: compiler sha256, source sha256, output binary sha256, exact command,
   exit status, and the observed bytes. A program that ignores a negative result is not evidence.
+- Measured 2026-10-25 while building a disk image with the seed compiler `seed/out/omc` sha256
+  `c99eda2465036c0637a444689a65dd7fc736e4fa8a8b4cf3456b0ce1b57f8996` (omega branch
+  `feat/allen-imac-competition` `c3fb79697`, off main `55f9b0af`). Except where noted, these are NOT
+  re-measured at the current pin (omc `2c824805…`). The failures that cost the most wasted compiles:
+  - `fopen` returns `long`, but `read`, `write`, `fclose`, `fsync`, `fseek`, `ftrunc` and `fchmod`
+    take `fd` as `int`: `read int fi A 0 n`. `fseek`'s offset and `ftrunc`'s length are `long`, so a
+    `ulong` constant must be converted explicitly (`ftrunc int fo long IMGLN`); a plain `ulong`
+    value there is error 7, not a quiet narrowing.
+  - There are no implicit conversions in any argument position: mixing a `ulong` value with a
+    `uchar` array element (`xor c get A i`) is error 7 until you write `xor c ulong get A i`
+    (reproduced at omc `2c824805…`: `d = xor c get A 0` is error 7, `xor c ulong get A 0` compiles).
+  - Host words and `global` need program mode: without `fn main` the unit compiles in function mode
+    and every host word is error 9 with an empty output file, which reads like a broken pin.
 
 ## 10. Wire serialization (only what the pin defines)
 
@@ -466,12 +1153,24 @@ files, directories, clocks, sockets, poll, processes, arguments, environment, ra
 
 ## 11. Compiler errors (exit code = error number, stderr `omc: line N: error K`)
 
-From `seed/omc/gate15.sh` ([#L29-L75](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/gate15.sh#L29-L75)), one minimal program
-per code; the message format is `fn fail` ([omc.om#L122-L148](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L122-L148)).
+The single source of the codes on main `91c83438d` (#965) is the registry
+[`seed/omc/error-codes.reg`](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/seed/omc/error-codes.reg)
+(issue #797). `seed/omc/gate15.sh` ([#L1-L9](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/seed/omc/gate15.sh#L1-L9),
+cases [#L45-L72](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/seed/omc/gate15.sh#L45-L72))
+holds one minimal program per code for codes 1..25 and 27..30 (26 has no emitting site), each
+checked for its exact exit code and `omc: line L: error C` line, and runs `seed/omc/codereg.om`,
+which fails when an emitting site in `omc.om` has no registry row, an emitted row has no site, the
+table in OMEGESE section 9.14 ([#L811-L855](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/docs/one_layer/OMEGESE.md#L811-L855))
+differs from the registry, or a case did not refuse as listed. irwasm exit codes 20..28 are a
+separate namespace in the same registry (OMEGESE section 11.1). The message format is `fn fail`
+([omc.om#L122-L148](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L122-L148) at `55f9b0af`;
+[omc.om#L292-L322](https://github.com/aien-dev/omega-mv/blob/e5b32567a7aff3ce594e3254a622a846a6cd190b/seed/omc/omc.om#L292-L322) at `e5b32567`;
+[omc.om#L324-L356](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/seed/omc/omc.om#L324-L356) at `91c83438`,
+`fn fail` on the first line and `exit int code`, the only non-zero `exit` in the compiler, on the last).
 
 | Code | Meaning | Code | Meaning |
 |---|---|---|---|
-| 1, 2 | compiler I/O | 13 | non-function name over 8 characters (over 63 once #837 is pinned) |
+| 1, 2 | compiler input / output (stdin a directory: 1; stdout `/dev/full`: 2; both observed) | 13 | non-function name over 8 characters |
 | 3 | unknown name or field | 14 | capacity at `91b3c932`: 8192 names, 4096 functions, 512 nested blocks, 1024 nesting depth, 8 MiB input/output |
 | 4 | line ends too early | 15 | missing `end` |
 | 5 | extra words on the line | 16 | syntax / unknown word |
@@ -482,6 +1181,10 @@ per code; the message format is `fn fail` ([omc.om#L122-L148](https://github.com
 | 10 | duplicate name | 21 | constant index out of range |
 | 11 | ambiguous bare number | 22 | bad text literal |
 | 12 | register pool exhausted | 23 | size capacity |
+| 24 | AArch64 branch displacement out of range | 28 | abstract type: `seal` outside its constructor, or an unsupported `holds` |
+| 25 | unknown target, or an AArch64-only path on another target | 29 | external `layout` out of bounds or misplaced |
+| 26 | unused (no emitting site) | 30 | contract syntax misplaced or not supported here (IR mode included) |
+| 27 | `fresh` element read before it is definitely written, or a fresh array passed on | | |
 
 A refused compile may still leave bytes on stdout. Never run output from a non-zero compile.
 Capacity boundaries are gated in `seed/omc/gate12.sh` (8192 globals accepted, 8193 refused;
@@ -491,8 +1194,37 @@ OM-2 units add or extend codes ([OMEGESE 9.13](https://github.com/aien-dev/omega
 [`spec/omegese-om2.md` section 8](https://github.com/aien-dev/omega-mv/blob/19f014f2178ca9cd3473728fe00a475a2398c409/spec/omegese-om2.md#L225)):
 27 initialization (`fresh`), 28 constructor discipline (`seal`, `holds`), 29 external `layout`;
 14 also covers expansion fuel (`obligation=growth`) and a 33rd `export`; 24 keeps its OM-1 meaning
-(branch displacement). gate15 pins only codes 3..23 (roadmap RM8, #797). Merged contracts
-(#807 through #768) add error **30**, diagnostic `obligation=contract` (section 11a).
+(branch displacement). Merged contracts (#807 through #768) add error **30**, diagnostic
+`obligation=contract` (section 11a).
+
+**IR mode refuses contract clause lines with error 30** (main `91c83438d`, #965, #791; OMEGESE
+section 11 [#L1097-L1102](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/docs/one_layer/OMEGESE.md#L1097-L1102)).
+Contracts are native only; an IR unit that writes one is refused rather than misread. Only the clause
+form is refused: a contract word followed by `=` (`ensures = ulong 1`) still assigns a local of that
+name. Observed 2026-10-31 with omc `2aec185d…`, control omc `7a8b84fc…` (main before #965):
+`ir` / `fn f x uint to uint` / `requires lt x 10` / `ret x` / `end` is `omc: line 3: error 30`,
+exit 30 (control: exit 0, 59 bytes of IR, the clause read as a local named `requires`); the same
+with `ensures lt x 10`: error 30 (control: exit 0, 59 bytes); with `invariant lt x 10`: error 30
+(control: `omc: line 3: error 13`, a 9-byte name). `ensures = ulong 1` / `ret ensures` compiles with
+exit 0 to the same 55 bytes of IR under both compilers. Native units are unaffected: with
+`2aec185d`, as with `7a8b84fc`, an OM-1 unit (no `om2` first line) with `requires ge x 0`, called
+with -5, still compiles and exits 6 (the contract is not checked), and the same unit with `om2`
+first exits 109 (trap 9).
+
+Limits met while porting CUDApp's encoder and cubin writer (aien-dev/CUDApp#143, merged
+`2fab72fde0`), rechecked with omega-mv main `bf54b19f` (`seed/out/omc` sha256 `62775d2a...`):
+an array parameter of length 16777216 compiles and 16777217 is error 23, so one `.om` buffer holds at
+most 16 MiB of `uchar`; `text` inside a function-mode unit is error 9 (both OBSERVED, identical on
+omc `2c824805`). AUTHOR-CLAIMED, not rechecked: `global` inside a function-mode unit is error 9, and
+omega-bridge `431fff0a` `native c` exits 110 when an entry's array length is written as a `const`
+name (write the literal in the entry signature).
+
+One minimal refusal per code is in `examples/errNN_*.om` of this repository, with its exact stderr
+line in `errNN_*.expect`, and `examples/gate.sh` runs them: codes 1..23 and 27..30, observed at
+`e5b32567`, plus code 25 (`err25_target`, added 2026-10-31 at `91c83438`). Code 24 needs a
+generated program of more than 1 MiB inside one loop (recipe in `writing-omega` section 11;
+observed at `e5b32567` and rerun at `91c83438`, section 0). 25 and 26 were unused at `e5b32567`;
+since `bf54b19f` the target checks emit 25 (section 0, rerun at `91c83438`).
 
 ## 11a. Executable contracts (merged #807 through #768)
 
@@ -507,6 +1239,12 @@ Older compiler `befb8199` does not implement these contextual contract words.
   same syntax, scope, type and purity checks; `om2 diag debug` / `om2 diag release` add diagnostic
   records; `om2 fmt` keeps its canonical output and still checks contracts. No environment variable
   selects the policy. The words are contextual: OM-1 units and the keyword table are unchanged.
+  Warning: an OM-1 unit that contains a contract line still compiles, and the contract never runs.
+  `fn step x long to long` / `requires ge x 0` / `ret add x 1` called with -5 compiles with no
+  diagnostic and returns -4; adding `om2` as the first line makes the same call trap 9 (exit 109),
+  and with `om2` a call with 5 passes the contract and returns 6. Observed with omc 734f0a39,
+  2c824805, the guide pin 2aec185d (omega-mv `91c83438`) and omc e4d84bc3 (omega-mv main
+  `d39450a2`). Every unit that relies on a contract must start with `om2`.
 - **Where clauses go.** `requires BOOL` and `ensures BOOL` form a function's prefix, before its first
   executable statement (blank and `note` lines may separate them; at most 64). `invariant BOOL` forms
   the prefix of a `while` or `for` body (at most 64 per loop). Anywhere else is error 30.
@@ -609,24 +1347,45 @@ check proves nothing.
    changes.
 4. No silent fallback. If `omc` cannot express something, do not write it in C, Rust, shell or
    Python and call the result Omega. Say exactly which word or capacity is missing.
-5. Missing is not impossible. Omega is meant to be extended. State the gap as an extension proposal:
-   the hardware or OS need, the proposed word and types, refusal codes, and the gate that would test
-   it. Known decision-blocked gaps at this pin ([OM_COMPLETION.md#L62-L72](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OM_COMPLETION.md#L62-L72)):
+5. Missing is not impossible, and it is not a stopping point. Drake's standing rule (2026-10-26):
+   "If .om doesn't have a feature, you need to make that feature." Build it in Omega as an omega-mv
+   pull request, coordinated with whoever owns the compiler lane at the time. The PR names the
+   hardware or OS need, the word and its types, refusal codes and a new error code if one is needed,
+   gates with a negative control, parity against an independent oracle, and the matching update to
+   this skill. Host code is a last resort only. When it is used, record it with its Omega successor
+   and the omega-mv PR that will replace it. Known decision-blocked gaps still need Drake's decision
+   before they are built (roadmap RM4 heap, RM6 imports;
+   [omega-mv#793](https://github.com/aien-dev/omega-mv/issues/793), [#795](https://github.com/aien-dev/omega-mv/issues/795)).
+   They are listed at `55f9b0af` ([OM_COMPLETION.md#L62-L72](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OM_COMPLETION.md#L62-L72)),
+   unchanged at main `bf54b19f` ([#L65-L73](https://github.com/aien-dev/omega-mv/blob/bf54b19fa590e8ae925c0e80815516dbf41e7326/docs/one_layer/OM_COMPLETION.md#L65-L73)):
    packed structs (FR-2), imports (FR-3, units concatenate), threads/atomics (FR-6), C ABI/shared
-   objects (FR-7), x86-64 (FR-9), heap (decision 24).
-6. Documents disagree with the code at this pin; trust the code and name the conflict:
-   OM_COMPLETION FR-5 still says mmap/ioctl are absent, and `seed/host/MAPPING.md`
-   ([#L66-L68](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/host/MAPPING.md#L66-L68)) still calls the device words a proposal not
-   on `main`, while `omc.om` reserves `devctl mapnew ... mapbind` (ids 166-177) and README
-   ([#L27](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L27)) says they are on `main`. GPU launch and model execution through
-   them are not qualified. (README line 5's old "candidate branches" wording was corrected on main by
-   #801.)
+   objects (FR-7), heap (decision 24). x86-64 (FR-9) is no longer missing: since main `bf54b19f`
+   (#923, 2026-10-28) `target x86linux` selects an x86-64 Linux static-ELF backend in
+   `seed/omc/omc.om`. Its status there is DRAFT, x86 execution is EMULATED (QEMU) only and native
+   x86 qualification is NOT_RUN (`docs/X86-LINUX.md` lines 3 and 286).
+6. Documents can disagree with the code; trust the code and name the conflict. At main `91c83438d`
+   (rechecked 2026-10-31) the earlier conflicts are resolved: OM_COMPLETION FR-5
+   ([#L68](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/docs/one_layer/OM_COMPLETION.md#L68))
+   lists `devctl devcall uvmctl mapnew ... mapbind` (ids 166..177 in `seed/omc/genkw.awk`) as
+   implemented for AArch64 program mode (omega-mv #944, merged by train r5 #985 as `613765d2b`; it
+   said "absent" through `4376c2112`), and `seed/host/MAPPING.md`
+   ([#L68-L70](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/seed/host/MAPPING.md#L68-L70))
+   says the device words are on `main` (train r2 #972, `f5c9bd89a`). GPU launch and model execution
+   through them are not qualified. The FR-9 row
+   ([#L72](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/docs/one_layer/OM_COMPLETION.md#L72))
+   and `docs/X86-LINUX.md` line 450 now cite the same EMULATED differential at `62d1d0d6` (15182 PASS,
+   0 FAIL, 2 NOT_RUN, 222 EXCLUDED, aggregate FAIL); native x86 stays NOT_RUN.
 
 ## 13. Examples
 
 - `examples/fnv1a32.om`: reads all of stdin with a partial-read loop, hashes it (FNV-1a 32, unsigned
   wrap), writes 4 little-endian bytes with a partial-write loop, distinct exit codes for each failure.
 - `examples/trap_narrow.om`: a masked narrowing succeeds, an unmasked one traps 5 (exit 105).
+
+Both carry `.expect` (and for `fnv1a32`, `.stdin` `abc` and the 4 expected bytes in `.stdout`) and
+run in [`examples/gate.sh`](../../examples/gate.sh) with the 97 programs in the repository's
+`examples/` directory; section 0 records the `e5b32567` rerun of every row below. The portable guide
+for writing a first program is [`skills/writing-omega/SKILL.md`](../writing-omega/SKILL.md).
 
 Observed on 2026-10-25, Linux AArch64 host only, compiler sha256 `734f0a39...6b61`:
 
