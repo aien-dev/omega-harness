@@ -757,23 +757,21 @@ Base words ([#L476-L486](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de7
 `write fd A off n`, `pread`/`pwrite fd A off n pos`. Native host words ([#L624-L747](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L624-L747)):
 files, directories, clocks, sockets, poll, processes, arguments, environment, random.
 
-**cpufence / cpurelax: PENDING [omega-mv#946](https://github.com/aien-dev/omega-mv/pull/946) (draft, not merged; not on main).**
-Rechecked 2026-10-30 at #946 head `b514c4adbb3cc937a0ff698100ca092eda1d6825` (branch `w1/939-cpu-barrier`,
-committed omc sha256 `19ea5f7403138e19640d47a9957ba494a5c94a1966ef0f46663b047a2d7fb835`, which rebuilds itself
-byte for byte from that head's `seed/omc/omc.om`).
-These are operand-free statements. `cpufence` (keyword 178) is a full host CPU barrier, AArch64 `DSB SY`
-and x86-64 `MFENCE`. `cpurelax` (179) is a spin-wait hint with no ordering, `YIELD` and `PAUSE`.
+**cpufence / cpurelax: merged in [omega-mv#946](https://github.com/aien-dev/omega-mv/pull/946) as `d94617177`, current main pin `91c83438` / omc `2aec185d`.**
+Rechecked 2026-10-31 at omega-mv main `91c83438daec0bdb88bf5c077cae10f3d15d365d` (omc sha256
+`2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`).
+These are operand-free statements. `cpufence` (keyword 199) is a full host CPU barrier, AArch64 `DSB SY`
+and x86-64 `MFENCE`. `cpurelax` (200) is a spin-wait hint with no ordering, `YIELD` and `PAUSE`.
 Unlike every other host word they compile in function mode too. An operand gives error 5, use as a
 value or at top level gives error 16, use as a name gives error 5, after `ret` gives error 17, and IR
-mode gives error 16. The branch proves this with `seed/host/cpufence.sh`: a fixture that exits 42
-natively and under qemu-x86_64, objdump instruction deltas, and a nop-fence mutant that is caught.
-These are host results only. Until #946 merges, main's omc (`62775d2a…`) does not know either word:
-a bare `cpufence` line is error 4 (read as a name waiting for `=`) and `cpurelax 1` is error 11, so do
-not write them against the main pin.
-**Keyword-id conflict, PENDING:** draft [omega-mv#878](https://github.com/aien-dev/omega-mv/pull/878)
-(and #890 stacked on it) also claims ids 178/179, for `vfioctl`/`vfiomap`. Whichever of #946 and #878
-merges second must renumber and reseed, so the ids above can still change; recheck `fn kw` in
-`seed/omc/omc.om` at the merge commit before quoting them.
+mode gives error 16. `seed/host/cpufence.sh` proves this: a fixture that exits 42 natively and under
+qemu-x86_64, objdump instruction deltas, and a nop-fence mutant that is caught. These are host results
+only. An omc older than `d94617177` (its parent's omc is `62775d2a…`) does not know either word: the
+fixture fails with error 4 (a bare `cpufence` line read as a name waiting for `=`) and `cpurelax 1` is
+error 11, so check the pin before writing them.
+**Keyword ids:** #946 landed with ids 199/200. Draft [omega-mv#878](https://github.com/aien-dev/omega-mv/pull/878)
+(`vfioctl`/`vfiomap`, with #890 stacked on it) is still open, PENDING, and must take ids that do not
+collide; recheck `fn kw` in `seed/omc/omc.om` at the pin before quoting any id.
 
 **pread/pwrite writability (landed via [omega-mv#904](https://github.com/aien-dev/omega-mv/pull/904), `e2662fff`).**
 At omega-mv main `bf54b19f` (omc sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b`),
