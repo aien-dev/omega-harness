@@ -22,6 +22,8 @@ Two writers, one file. Humans and agents own the semantic kernel: `purpose`, `la
 
 Inside a git repository, live coordination no longer lives in `.crumb.local`: new writes go to the shared store under `<git-common-dir>/crumb/v1/{dirs,agents,continuations,ledger}`. The old file is a read path, merged in with provenance when present. So do not write `.crumb.local` by hand, and never delete or edit the store to clear a state you do not like; the tool keeps it transactionally consistent for a reason.
 
+Scope (DRA-97 option A; PROPOSED in drafts aien-dev/aien-architecture-mv#368 and aien-dev/aienos.com#193, not merged): `.crumb.local` and the shared store are single-machine scratch state, visible only on the machine that wrote them. Claims and handoffs between agents go through a claimed tracker issue and draft pull requests; a crumb lock or whisper is never a claim.
+
 Legacy warning: the older Rust implementation wrote `version`, `dir_path`, `history` and `whispers` into `.crumb`. Those files still exist in some repositories. The tool leaves them untouched and reports them as legacy. Do not copy that shape into a new crumb.
 
 ## 2. Before you touch a directory
