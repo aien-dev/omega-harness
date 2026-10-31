@@ -1061,10 +1061,20 @@ fixed limit (section 4).
 - **Hex.** OM-1 rejects `0x10` with error 6; under `om2` the same unit compiles and exits 16.
 - **x86 target.** A first line exactly `target x86linux` emits an x86-64 ELF; with a leading space it
   is error 16.
-- **om4 function cap: 512 functions in `omc.om` itself (contributors to the compiler).** Rechecked at
-  main `62d1d0d66` on 2026-10-30, at main `4376c2112` on 2026-10-31 and at main `91c83438d` on
-  2026-10-31 (`omc.om` changed, `om4.bin` the same; 512 `^fn ` lines; om4 exit 0, and with one added
-  function `om4: line 15953: error 14`, exit 14). om4 is the seed rung that compiles `seed/omc/omc.om` into the first
+- **om4 function cap: 512 functions in `omc.om` itself (contributors to the compiler).** Measured at
+  main `57a4135d6` on 2026-10-31: `omc.om` has 495 `^fn ` lines (16,432 lines, sha256 `d4b4b89d…30f6`,
+  the same file as at `9920aab14`) and `om4.bin` is still `d0da40e4…19efab`. `omc.om` plus 17 appended
+  `fn zqN to ulong` / `ret 0` / `end` functions compiled with exit 0; plus 18 gave
+  `om4: line 16484: error 14`, exit 14. So 17 entries are free. **Decision (Drake, 2026-10-31): stay
+  within 512 for now (option 3).** A prototype that moves om4's table to 4096 entries is draft
+  [omega-mv#1013](https://github.com/aien-dev/omega-mv/pull/1013) (`646ed1ec`, om4 `bfc1cfd1…`, omc
+  bytes unchanged), **parked until after alpha**: do not merge it unless `omc.om` needs more than 512
+  functions or an alpha-critical fix needs more than the free entries. If it merges, the published
+  challenge pin moves in the same release as a new version (v1 = om4 `d0da40e4` at `369dbc96` stays
+  checkable), `seed/challenge/run.sh` builds the new pin, and never while an outside recheck
+  (DRA-58) is running. Its cubic cycle check is omega-mv#1014. Until it merges, the 512 cap below holds. Earlier
+  checks: main `62d1d0d66` (2026-10-30), `4376c2112` and `91c83438d` (2026-10-31), when `omc.om` had
+  512 functions and one more gave `om4: line 15953: error 14`. om4 is the seed rung that compiles `seed/omc/omc.om` into the first
   `omc` (`seed/omega-from-seed.sh`
   [#L43-L46](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omega-from-seed.sh#L43-L46)).
   Its function table is 128-byte entries at `0x1840000`
@@ -1073,8 +1083,8 @@ fixed limit (section 4).
   ([om4.s#L768-L769](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/rung4/om4.s#L768-L769),
   `cmp.x.i x10 512` / `b.hs E_FULL`; [#L3073-L3075](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/rung4/om4.s#L3073-L3075)).
   512 entries x 128 bytes fill exactly `0x1840000..0x1850000`, where the state slots begin
-  (Wolfram `IntegerString[16^^1840000 + 512*128, 16]` -> `1850000`). Main's `omc.om` has exactly 512
-  `^fn ` lines (`main` included), so it is full. Observed: om4 compiled main's `omc.om` with exit 0;
+  (Wolfram `IntegerString[16^^1840000 + 512*128, 16]` -> `1850000`). At `62d1d0d66` main's `omc.om` had exactly 512
+  `^fn ` lines (`main` included), so it was full. Observed there (dated): om4 compiled that `omc.om` with exit 0;
   the same file plus one three-line function gave `om4: line 15625: error 14`, exit 14, and the seed
   chain stops there. Any omc change that adds a function must fold or remove another one (#875 inlines
   `dit`/`scrub` for this reason; its `omc.om` note is at L7525-L7526 in the merge commit `23678743`,
@@ -1084,7 +1094,9 @@ fixed limit (section 4).
   draft [#832](https://github.com/aien-dev/omega-mv/pull/832) (head `707faca6`) 526, so both are
   blocked until 20 and 14 functions are folded (Wolfram `{532-512, 526-512}` -> `{20, 14}`) or the cap
   is raised. Raising the om4 cap changes a seed rung and is Drake's decision, not a contributor's.
-  Check before every compiler PR: `grep -c '^fn ' seed/omc/omc.om` must print at most 512.
+  Check before every compiler PR: `grep -c '^fn ' seed/omc/omc.om` must print at most 512. To
+  measure the headroom, append k three-line functions (`fn zqN to ulong`, `ret 0`, `end`, N unique;
+  never `fN`, because `f32`/`f64` are type words) and run `seed/rung4/om4.bin < omc.om > /dev/null`.
 - **Do not confuse it with omc's cap on user programs.** The compiled `omc` holds 4096 functions per
   program ([omc.om#L116-L118](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omc/omc.om#L116-L118),
   refusal [#L7809-L7810](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omc/omc.om#L7809-L7810);
