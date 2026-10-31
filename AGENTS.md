@@ -27,6 +27,11 @@ pinned compiler hash and reruns every program in `examples/` and `skills/*/examp
 any change to an example or a language rule. `skills/omega-encoding/examples/` holds two more
 runnable programs. `LICENSE` is Apache 2.0.
 
+`coder/` is harness configuration for an Omega-only `omp` session: a TypeScript `omp` extension that
+allows `.om` writes only and runs the pinned `omc` after each one, the builder of its context pack
+(sections 2-11 of `omega-encoding` plus compiled examples), and a held-out eval. See `coder/README.md`.
+When `omega-encoding` sections 2-11 change, rebuild the pack with `coder/build-context.sh`.
+
 ## Before you edit a skill
 
 1. Read the skill you intend to change, and `skills/omega-harness/SKILL.md` section 6, which maps a
