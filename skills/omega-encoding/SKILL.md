@@ -761,6 +761,10 @@ Older compiler `befb8199` does not implement these contextual contract words.
   same syntax, scope, type and purity checks; `om2 diag debug` / `om2 diag release` add diagnostic
   records; `om2 fmt` keeps its canonical output and still checks contracts. No environment variable
   selects the policy. The words are contextual: OM-1 units and the keyword table are unchanged.
+  Warning: an OM-1 unit that contains a contract line still compiles, and the contract never runs.
+  With omc 2c824805, `fn step x long to long` / `requires ge x 0` / `ret add x 1` called with -5
+  compiles with no diagnostic and returns -4. Adding `om2` as the first line makes the same call trap 9
+  (exit 109). Every unit that relies on a contract must start with `om2`.
 - **Where clauses go.** `requires BOOL` and `ensures BOOL` form a function's prefix, before its first
   executable statement (blank and `note` lines may separate them; at most 64). `invariant BOOL` forms
   the prefix of a `while` or `for` body (at most 64 per loop). Anywhere else is error 30.
