@@ -470,6 +470,11 @@ rebuilt for this note.
   `spec/omegese-om2-measure.md` `507702d0e69ccc76cefb3675e2b22f7279497d362b42ee3043f3a1057aa17bad`.
   Before #801 these files existed only on that branch; older notes that call the contract "missing"
   or "draft only" are stale.
+- **OM-2 is frozen.** `spec/omegese-om2.md` says "A change after freeze needs `omegese-om3.md`", and its
+  sha256 `245bb74e…` is pinned by `evidence/OM2-COMPILER/*/PINS.txt` and
+  `seed/qualification/om2/oracle/s0s2/PROVENANCE.txt`. Never edit it to add a feature: write the
+  addition in `spec/omegese-om3.md` (first proposed in draft omega-mv#1008, not on main 2026-10-31).
+  The errata file only resolves conflicts inside the frozen text.
 - **Omega 1.0 roadmap:** [`docs/ROADMAP-1.0.md`](https://github.com/aien-dev/omega-mv/blob/19f014f2178ca9cd3473728fe00a475a2398c409/docs/ROADMAP-1.0.md),
   milestones RM1..RM11 with acceptance gates, tracked in
   [#790](https://github.com/aien-dev/omega-mv/issues/790) (gate coverage),
@@ -760,6 +765,13 @@ end
 - A unit with `fn main` is a static AArch64 Linux ELF (program mode). Without `fn main` the output is
   bare function words (function mode): it compiles with exit 0 but is **not runnable**. Host words
   and `global` are error 9 there, and `text` is program-mode only ([#L400-L407](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L400-L407), [#L454-L459](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L454-L459), [#L629](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L629)).
+  **PENDING exception, draft [omega-mv#1008](https://github.com/aien-dev/omega-mv/pull/1008)** (`78fa7ec3`,
+  omc `3988c31f…f7c4`, not on main, 2026-10-31): an OM-2 function unit (first line `om2`, no `fn main`)
+  may use `fopen fclose fstat stat lstat getuid geteuid getgid getegid` on AArch64; every other host
+  word, any host word in an OM-1 unit and any other target stay error 9 (gate
+  `seed/omc/om2/fnhost/fnhost.cases`; PROPOSED contract `spec/omegese-om3.md` section 1). The
+  omega-bridge binds such a unit only with `tools/native --host` (draft omega-bridge#54). With main's
+  compiler these are still error 9.
 - Program exit status = `main`'s value mod 256 (0 for void main). `exit v` (v `int`) ends at once.
   A runtime trap exits **100 + code**. Keep your own exit codes below 100, or a result is
   indistinguishable from a trap ([#L404-L407](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L404-L407), [#L484](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L484)).
@@ -1193,7 +1205,10 @@ omega MCP pin `2c824805…`, lack both.
     `uchar` array element (`xor c get A i`) is error 7 until you write `xor c ulong get A i`
     (reproduced at omc `2c824805…`: `d = xor c get A 0` is error 7, `xor c ulong get A 0` compiles).
   - Host words and `global` need program mode: without `fn main` the unit compiles in function mode
-    and every host word is error 9 with an empty output file, which reads like a broken pin.
+    and every host word is error 9 with an empty output file, which reads like a broken pin. (Pending
+    exception for nine file/identity words in OM-2 units: section 2, omega-mv#1008. Observed
+    2026-10-31: `om2` / `export fn f to long` / `r = geteuid` gives `omc: line 3: error 9` with main
+    omc `be8c5130…` and compiles with the #1008 omc `3988c31f…`.)
 
 ## 10. Wire serialization (only what the pin defines)
 
