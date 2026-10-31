@@ -85,14 +85,15 @@ pinned one, then compiles and runs every program here and in `skills/*/examples/
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv.git omega-src
-git -C omega-src checkout 3a163bc5eafa5be4b9ca97b7f17046c33f0d9032
-sha256sum omega-src/seed/out/omc   # 24caacf463cc29c5413d5b2565ef8f88c76e60a585bbad44d2388cb1ac29abb7 at main 3a163bc5 (2026-10-31); 2aec185d... at the previous pin 91c83438; 734f0a39... at the 2026-10-25 pin 55f9b0af
+git -C omega-src checkout 9920aab1413983c2867d02d75b2276341595adb8
+sha256sum omega-src/seed/out/omc   # be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a at main 9920aab1 (2026-10-31); 24caacf4... at the previous pin 3a163bc5; 2aec185d... at the pin before, 91c83438; 734f0a39... at the 2026-10-25 pin 55f9b0af
 examples/gate.sh omega-src/seed/out/omc
 ```
 
 It prints `PASS name` or `FAIL name: reason` per program and ends with
-`GATE PASS examples=101 pass=101 fail=0 omc=24caacf4...` (exit 0), `GATE FAIL ...` (exit 1), or a hash
-refusal (exit 2). The `omega-encoding` skill (section 0 and section 13) records the observed results
+`GATE PASS examples=101 pass=101 fail=0 omc=be8c5130...` (exit 0), `GATE FAIL ...` (exit 1), or a hash
+refusal (exit 2), for example `GATE FAIL omc sha256 24caacf4..., pinned be8c5130... (omega-mv 9920aab1...)`
+for the previous pin's compiler. The `omega-encoding` skill (section 0 and section 13) records the observed results
 and the negative controls; [`examples/WOLFRAM.md`](examples/WOLFRAM.md) records the Wolfram checks of
 the arithmetic expectations.
 
