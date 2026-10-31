@@ -19,22 +19,25 @@ The quantity and diagnostic audit is merged through omega-mv #914 at main
 `d94a503f7aae57d09697046405da2e9a5895be6d`. The older candidate observations
 below remain dated history, not claims about the newer integration.
 
-### Current main pin (checked 2026-10-30)
+### Current main pin (checked 2026-10-31)
 
 | Item | Value |
 |---|---|
 | Repository | `github.com/aien-dev/omega-mv`, branch `main` |
-| Commit | `62d1d0d668f897386a0e311374f8dbcc5c32dde8` (merge of #936, 2026-10-30) |
+| Commit | `4376c2112d7469b6908c6403720c9001de4622b5` (squash of #979, Train r3, 2026-10-31) |
 | Compiler source `seed/omc/omc.om` | 15,624 lines, 512 `^fn ` lines, sha256 `96d51b63c8f451661ac715395078e04f39195e50c9e8fe37746cda121e4d7a1e` |
 | Compiler `seed/out/omc` | sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b` (equals `seed/out/omc.sha256`; last `seed/omc/size-history.tsv` row `FR9-acceptance-fixes`) |
 | Seed loader `seed/rung0/seed0.hex` | sha256 `baaf081fe6055a768485c5d25d7435681ce00b04cfa80b26c48169f78944e14d` |
 
-No commit between `bf54b19fa` (#923, 2026-10-28) and `62d1d0d66` touches `seed/omc`, `seed/out`,
-`seed/rung0` or `seed/rung4`, so the compiler is the one #923 merged. Hashes were read with
-`git show 62d1d0d66:<path> | sha256sum`. On 2026-10-30, `seed/rung4/om4.bin` (sha256
-`d0da40e4…19efab`) compiled that `omc.om` with exit 0 to a 477,612-byte binary whose sha256 is
-exactly `62775d2a…712b`. Both guide examples were rerun on 2026-10-30 with that `seed/out/omc` on a
-Linux AArch64 host: `fnv1a32.om` compiled with exit 0 and empty stderr; `abc`, `a` and empty input
+No commit between `bf54b19fa` (#923, 2026-10-28) and `4376c2112` changes the compiler:
+`git diff --quiet 62d1d0d66 4376c2112 -- seed/omc/omc.om seed/omc/gate12.sh seed/out seed/rung0 seed/rung4 seed/omega-from-seed.sh`
+exits 0, so the `omc.om`, `om4.s` and seed-script line links below, written at `62d1d0d66`, still
+describe main. Hashes were read from a clone at `4376c2112` with `sha256sum`. On 2026-10-31,
+`sh seed/omega-from-seed.sh` there exited 0 and rebuilt `seed/out/omc` with sha256 exactly
+`62775d2a…712b`, and `seed/rung4/om4.bin` (sha256 `d0da40e4…19efab`) alone compiled that `omc.om`
+with exit 0 to a 477,612-byte binary with the same sha256. Both guide examples were rerun on
+2026-10-31 with that `seed/out/omc` on a Linux AArch64 host (results identical to the 2026-10-30
+run at `62d1d0d66`): `fnv1a32.om` compiled with exit 0 and empty stderr; `abc`, `a` and empty input
 gave `0b e9 47 1a`, `2c 29 0c e4`, `c5 9d 1c 81`, exit 0; 65536 zero bytes gave no output, exit 2;
 the wrong-prime control (`16777617`) gave `55 be dc f5` for `abc`. `trap_narrow.om` compiled with
 exit 0 and ran with exit 105; deleting only its unmasked store (negative control) changed the run exit
@@ -69,7 +72,7 @@ contracts", source `7ab5fdd0`, QEMU, EMULATED) reported 15179 PASS, 4 NOT_RUN,
 `00ebdee8` then passed the two text-write cases (5 PASS), leaving two invalid-fd ioctl
 cases unrun. Merged in source; not native x86 qualification.
 
-**Error 25 on x86 at main `62d1d0d66` (observed 2026-10-30, compile only).** `docs/X86-LINUX.md`
+**Error 25 on x86 at main `62d1d0d66` (observed 2026-10-30, compile only; rechecked 2026-10-31 at `4376c2112`).** `docs/X86-LINUX.md`
 ([#L201-L202](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/docs/X86-LINUX.md#L201-L202))
 defines error 25 as an unsupported target/emission path. In `seed/omc/omc.om` at that commit it is
 raised by the target-line parser for any `target` word other than `x86linux`
@@ -85,9 +88,10 @@ The device and mapping words 166..177 are **not** refused on x86: `xhost` dispat
 helpers (`xhdev`, `xhmnew`, `xhmbind`, `xhmdrop`, `xhmcopy`, `xhmmio`;
 [#L14679-L14707](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omc/omc.om#L14679-L14707)).
 `seed/host/tests/device.om`, `mapping.om` and `devcall.om`, each prefixed with `target x86linux`,
-compiled with exit 0 to x86-64 ELF files with main's omc. They were not run, so no x86 execution of
-device words is claimed. The VFIO words `vfioctl`/`vfiomap` are not on main (pending
-[omega-mv#878](https://github.com/aien-dev/omega-mv/pull/878)).
+compiled with exit 0 to x86-64 ELF files with main's omc, at `62d1d0d66` and again at `4376c2112`
+(where `target x86efi` still gave `omc: line 1: error 25`, exit 25). They were not run, so no x86
+execution of device words is claimed. The VFIO words `vfioctl`/`vfiomap` are not on main (pending
+draft [omega-mv#878](https://github.com/aien-dev/omega-mv/pull/878), open on 2026-10-31).
 
 ### Historical quantity/check/next candidate (observed 2026-10-28)
 
@@ -649,7 +653,7 @@ From OMEGESE section 3 and 4 ([#L58-L60](https://github.com/aien-dev/omega-mv/bl
 - No loop runs forever and recursion is bounded by the 8 MiB stack. A long-running service needs an
   explicit epoch/restart design, not a bigger bound.
 
-### Compiler limits checked at main `bf54b19fa` (2026-10-29; compiler unchanged at `62d1d0d66`)
+### Compiler limits checked at main `bf54b19fa` (2026-10-29; compiler unchanged at `62d1d0d66` and `4376c2112`)
 
 Checked with main's `seed/out/omc` (sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b`)
 and `seed/rung4/om4.bin` (`d0da40e4…19efab`) on the Linux AArch64 host; facts 2, 3, 5 and 6 were also
@@ -668,7 +672,8 @@ reproduced with the omega MCP `run` tool (pin `e5b32567`, compiler `2c824805…0
 - **x86 target.** A first line exactly `target x86linux` emits an x86-64 ELF; with a leading space it
   is error 16.
 - **om4 function cap: 512 functions in `omc.om` itself (contributors to the compiler).** Rechecked at
-  main `62d1d0d66` on 2026-10-30. om4 is the seed rung that compiles `seed/omc/omc.om` into the first
+  main `62d1d0d66` on 2026-10-30 and at main `4376c2112` on 2026-10-31 (same `omc.om` and `om4.bin`,
+  same results). om4 is the seed rung that compiles `seed/omc/omc.om` into the first
   `omc` (`seed/omega-from-seed.sh`
   [#L43-L46](https://github.com/aien-dev/omega-mv/blob/62d1d0d668f897386a0e311374f8dbcc5c32dde8/seed/omega-from-seed.sh#L43-L46)).
   Its function table is 128-byte entries at `0x1840000`
