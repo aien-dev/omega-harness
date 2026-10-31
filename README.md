@@ -66,13 +66,22 @@ emitter, a PoCL CPU parity gate and a minimal OpenCL IL demo. `omega-harness`
 section 3 records the exact exercised source, toolchain, ABI, refusal boundary
 and evidence. CPU execution is not GPU or DPC++ qualification.
 
+The Neuralese supplement ([#919](https://github.com/aien-dev/omega-mv/pull/919), merged by
+train r1 #971 as `f56a372a`) keeps Omega's name and proposes model/decoder-bound
+representations that decode into explicit Omega operations on the ordinary checked
+path. `omega-harness` section 2 and `omega-communication` record its pin, native host
+codebook evidence and trust boundary. The learned experiment is PROPOSED / NOT_RUN; the
+bounded reference is MERGED and IMPLEMENTED / EXERCISED on the host, not hardware
+QUALIFIED or deployed.
+
+
 ## Check the examples yourself
 
 The examples run on Linux AArch64 hosts only:
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv.git omega-src
-sha256sum omega-src/seed/out/omc   # 62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b at main bf54b19f (2026-10-29); 734f0a39... at the 2026-10-25 pin 55f9b0af
+sha256sum omega-src/seed/out/omc   # 2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5 at main 91c83438 (2026-10-31); 734f0a39... at the 2026-10-25 pin 55f9b0af
 omega-src/seed/out/omc < skills/omega-encoding/examples/fnv1a32.om > fnv 2> fnv.err
 compile_rc=$?
 printf 'compile rc=%s\n' "$compile_rc"
