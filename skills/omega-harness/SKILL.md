@@ -283,6 +283,18 @@ Paths below are on CUDApp main (present at `cc0908bdc0`).
 - For the native GPU swarm, follow the [realization-record evidence boundary](../omega-communication/SKILL.md#native-gpu-realization-records-2026-10-28). A unit test calling an isolated cache or selector is not proof that the existing runtime records the selected code. Exercise the actual generated binding and consuming cache/command-list path, with stale-generation, wrong-artifact and missing-qualification controls. Keep device and whole-model tests NOT_RUN until their authorized execution; never populate production candidates from synthetic host records.
 - **Fix it, don't file it** (Drake, 2026-10-25). A defect you can reproduce is a defect you chase in the same piece of work, including one you found while reviewing someone else's lane: read the code, build the smallest reproduction, change it, prove it, ship it. Reporting a blocker you have not tried to fix, or handing a reproduced bug to an "owner", is unfinished work. Stop only for a real external gate (authorization, a user decision, an exhausted check) and name it after the attempt.
 
+### NVIDIA tools and licensed inputs (provenance)
+
+Hardware facts for NVIDIA back ends follow `PROVENANCE.md` in aien-dev/CUDApp (CUDApp#110, merged as `a8878c955ac16c7b507a46e530e4ca102b935b9a`) and aien-dev/omega-mv (omega-mv#874, merged through the train omega-mv#972 as `f5c9bd89ae604a65d7c777a5739c176f41a036ec`; present at omega-mv main `91c83438daec0bdb88bf5c077cae10f3d15d365d`, omc sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`), which quote the clauses (CUDA Toolkit EULA, January 2025 revision, §1.2(1), §1.2(8), §1.1.2(4), §2.1; NVIDIA driver licence §2.1, §2.2; MAX License §1.4, October 21, 2026). Engineering rule, not legal advice:
+
+- Cite public documentation (PTX ISA, CUDA Binary Utilities, open-gpu-doc), permissively licensed source (NVIDIA open kernel module headers, Mesa NAK/NVK, LLVM `ELF.h`, CUTLASS) or a chip receipt for each fact.
+- `nvcc`, `ptxas`, `cuobjdump` and `nvdisasm` are proprietary, internal-use SDK tools. Run them only on inputs we wrote (our probe kernels, our encoder's bytes), only for NVIDIA targets, and record the version and command. Never ship or wrap them.
+- Never disassemble, extract or read the machine code of an NVIDIA binary: libcuda, cuBLAS, cuDNN, TensorRT, NCCL, driver, firmware, or cubins inside NVIDIA libraries, on any machine including rentals.
+- Never carry a fact learned from NVIDIA tool output into a non-NVIDIA back end.
+- Never give MAX source to an AI system to build a substitute for MAX; reading it to interoperate is allowed.
+- Record every stored NVIDIA-tool listing in the repository's `PROVENANCE.md`. A golden copied from tool output is a regression pin, not independent evidence.
+- In public text, describe the work as independently implemented from public documentation and open source, checked with NVIDIA's tools on my own code. Avoid "reverse-engineered NVIDIA's compiler/driver", "CUDA clone" and an unqualified "byte-identical to nvcc".
+
 ## 5. Communicate and learn
 
 Follow `omega-communication`. Keep proposed, implemented, exercised, qualified, merged and deployed separate. A receiver needs the minimum sufficient definitions, inputs, constraints, evidence and open uncertainty, not the whole conversation. Never drop a prerequisite just to make a handoff shorter.
@@ -312,6 +324,7 @@ Before you finish, check whether your change touched any of these, and update th
 | Status vocabulary, receipts, report or handoff conventions, wire formats | `omega-communication` |
 | Repository purpose, ownership, names, archive state, plan authority, merge or Alpha policy, a resolved or new contradiction | `aien-repositories` |
 | Any aien-dev repository's purpose, status or links, or a new repository | that repository's entry in [aien-dev/sovereign-intelligence](https://github.com/aien-dev/sovereign-intelligence) `index/curated.yml` (layer, evidence, one-line purpose), in the same piece of work |
+| A new source of hardware facts, a new use of an NVIDIA SDK tool, or stored NVIDIA-tool output | that repository's `PROVENANCE.md`, and section 4 here if the rule changed |
 | These skills, their install method or their layout | the README and the affected skill |
 
 How to do it:
