@@ -500,7 +500,14 @@ end
 - `fn NAME (PARAM TYPE)* to TYPE|void` ... `end`. At most 6 parameters (error 9). `main` takes none.
   In an OM-2 unit the limit is 6 parameter *slots*: an unsized array (`view T *`, `edit T *`) takes 2,
   so a 7th slot is error 9 on the `fn` line (observed with omc `befb8199`, 2026-10-26, building
-  omega-mv `om/tls`). Pack small fixed inputs into one array.
+  omega-mv `om/tls`). Pack small fixed inputs into one array. A scalar or a sized array
+  (`view uchar 8`) takes one slot: `fn f a view uchar * b view uchar * c ulong d ulong to ulong`
+  (6 slots) compiles, adding `e ulong` is `line 2: error 9`, and two `view uchar 8` plus three `ulong`
+  (5 slots) compiles in both OM-2 and OM-1. `part B OFF LEN` (OM-2) is an argument form only:
+  binding it to a local (`r = part b 0 4`) is error 9; pass `part` directly in the call (exit 4 for a
+  4-byte part). In an OM-1 unit the same call is `error 3` (unknown name). First probed on omc `2c82480596bb…`
+  (omega-mv `audit/tls-integration` 9472e9615); all rechecked 2026-10-31 with main omc
+  `62775d2a…712b` at omega-mv `4376c2112`.
 - A unit with `fn main` is a static AArch64 Linux ELF (program mode). Without `fn main` the output is
   bare function words (function mode): it compiles with exit 0 but is **not runnable**. Host words
   and `global` are error 9 there, and `text` is program-mode only ([#L400-L407](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L400-L407), [#L454-L459](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L454-L459), [#L629](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L629)).
