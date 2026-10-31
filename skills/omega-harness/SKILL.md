@@ -422,8 +422,11 @@ by the repo's own `toolchain.yml`, compares with `reference.py`, and uploads an
 `omega-kernel-receipt` artifact (`receipt.json`, `SHA256SUMS`).
 
 - Evidence: `main` run 40426781699 PASS 138/138; negative control `demo/wrong-kernel` (overflowing
-  average) run 40426783628 FAIL 20/138. This is CPU-EXERCISED evidence only: no GPU, sm_121 SASS or
-  CUDA++ path runs, and the receipt says so in `not_run`.
+  average) run 40426783628 FAIL 20/138. Rerun 2026-10-31 by workflow_dispatch: `main` at `02050226`
+  run 41196263282 PASS 138/138, `demo/wrong-kernel` at `d26761f0` run 41196264947 FAIL 20/138.
+  This is CPU-EXERCISED evidence only: no GPU, sm_121 SASS or CUDA++ path runs, and the receipt
+  says so in `not_run`. The template still pins omega-mv `369dbc96` (omc `2c824805`), not the
+  general compiler pin above.
 - When omega-mv changes `omc` or `seed/spirv/`, a template pin bump needs a passing template run
   first; the PoCL asset changes only through `toolchain.yml`, whose self-test must pass.
 - Its `tools/check.sh`, `tools/fetch.sh` and `tools/cases.py` are INTERIM host glue whose successor
