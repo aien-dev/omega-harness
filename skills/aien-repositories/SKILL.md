@@ -66,6 +66,34 @@ Ownership rule for the Omega/GPU/compatibility trio (Drake's forwarded omega-bri
 | GPU execution: encoders and ISA tables, GPU code generation, cubin writer and exporter, artifact admission, disassembler, driver client, submission, GPU runtime | [CUDApp](https://github.com/aien-dev/CUDApp) | Owns GPU execution ([ADR 0042](https://github.com/aien-dev/aien-architecture-mv/blob/main/docs/adr/0042-omega-cudapp-bridge-ownership.md), Accepted by Drake 2026-10-30, merged as aien-architecture-mv#342 `6b924d4f8e`; [CUDApp docs/ARCHITECTURE.md](https://github.com/aien-dev/CUDApp/blob/main/docs/ARCHITECTURE.md)). The decision routes new work; the cut-over is not done: the encoder/codegen/runtime still exist as diverged copies in omega-mv and CUDApp ([CUDApp#106](https://github.com/aien-dev/CUDApp/issues/106), open), omega-mv builds physics-mv's driver client ([CUDApp#107](https://github.com/aien-dev/CUDApp/issues/107), open), and omega-mv does not consume CUDApp at a pin (no `cudapp.lock` at omega-mv main `91c83438da`). The resident 35B is served by the C stack. Check target support and remaining driver/OS dependencies; do not imply a complete driver replacement (NVIDIA kernel modules and GSP firmware stay required). Only the GB10 (sm_121) is a supported GPU; every other GPU (other NVIDIA generations, AMD, Intel, Apple, mobile) is a PLANNED target, hardware NOT_RUN. Multi-target work (target table, code-object loader, SPIR-V on CPU drivers, HSACO checks) merged in CUDApp#138 (`0c782c44af`); host CPU runs never make a vendor "supported". CUDApp is still mostly C. [#143](https://github.com/aien-dev/CUDApp/pull/143) (merged `2fab72fde0`) runs the sm_121 encoder and cubin writer as `.om` units through an omega-bridge binding in the default hosted build; freestanding builds keep C. Do not call CUDApp "written in Omega". |
 | Deep-learning primitives (norms, activations, RoPE, MatMul, attention, conv, pooling) written in seeded `.om` | [omega-dnn](https://github.com/aien-dev/omega-dnn) | The `.om` ops are host code (AArch64, through the omega-bridge ABI), not GPU kernels. omega-dnn#1 (merged `ff030473f6`) ships `tests/`, `docs/TOLERANCE.md` and a GB10 tier: CUDApp's native kernels for RMSNorm, RoPE (split), SwiGLU, SiLU, Softmax (c <= 64), GQA decode, causal prefill and paged-KV attention and f32 MatMul, gated against the `.om` host result (EXERCISED on the chip, not QUALIFIED: one seed, 32 cases per op; receipts `evidence/GPU-9841bb3a`, `evidence/GPU-b28372d1`, the MatMul one on unmerged CUDApp#139). Quote GPU coverage only from those receipts and the README "Not on the GPU" list (LayerNorm, GELU, ReLU, conv, pooling and others are NOT_RUN). There is no oneDNN speed comparison (NOT_RUN). |
 
+**Spark boot/input path 5 (merged 2026-10-30).** Aienux
+[#471](https://github.com/aien-dev/aienux/pull/471) landed on main as
+[`8182d6d3805f24161ed8b321dd91140193ead7bb`](https://github.com/aien-dev/aienux/tree/8182d6d3805f24161ed8b321dd91140193ead7bb)
+(GATES.md and the procedure are byte-identical to the exercised source `180618ae`).
+A source merge is not a hardware-qualified feature. Its `CK_SPARK_INPUT=1` selector composes the
+existing confined xHCI/HID bounded boot shell with RTL8127/UDP reporting,
+without linking NVMe, Store, security or Allen write stages. Do not
+substitute the storage-bearing `full CK_RTL8127=1` image or make the
+QEMU-only sustained console session hardware-admissible.
+The [row-32b fixture correction](https://github.com/aien-dev/aienux/blob/8182d6d3805f24161ed8b321dd91140193ead7bb/native/kernel/GATES.md)
+removes a stale Spark IORT parser-refusal prediction: the measured table
+parses with three SMMU instances; all six USB routes target the instance
+at `0x13800000`. The six predicted grants are CONDITIONAL static predictions
+(`?` lines in `native/kernel/tests/fixtures/spark_xhci_acpi_expected.txt`), not observed grants.
+Named host/QEMU gates, a read-only exact GPT input boot and an RTL
+failed-unconfine negative control were exercised (rerun 2026-10-31 at `8182d6d3`:
+`make -C native/kernel stage-test` prints `CK_STAGE_HOST: PASS checks=870 failures=0`;
+clearing the confined flag after a failed unconfine in `dev/rtl8127_bind.c` gives
+`FAIL checks=870 failures=5`); physical input,
+RTL DMA/link/TX and hardware handoff remain NOT_RUN.
+The actual `CK_HARDWARE_STAGING` build remains blocked on the NOT DONE
+TRUST-1 owner ceremony. The built non-staging artifact is **NOT
+boot-admissible**. Keep the global provisioning gate intact even though
+this storage-free selection has no Store keys consumer. Use the
+[pinned attended procedure](https://github.com/aien-dev/aienux/blob/8182d6d3805f24161ed8b321dd91140193ead7bb/docs/campaigns/SPARK-BOOT-INPUT-20261028.md)
+for its exact staging delta, receiver, one-shot boot and restore
+prerequisites; the document grants no physical or live-service authority.
+
 ### Runtime and learning
 
 - [aien-sovereign-core-mv](https://github.com/aien-dev/aien-sovereign-core-mv): host runtime, `aien` CLI, inference ABI, scheduling/KV state and verification tooling. Product source and gate manifests determine implementation; installed service state requires separate evidence.
