@@ -578,6 +578,14 @@ bound in an outer `if`, then load inside it.
   same results 2026-10-31 with main omc `62775d2a…712b` at omega-mv `4376c2112`; see also **Hex** in
   section 8).
   `true` / `false` are the bools.
+- Hex literals, OM-2 units only (`om2` first non-note line; `spec/omegese-om2.md` section 2): `0x`
+  then 1..16 lowercase digits `0-9a-f`, value unsigned, typed by the place under the decimal range rule
+  (`int 0xffffffff` is error 8: no two's-complement reinterpretation). Error 6: `-0x..`, `0X`, no
+  digits, 17+ digits, uppercase, `_`, any other character. `0x2a` and `42` compile to identical bytes;
+  signed minima need decimal. An OM-1 unit, IR mode included, has no hex literal (error 6). Fixtures:
+  `seed/omc/om2/hex/` (gate PR #951, merged by train r3 #979 as `4376c2112`). Rerun 2026-10-31 at
+  main `91c83438d` with omc `2aec185d…`: `hex.cases` gives `OM2GATE PASS cases=51 pass=51`, and
+  `mutants.cases` gives the expected `OM2GATE FAIL cases=8 pass=3 fail=5` (each `tok_hex` mutant killed).
 - Shift with a bare left operand takes the shift amount's type: `shl 1 sh` with `sh` a `uchar` shifts
   a `uchar`. Write `shl ulong 1 sh` when you mean 64 bits ([#L97-L99](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L97-L99)).
 - Float literals: `digits.digits[e[+|-]digits][f32|f64]`, a digit on both sides of the dot; exact
@@ -757,6 +765,22 @@ Base words ([#L476-L486](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de7
 `write fd A off n`, `pread`/`pwrite fd A off n pos`. Native host words ([#L624-L747](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L624-L747)):
 files, directories, clocks, sockets, poll, processes, arguments, environment, random.
 
+**cpufence / cpurelax: merged in [omega-mv#946](https://github.com/aien-dev/omega-mv/pull/946) as `d94617177`, current main pin `91c83438` / omc `2aec185d`.**
+Rechecked 2026-10-31 at omega-mv main `91c83438daec0bdb88bf5c077cae10f3d15d365d` (omc sha256
+`2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`).
+These are operand-free statements. `cpufence` (keyword 199) is a full host CPU barrier, AArch64 `DSB SY`
+and x86-64 `MFENCE`. `cpurelax` (200) is a spin-wait hint with no ordering, `YIELD` and `PAUSE`.
+Unlike every other host word they compile in function mode too. An operand gives error 5, use as a
+value or at top level gives error 16, use as a name gives error 5, after `ret` gives error 17, and IR
+mode gives error 16. `seed/host/cpufence.sh` proves this: a fixture that exits 42 natively and under
+qemu-x86_64, objdump instruction deltas, and a nop-fence mutant that is caught. These are host results
+only. An omc older than `d94617177` (its parent's omc is `62775d2a…`) does not know either word: the
+fixture fails with error 4 (a bare `cpufence` line read as a name waiting for `=`) and `cpurelax 1` is
+error 11, so check the pin before writing them.
+**Keyword ids:** #946 landed with ids 199/200. Draft [omega-mv#878](https://github.com/aien-dev/omega-mv/pull/878)
+(`vfioctl`/`vfiomap`, with #890 stacked on it) is still open, PENDING, and must take ids that do not
+collide; recheck `fn kw` in `seed/omc/omc.om` at the pin before quoting any id.
+
 **pread/pwrite writability (landed via [omega-mv#904](https://github.com/aien-dev/omega-mv/pull/904), `e2662fff`).**
 At omega-mv main `bf54b19f` (omc sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b`),
 `pwrite` only reads its array, so it accepts a `text` or a `view`; `pread` writes its array, so
@@ -768,6 +792,23 @@ exit 0, writing `ABC\n` to stdout. Host evidence only.
 Historical note: up to omc `2c824805…` (omega-mv `e5b32567`, the omega MCP pin) the check sat on
 the wrong word: `pwrite` from a `text` was error 20 and `pread` into a `text` compiled and returned
 `-EFAULT` at run time. Code written for that pin copied a text into a `new` array before `pwrite`.
+
+**`execpure` and descriptor closing in `execprog`** (merged in
+[omega-mv#970](https://github.com/aien-dev/omega-mv/pull/970) as `1db941627`, current main pin
+`91c83438` / omc `2aec185d`). `execpure A off n` is host word 198
+(AArch64 only; `target x86linux` is error 25): it decodes the packet as `execprog` does, pins the
+executable as descriptor 3, applies a fixed strict stdio profile (Landlock execute/read beneath that file,
+no-new-privs, seven `prlimit64` ceilings, a seccomp filter allowing only `read` on 0, `write` on 1 and 2,
+`exit`, `exit_group` and `execveat` on 3) and calls `execveat(AT_EMPTY_PATH)`. It returns only on failure,
+with the first failing step's negative errno, and has no weaker fallback. `execprog` also changes: it now
+closes every descriptor at or above 3 with `close_range(3, UINT_MAX, CLOSE_RANGE_UNSHARE)` before exec,
+so a child no longer inherits them. Observed 2026-10-31 with omc `2aec185d` (host only): the
+`seed/qualification/security673/pure-launch.om` fixture launching a static omc program that exits 7 gave
+exit 7; launching `/nonexistent/x` printed `PURE_LAUNCH_REFUSED` and exited 2 (ENOENT); a child that reads
+descriptor 3 got EPERM (exit 1) under `execpure`, and EBADF (exit 9) under `execprog` with the parent's
+descriptor 3 open. The omc of `1db941627^` (`0243e4aff`, sha256 `1578b357…`) refuses `execpure` with
+error 3, and its `execprog` child read the inherited descriptor 3 (exit 50). Older pins, including the
+omega MCP pin `2c824805…`, lack both.
 
 - Types: `fd`, flags, modes, pids are `int`; offsets, counts, capacities `ulong`; file positions and
   intervals `long`; buffers are `uchar` arrays. Every result is `long`.
@@ -1013,16 +1054,18 @@ check proves nothing.
    (#923, 2026-10-28) `target x86linux` selects an x86-64 Linux static-ELF backend in
    `seed/omc/omc.om`. Its status there is DRAFT, x86 execution is EMULATED (QEMU) only and native
    x86 qualification is NOT_RUN (`docs/X86-LINUX.md` lines 3 and 286).
-6. Documents disagree with the code at this pin; trust the code and name the conflict:
-   OM_COMPLETION FR-5 still says mmap/ioctl are absent, and `seed/host/MAPPING.md`
-   ([#L66-L68](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/host/MAPPING.md#L66-L68)) still calls the device words a proposal not
-   on `main`, while `omc.om` reserves `devctl mapnew ... mapbind` (ids 166-177) and README
-   ([#L27](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L27)) says they are on `main`. GPU launch and model execution through
-   them are not qualified. (README line 5's old "candidate branches" wording was corrected on main by
-   #801.) At main `bf54b19f`, `OM_COMPLETION.md` lines 72 and 80 still call FR-9 a draft with its
-   full fixture differential NOT_RUN, while `docs/X86-LINUX.md` lines 431-438 record the complete
-   EMULATED differential at `7ab5fdd0` (15179 PASS, 4 NOT_RUN, 222 EXCLUDED, no FAIL cases,
-   aggregate FAIL). Cite X86-LINUX.md and name the conflict.
+6. Documents can disagree with the code; trust the code and name the conflict. At main `91c83438d`
+   (rechecked 2026-10-31) the earlier conflicts are resolved: OM_COMPLETION FR-5
+   ([#L68](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/docs/one_layer/OM_COMPLETION.md#L68))
+   lists `devctl devcall uvmctl mapnew ... mapbind` (ids 166..177 in `seed/omc/genkw.awk`) as
+   implemented for AArch64 program mode (omega-mv #944, merged by train r5 #985 as `613765d2b`; it
+   said "absent" through `4376c2112`), and `seed/host/MAPPING.md`
+   ([#L68-L70](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/seed/host/MAPPING.md#L68-L70))
+   says the device words are on `main` (train r2 #972, `f5c9bd89a`). GPU launch and model execution
+   through them are not qualified. The FR-9 row
+   ([#L72](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/docs/one_layer/OM_COMPLETION.md#L72))
+   and `docs/X86-LINUX.md` line 450 now cite the same EMULATED differential at `62d1d0d6` (15182 PASS,
+   0 FAIL, 2 NOT_RUN, 222 EXCLUDED, aggregate FAIL); native x86 stays NOT_RUN.
 
 ## 13. Examples
 
