@@ -257,6 +257,47 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
   contract checks. No DPC++, Level Zero, GPU or Alpha qualification is implied.
   The standalone acceptance gate is not wired into protected gate manifests.
 
+### Path 3: bounded seeded Omega NVMe read protocol
+
+Merged: [aienux #472](https://github.com/aien-dev/aienux/pull/472) landed on main
+2026-10-30 as `aab6de6d4df4b4d99e764e91303a13d10684f5fe`; its confinement-retention
+[fix #470](https://github.com/aien-dev/aienux/pull/470) landed as
+`2b77170de9693a3204b65dff059e24c2cdecc197`. `native/disk` at the merge commit is
+byte-identical to the exercised source `62393fb2ab03766c4be0273a1388af6d2f7247f8`.
+This is HOST/QEMU EXERCISED, not physical qualification, a bootable storage stack
+or a TRUST-1 Gate 7 pass.
+
+- Use the existing driver compiler pin: omega-mv
+  `397e67040fb74853c6814097fe02ae4e1ebd6f66`, omc SHA256
+  `bcfa582892afca8f65e551fe56867d918d86e84540c7381be8fa9ef18d0cf0f6`.
+  This compatibility pin does not replace the general compiler pin above.
+- From aienux at `aab6de6d`, run `sh native/disk/tests/omega_nvme_test.sh`,
+  with `AIEN_OMC` set to the absolute pinned compiler and
+  `OMEGA_NVME_EVIDENCE` set to a new absolute evidence directory.
+  Observed exit 0 (2026-10-28 on the source, rerun 2026-10-31 at `aab6de6d` with an omc
+  rebuilt from seed at that pin): 37 host cases, seven killed guard-removal mutants and ten
+  disposable-QEMU cases. The C driver is the independently compiled data oracle;
+  the hosted C/QTest relay performs raw memory/register accesses, not the NVMe
+  protocol. QEMU 8.2.2 and GCC 13.3.0 are verification-only dependencies. Any other
+  compiler is refused before a case runs (`compiler pin mismatch`, exit 2).
+- The Omega code owns Identify/manifest parsing, bounded queues and PRPs,
+  head/tail/phase wrap, CID/SQID/SQ-head correlation, successful copy-out and
+  fail-stop DMA retention. The central opcode guard refuses writes and other
+  IO commands; removing it makes a hostile Write reach the model and fails
+  the negative control. Identity, extent, format, completion and timeout
+  refusals remain separately exercised.
+- See `native/disk/tests/omega_nvme_receipt.txt` and
+  `native/disk/OMEGA_NVME_READ.md` for hashes, manifest layout, reuse search,
+  native adapter contract and the exact measurement-first physical procedure.
+  The volatile/MMIO, DMA coherence/lifetime, timer and ownership adapter is an
+  explicit integration prerequisite, not an excuse to call the C kernel binder.
+  The existing binder reaches a write/flush/restore probe and is not read-only.
+- Physical execution stays NOT_RUN until that adapter is exercised and the
+  operator approves the exact device/namespace/extent, recovery/evidence media
+  and service downtime. Do not open the live root block device or transfer its
+  controller while Linux owns it. Capture latency/throughput before any tuning;
+  host/QEMU results are not SSD measurements or hardware safety evidence.
+
 ### CUDApp portable backend (CUDApp#138, merged `0c782c44af`)
 
 Paths below are on CUDApp main (present at `cc0908bdc0`).
