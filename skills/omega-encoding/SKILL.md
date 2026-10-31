@@ -402,18 +402,21 @@ From OMEGESE section 3 and 4 ([#L58-L60](https://github.com/aien-dev/omega-mv/bl
   limit is 1000000 passes. One more pass traps 4. The condition is recomputed before every pass.
 - `for i T K` runs i = 0..K-1. A literal K needs no hidden guard; a name or expression K gets the
   1000000-pass guard.
-- **Pending, not pinned (omega-mv #848, draft):** an explicit `bound N` may be 1..9223372036854775807
-  (a number or a `ulong` const). The 1000000 default and trap 4 stay. Until #848 is pinned, a loop
-  that needs more than 999999 passes must be split into nested loops.
-- **Pending, not pinned (omega-mv #857, draft, stacked on #848):** `for i T K bound N` takes the same N
+- **Merged on omega-mv main, not yet this skill's pin (omega-mv #848, squash `157bab57`, omc
+  `90c8884c`):** an explicit `bound N` may be 1..9223372036854775807 (a number or a `ulong` const).
+  The 1000000 default and trap 4 stay. Until the pin above moves past `157bab57`, a loop that needs
+  more than 999999 passes must be split into nested loops.
+- **Pending, not pinned (omega-mv #857, draft, on main `157bab57`):** `for i T K bound N` takes the same N
   (1..2^63-1, a number or integer const; 0 and 2^63 are error 8); more than N passes trap 4. Exercised
   2026-10-26 on candidate compiler 8d2f0706 (gate16, C2 5870/5876, 811 .om differ=0). Until it is
   pinned, a `for` with a computed count above 1000000 must be written `while lt i n bound N`.
   The same PR makes IR-mode `for` with a value count carry the guard (before, checker2 rejected it).
   In IR mode it keeps the C oracle's ranges: `bound N` is 1..1000000, and a number or integer-const
   `for` count is 0..1000000; outside them (a minus sign included) is error 8 on the loop's line.
-  Exercised 2026-10-30 on candidate omc `0d4c722b` (#857 commit 52abfb4f: gate-ir, 1015-file
-  plain/x86/IR differential 0 differences).
+  On main `157bab57` IR mode still accepts `while ... bound 1000001` and `for i ulong 1000001`, and
+  checker2 rejects that output (C2-LOOP-UNBOUNDED). Exercised 2026-10-31 on candidate omc `24caacf4`
+  (#857 head 4670831d, merged with main: gate-ir, gate16, 1237-file plain/IR/x86linux/x86efi
+  differential against `90c8884c` with 3 IR differences, all value-count guards checker2 now accepts).
 - `break` and `continue` (`omc` only, gate7); `continue` in a `while` re-runs the condition and bound.
 - Choose N from a proof, not a guess. Example: a read loop where every pass adds at least one byte to
   a 65536-byte buffer needs at most 65536 passes. Write that reasoning in a `note`.
