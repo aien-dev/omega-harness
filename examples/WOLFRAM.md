@@ -6,6 +6,7 @@ on 2026-10-27. The `.stdout` files hold what the pinned compiler's programs prin
 (omega-mv `e5b32567`, omc sha256 `2c824805…029f`); this call is the independent check that those
 outputs are the right numbers. Byte counts, exit statuses and the `before` lines are bookkeeping and
 are not listed.
+The same stdout bytes were printed again on 2026-10-29 by omc `62775d2a…712b` (omega-mv `bf54b19f`); the gate compared them. Wolfram was not rerun that day.
 
 Query (verbatim):
 

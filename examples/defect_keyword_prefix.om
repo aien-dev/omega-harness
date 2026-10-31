@@ -1,6 +1,6 @@
-note defect_keyword_prefix: known defect at the pin. A function name longer than 8 bytes whose first
-note 8 bytes are an 8-letter keyword (continue, truncate, sockname, execprog, peercred) is refused error 16.
-note Workaround: rename (cont_x, trunc_num). Expected to change when the compiler fix is pinned
+note keyword_prefix: regression guard at omc 62775d2a. A name of 9..63 bytes is never a
+note keyword by its first 8 bytes, so continue_x compiles and returns 7. An exact keyword
+note name is still error 16. Older pin 2c824805 refused this file with error 16 on line 4.
 fn continue_x to int
 ret 7
 end

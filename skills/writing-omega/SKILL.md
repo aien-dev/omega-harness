@@ -14,8 +14,8 @@ For compiler internals, register rules, wire formats and the reasons behind each
 
 | Pin | Value |
 |---|---|
-| omega-mv commit | `e5b32567a7aff3ce594e3254a622a846a6cd190b` |
-| compiler `seed/out/omc` | sha256 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f` |
+| omega-mv commit | `91c83438daec0bdb88bf5c077cae10f3d15d365d` |
+| compiler `seed/out/omc` | sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5` |
 | language reference | `docs/one_layer/OMEGESE.md` at that commit |
 | host | Linux AArch64 only; omc writes a static AArch64 Linux ELF |
 
@@ -26,7 +26,7 @@ decides; this guide records the known disagreements.
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv && cd omega-mv
-git checkout e5b32567a7aff3ce594e3254a622a846a6cd190b
+git checkout 91c83438daec0bdb88bf5c077cae10f3d15d365d
 sha256sum seed/out/omc      # must print the pinned hash
 sh seed/omega-from-seed.sh  # optional: rebuild omc from the 408-byte loader
 seed/out/omc < prog.om > prog; echo "compile $?"
@@ -313,17 +313,20 @@ with its exact stderr line in the matching `.expect`, except 24, which needs a g
 | 22 | a text escape other than `\n \t \\ \"` | `err22_text_escape` | build other bytes with `put` |
 | 23 | array or pool size limit | `err23_size` | smaller arrays (section 8 limits) |
 | 24 | a conditional branch farther than 1 MiB of code | generated, below | move long bodies into functions |
-| 25, 26 | never emitted at the pin | none | none |
+| 25 | unknown `target` name, or an AArch64-only path on another target | `err25_target` | omit `target` for AArch64, or name a target the unit fits (`target x86linux` with `fn main` compiles; `target x86efi` with the same unit is error 25) |
+| 26 | never emitted at the pin | none | none |
 | 27 | OM-2 `fresh` element read before it is written | `err27_fresh` | `put` every element before the `get` |
 | 28 | OM-2 `seal` outside the constructor | `err28_seal` | `seal` only as the whole body of `fn NAMEmk ... to NAME` |
 | 29 | OM-2 `layout` field past the size or overlapping | `err29_layout` | keep every field inside SIZE and apart |
 | 30 | OM-2 contract clause not allowed | `err30_contract` | integer words on parameters only (and `result` in `ensures`); no calls, floats or host words |
 
-How the emitted set was established at the pin: in `seed/omc/omc.om`, `fn fail` (line 293) writes
-the stderr line and exits with the code (`exit int code`, line 322). The only other exits are
-`exit int 0` and `exit 0`, so every refusal goes through `fail`. Its callers pass the literals 1..24
+How the emitted set was established at the pin: in `seed/omc/omc.om`, `fn fail` (line 324) writes
+the stderr line and exits with the code (`exit int code`, line 356). The only other exits are
+`exit int 0` and `exit 0`, so every refusal goes through `fail`. Its callers pass the literals 1..25
 and 27..30, or forward a literal 3, 4, 6, 8, 13 or 16 through `lenval`, `nfail` and `unkfail`. No
-caller passes 25 or 26, so those two codes are never emitted. A trap inside omc itself would exit
+caller passes 26, so that code is never emitted (the registry `seed/omc/error-codes.reg` lists it as
+"no emitting site"). Code 25 comes from the target checks (`fail 25` in `fn emit` and six other
+sites). A trap inside omc itself would exit
 100 + N, which is not an error code.
 
 Error 24 needs more than 1 MiB of code inside one loop. This program, with 270000 copies of the
@@ -375,27 +378,19 @@ Each row is a program in `examples/` with its observed refusal.
 
 ## 13. Known compiler defects at the pin
 
-- **`bitcast` across signedness below 64 bits** (fix proposed in draft omega-mv #896, not in the
-  pin): the result does not compare equal to the reinterpreted value. Observed wrong: `uint` to
-  `int` (4294967295 is not -1, and adding 2 traps 1), `int` to `uint`, `ushort` to and from
-  `short`, `uchar` to and from `byte`, and `f32` to `int` (-1.0 is not -1082130432 and not below 0).
-  Observed correct: `ulong` to and from `long`, `f64` to `long`, `f32` to `uint`, `int` to `f32`.
-  Until a fixed compiler is pinned, do not `bitcast` between narrow integer types or from `f32` to
-  `int`; decode signed 8, 16 and 32-bit values arithmetically: load into `long`, then subtract 2^32
-  (or 2^16, 2^8) when the value is at least 2^31 (2^15, 2^7), as
-  [`examples/wire_le.om`](../../examples/wire_le.om) does. For float bits, `bitcast uint` of an
-  `f32` is correct.
-- **Empty text through `view uchar *`** (omega-mv issue #775): the parameter does not arrive with
-  `len` 0 (observed 60 and 28, depending on the other texts in the unit), so a loop over it runs past
-  the text (a crash has been reported; not reproduced here). Workaround: pass `part e 0 0`, which
-  arrives with `len` 0
+- **`bitcast` across signedness below 64 bits:** at this pin, `uint 4294967295` to `int` compares
+  equal to -1 and adding 2 returns 1, and `int -1` to `uint` compares equal to 4294967295. Those
+  two cases were wrong at omc `2c824805` (not equal; adding 2 trapped 1). `ushort`/`short`,
+  `uchar`/`byte` and `f32` to `int` were not retested on 2026-10-29. Do not assume they are fixed.
+  Decode signed values arithmetically when you have not measured the pair
+  ([`examples/wire_le.om`](../../examples/wire_le.om)).
+- **Empty text through `view uchar *`** (omega-mv issue #775): a 2026-10-27 report said `len` was
+  60 or 28, not 0. A two-text unit on 2026-10-29 returned 0 on this pin and on `2c824805`, so that
+  report was not reproduced. Keep passing `part e 0 0`
   ([`examples/empty_text_part.om`](../../examples/empty_text_part.om)).
-- **Function names that begin with an 8-letter keyword:** a function name longer than 8 bytes whose
-  first 8 bytes are a keyword (`continue_x`, `truncate_number`, `sockname_x`, `execprog_x`,
-  `peercred_x`) is error 16, although function names may be 63 characters. Shorter keyword prefixes
-  are fine (`breakx`, `whilex`, `getpid_x`). Workaround: rename (`cont_x`, `trunc_num`)
-  ([`examples/defect_keyword_prefix.om`](../../examples/defect_keyword_prefix.om)).
-- A fix for both is in progress in omega-mv; until a new compiler is pinned, use the workarounds.
+- **Function names:** a name of 9..63 bytes is not a keyword by its first 8 bytes. `continue_x`
+  compiles and returns 7 ([`examples/defect_keyword_prefix.om`](../../examples/defect_keyword_prefix.om)).
+  An exact keyword (`fn continue`) is still error 16. At omc `2c824805`, `continue_x` was error 16.
 - OMEGESE 9.9 lists `+ - * /` for floats; the compiler refuses them. Write `add sub mul div`.
 
 ## 14. Example index
@@ -412,5 +407,5 @@ arithmetic expectations are in [`examples/WOLFRAM.md`](../../examples/WOLFRAM.md
 - Traps: `trap1_overflow` .. `trap7_shift`, `trap_code`.
 - OM-2 and contracts: `om2_tour`, `om2_views`, `om2_hex_rotr`, `om2_part_trap`, `om2_param_slots`,
   `contracts_ok`, `contract_requires`, `contract_ensures`, `contract_invariant`, `contract_release`.
-- Known defects and their workarounds: `empty_text_part`, `defect_keyword_prefix`.
+- Regression guards: `empty_text_part`, `defect_keyword_prefix`.
 - Refusals: `err01_input` .. `err30_contract`, `mistake_*`.
