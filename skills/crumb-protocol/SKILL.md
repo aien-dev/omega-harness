@@ -157,3 +157,11 @@ crumb list .        # no lock of yours left behind
 ```
 
 State what you ran and what it returned. A crumb change is part of the change under review, so it travels in the same commit or pull request as the work that caused it, and the exact numbers belong in what you report.
+
+## 11. Invariants that name their check (PENDING: aien-sovereign-core-mv#887, draft, not merged)
+
+Proposed in core#887 (DRA-95) and not merged; until it merges, core main has no crumb with this form and the rule below is not in force. Under it, every invariant in a shipped-path `.crumb` ends with `Check: <command>`, naming the test or script that enforces it, for example `"A reused KV block never exposes the previous sequence's KV. Check: cargo test -p aien-kv-cache --test kv_lifecycle_qualification -- --exact freed_block_reuse_never_exposes_previous_sequence_kv"`. An invariant with no check you can name and run does not go in the crumb; list it in the PR as unenforced instead.
+
+`om/crumb-coverage/run.sh` (Omega, omc pinned in `om/crumb-coverage/omega.pin`, omega-mv `b3346c2e`) counts tracked directories, directories with a `.crumb`, and directories with at least one invariant whose `Check:` resolves to an existing test function or repository script, and lists every check that does not resolve. Without `AIEN_OMC` hashing to the pin it exits 77 NOT_RUN. Measured 2026-10-31 on the #887 head `58f6dfe7`: `tracked_dirs 781`, `crumb_dirs 41`, `enforced_dirs 28`, `invariants 46 resolved 46 unresolved 0`; `--self-test` PASS. On main `43495111` it reports 17 of 780 directories with a crumb and 0 enforced.
+
+The coverage report is advisory: no gate runs it, and `CRUMB-VERIFY` checks only that crumbs are current, not that their checks pass. Resolving a check proves the named test exists, not that it passes; run it. The `.crumb.local` wording in section 1 and the binding-rules change are tracked in aien-dev/omega-harness#158 pending DRA-97 and DRA-98.
