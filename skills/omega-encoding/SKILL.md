@@ -148,6 +148,131 @@ correctness proof or a full gate5/host qualification.
 
 Every citation links to that commit: `https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/<path>#L<n>`.
 
+### Rerun at omega-mv `91c83438` (2026-10-31)
+
+The example gate now pins main `91c83438daec0bdb88bf5c077cae10f3d15d365d` (#965), `seed/out/omc`
+sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`. On 2026-10-31, Linux
+AArch64, `examples/gate.sh` against that binary printed `GATE PASS examples=98 pass=98 fail=0`
+(exit 0) with no expectation changed. The rerun also showed that code 25 is emitted (it has been
+since the x86 integration `bf54b19f`): `target foo` as the first line is `omc: line 1: error 25`
+under both `2aec185d` and the pre-#965 `7a8b84fc`. `examples/err25_target.om` now records it, and
+the gate printed `GATE PASS examples=99 pass=99 fail=0` (exit 0); with its first line changed to
+`target x86linux` (a known target) that example fails (`compile exit 0, expected 25`). Negative
+controls on a scratch copy of the 99-program tree each ended `GATE FAIL examples=99 pass=98 fail=1`
+with exit 1: `const N ulong 16` changed to 15 in `examples/consts.om` (stdout `15` instead of
+`16`), and one byte appended to `consts.stdout`. The gate pointed at the pre-#965 omc `7a8b84fc…`
+was refused with exit 2. The 2026-10-29 section below is the previous pin.
+
+### Rerun at omega-mv `bf54b19f` (2026-10-29)
+
+The example gate now pins this compiler. On 2026-10-29, Linux AArch64, `examples/gate.sh` against
+`seed/out/omc` sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b` printed
+`GATE PASS examples=98 pass=98 fail=0` after the keyword-prefix expectation was updated. The same
+gate pinned to `2c824805…029f` had passed 98/98 with the old expectation. A copy of the new gate
+pointed at `2c824805` was refused (exit 2).
+
+| Item | Value |
+|---|---|
+| Commit | `bf54b19fa590e8ae925c0e80815516dbf41e7326` (2026-10-28, merge of PR #923) |
+| `seed/omc/omc.om` | 15,624 lines, sha256 `96d51b63c8f451661ac715395078e04f39195e50c9e8fe37746cda121e4d7a1e` |
+| `seed/out/omc` | sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b` |
+| `seed/rung0/seed0.hex` | sha256 `baaf081fe6055a768485c5d25d7435681ce00b04cfa80b26c48169f78944e14d` (unchanged) |
+| `docs/one_layer/OMEGESE.md` | blob `90fa5d0c32757da6e7c271e96406b75105ba8008` |
+
+Two defects recorded at `e5b32567` are fixed in this compiler (the #904 integration, `e2662fff`):
+`fn continue_x` compiles and the program exits 7 (`examples/defect_keyword_prefix.om`); `bitcast int`
+of `uint 4294967295` compares equal to -1 and `add` 2 returns 1, and `bitcast uint` of `int -1`
+compares equal to 4294967295. At `2c824805` those three programs were error 16, exit 2 and exit 2,
+and `add` 2 trapped 1. `fn continue` is still error 16. The #775 empty-text report was not
+reproduced: a two-text unit passing `text e ""` to `view uchar *` returned len 0 on both compilers.
+Keep the `part e 0 0` workaround until that report has an exact failing program. Other
+"observed at e5b32567" lines below are dated history; the example suite still matches them.
+
+### Historical rerun at omega-mv `e5b32567` (2026-10-27)
+
+Every example and rule in this file that a program can show was rerun on 2026-10-27 with the
+compiler below, on a Linux AArch64 host only. The 2026-10-29 section above is current where it
+disagrees with this list.
+
+| Item | Value |
+|---|---|
+| Commit | `e5b32567a7aff3ce594e3254a622a846a6cd190b` (2026-10-26, merge of PR #868) |
+| `seed/omc/omc.om` | 12,040 lines, sha256 `7703da00055fc0c7a91fcae43071df76a3f277dbe867cb284a3bdff3bedb7e1b` |
+| `seed/out/omc` | sha256 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f` |
+| `seed/rung0/seed0.hex` | sha256 `baaf081fe6055a768485c5d25d7435681ce00b04cfa80b26c48169f78944e14d` (unchanged) |
+| `docs/one_layer/OMEGESE.md` | blob `119c559557e4f227dee348c0e0e1240c71a42df3` |
+
+The executable record is [`examples/gate.sh`](../../examples/gate.sh): it refuses any other compiler
+hash, then compiles and runs 98 programs (`examples/*.om` and this skill's `examples/*.om`) against
+exact expected stdout bytes, exit statuses and compiler stderr lines. Observed:
+`GATE PASS examples=98 pass=98 fail=0`. Negative controls on a copy each ended `GATE FAIL` with
+exit 1: one changed digit in an expected stdout, an expected exit 105 changed to 104, an expected
+stderr line number changed, a removed `.expect` file, and a changed program body; a compiler with one
+appended byte was refused with exit 2. Arithmetic expectations were checked with Wolfram
+(`examples/WOLFRAM.md`).
+
+Changes and confirmations against the rules below, each observed with a program:
+
+- **Hex literals are OM-2 only.** In an OM-1 unit `uint 0x10` is error 6. After an `om2` line it is
+  16; `0X10` (uppercase prefix) is error 6, and the value must fit the type: `int 0xffffffff` is
+  error 8 (`examples/om2_hex_rotr.om`, `mistake_om2_upper_hex.om`, `mistake_om2_int_hex.om`).
+- **`+` is refused.** `y = x + 1` is error 5 and a value starting with `+` is error 3
+  (`mistake_infix.om`). OMEGESE 9.9's "`+ - * /`" is still wrong at this pin.
+- **Float to integer truncates toward zero and saturates; it never traps.** `long 1.0e30f64` is
+  9223372036854775807, `long -1.0e30f64` is -9223372036854775808, `long -5.75f64` is -5,
+  `uint -5.5f64` is 0, `uchar 300.0f64` is 255, and a NaN converts to 0 (`float_to_int.om`). Integer
+  to integer conversion stays checked (trap 5).
+- **The `=` of an assignment is optional** (OMEGESE line 24), so `return x` compiles as an assignment
+  to a new name `return`. In a value function the missing `ret` then shows as error 18
+  (`mistake_return.om`).
+- **`for` takes no `bound`**: `for i ulong n bound 10` is error 5 (`mistake_for_bound.om`). `while`
+  bounds are 1..999999 (`bound 1000000` is error 8) and `trap` takes 1..14 (`trap 15` and `trap 0`
+  are error 8; `trap 14` exits 114).
+- **Names:** an 8-character variable compiles and 9 is error 13; a 63-character function name
+  compiles and 64 is error 13. `len` or `stat` as a variable is error 16, `free` is error 9, and
+  `bits` is an ordinary name.
+- **Placement:** a `struct` line after the first `fn` is error 9; `new` inside a block is error 9; a
+  variable `new` length is error 16; `main` with a parameter is error 9. A `const` in function mode
+  compiles.
+- **Parameter slots, not parameter count.** Parameters fill x0..x5: an OM-2 unsized `view T *` /
+  `edit T *` takes two slots (pointer, count), every other parameter one, a sized array included
+  (OMEGESE 9.13 "Parameter slots"). Observed: 3 sized views plus 3 scalars compile and run; 2 unsized
+  views plus 2 scalars compile; 2 unsized views plus 3 scalars, or 7 scalars, are error 9 on the `fn`
+  line (`examples/om2_param_slots.om`, `mistake_om2_param_slots.om`, `mistake_seven_params.om`).
+- **Function names of 9..63 bytes are not keywords by their first 8 bytes** (fixed in the #904
+  integration, measured 2026-10-29 at omc `62775d2a`). `continue_x` compiles and returns 7
+  (`examples/defect_keyword_prefix.om`). At omc `2c824805` the same file was error 16. An exact
+  keyword name (`fn continue`) is still error 16.
+- **OM-2 slices:** `part A off n` is only an argument to an unsized `view T *` parameter. As a value
+  of its own it is error 9, to a sized parameter error 7, of a global error 19; `off + n` past the end
+  traps 3 at run time (`om2_views.om`, `om2_part_trap.om`).
+- **Errors 1 and 2 reproduce:** a directory as the compiler's stdin gives exit 1,
+  `omc: line 0: error 1`; stdout on `/dev/full` gives exit 2 with the line after the last input line
+  (`omc: line 5: error 2` for a 4-line unit). A 33rd `export fn` in an OM-2 unit is error 14; exports
+  are function mode, so an `export` beside `fn main` is error 9.
+- **Error 24 was not reproduced.** 40 functions of 4,000 checked `add` lines each compiled and ran,
+  because trap branches stay short; the check (`disp19`, omc.om line 2465) is defensive. Codes 25 and
+  26 are not emitted by any `fail` call at this pin.
+- **Narrow `bitcast`:** at omc `2c824805`, `bitcast int` of `uint 4294967295` was not -1 and `add` 2
+  trapped 1, and `bitcast uint` of `int -1` was not 4294967295. At omc `62775d2a` those two cases
+  are correct (exit 1 and exit 1; `add` 2 returns 1). `ushort`/`short`, `uchar`/`byte` and `f32` to
+  `int` were not retested on 2026-10-29. Do not assume they are fixed. Decode signed values
+  arithmetically when you have not measured the pair (`examples/wire_le.om`).
+- **`byte` is signed 8-bit** (`i8`, OMEGESE line 109); `char` is not a type (error 3).
+- **Empty text through `view uchar *` (omega-mv #775).** A 2026-10-27 report said `len` was 60 with
+  one other text and 28 with none. A two-text unit on 2026-10-29 returned 0 on both `2c824805` and
+  `62775d2a`, so that report was not reproduced. Keep passing `part e 0 0`
+  (`examples/empty_text_part.om`) until an exact failing program exists.
+- **Skill examples rerun:** `fnv1a32.om` compile exit 0, empty stderr; `abc`, `a`, empty and 65535
+  zero bytes gave `0be9471a`, `2c290ce4`, `c59d1c81`, `47dac371`, each exit 0; 65536 zero bytes gave
+  exit 2 and no output; the prime changed to `16777617` gave `55bedcf5` for `abc`.
+  `trap_narrow.om` compiled with exit 0 and ran with exit 105, and 44 without the unmasked store. The
+  section 13 inline refusal gave exit 7, `omc: line 3: error 7`.
+- **Section 11a contract fixtures rerun** from `seed/omc/contracts/`: `ok.om` exit 0, `requires.om`
+  exit 109, `release.om` exit 0 and byte-identical to `erased.om`; `diagproof.om` stderr
+  `omc-check 1 erased line=3 rule=constant-true kind=requires`, `diagrelease.om` stderr
+  `omc-check 1 erased line=3 rule=release kind=requires`, each compile exit 0.
+
 ### Merged IR/wasm backend (2026-10-26)
 
 Source: omega-mv main `3364a1dfd0ca50c1b82bf19ba34932d8bc10a7a9`,
@@ -563,7 +688,8 @@ Evaluation is innermost first, left to right ([#L137-L141](https://github.com/ai
 
 There are no infix operators. `+ - * /` are not keywords (they are absent from the keyword table);
 OMEGESE 9.9 ([#L564](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L564)) writes "`+ - * /`" but its own
-float fixtures use `add sub mul div` (`seed/omc/tests/float/arith.om`). Write the words.
+float fixtures use `add sub mul div` (`seed/omc/tests/float/arith.om`). Write the words. Observed at
+`e5b32567`: `y = x + 1` is error 5 (`examples/mistake_infix.om`).
 
 `and` / `or` evaluate **both** sides; there is no short circuit ([#L104](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L104)).
 `and lt i len a eq get a i 0` still loads `a[i]` when `i` is out of range and traps 3. Test the
@@ -584,10 +710,12 @@ bound in an outer `if`, then load inside it.
 - Integer literals: decimal only, optional leading `-`, at most 20 digits, and the value must fit the
   type it takes (error 8), e.g. `long` -2^63..2^63-1, `ulong` 0..2^64-1. A non-digit (`12a`,
   `0x10`) is error 6 ([#L443-L446](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L443-L446)). In an OM-1 unit: no hex, no octal,
-  no character literals: write byte 65, not `'A'`. An `om2` unit accepts hex (`x = uint 0x10` compiled
-  and the program exited 16; the same line without `om2` is error 6; omc `befb8199...a1d`, 2026-10-26;
-  same results 2026-10-31 with main omc `62775d2a…712b` at omega-mv `4376c2112`; see also **Hex** in
-  section 8).
+  no character literals: write byte 65, not `'A'` (error 3). OM-2 units (first non-`note` line `om2`)
+  also take lowercase hex, `0xdeadbeef`, which must still fit its type (`int 0xffffffff` is error 8,
+  `0X10` is error 6; observed at `e5b32567`; full rule in the next item). An `om2` unit with
+  `x = uint 0x10` compiled and the program exited 16; the same line without `om2` is error 6 (omc
+  `befb8199...a1d`, 2026-10-26; same results 2026-10-31 with main omc `62775d2a…712b` at omega-mv
+  `4376c2112`; see also **Hex** in section 8).
   `true` / `false` are the bools.
 - Hex literals, OM-2 units only (`om2` first non-note line; `spec/omegese-om2.md` section 2): `0x`
   then 1..16 lowercase digits `0-9a-f`, value unsigned, typed by the place under the decimal range rule
@@ -650,8 +778,13 @@ Conversions are **checked**, not truncating. `uchar x` with x = 300 traps 5. Mas
 `bitcast T v` reinterprets bits of the same width; `bool` and different widths are error 7, a bare
 number is error 11 ([omc.om#L4640-L4662](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L4640-L4662)). Every fixture
 uses it between floats and unsigned integers. The code also accepts integer-to-integer of equal
-width (`bitcast int u`), but no fixture covers that; prove it with your own fixture before relying on
-it, or decode signed values arithmetically (section 8).
+width. At omc `2c824805` results across signedness below 64 bits were wrong (section 0). At omc
+`62775d2a` the two measured 32-bit pairs are correct; narrower pairs and `f32` to `int` were not
+retested. Do not bitcast an unmeasured pair; decode signed values arithmetically (section 10).
+
+Float to integer conversion is the exception to "checked": it truncates toward zero and saturates at
+the target's limits, and a NaN gives 0, with no trap (observed at `e5b32567`,
+`examples/float_to_int.om`).
 
 ## 6. Names, scope, registers
 
@@ -710,7 +843,7 @@ From OMEGESE section 3 and 4 ([#L58-L60](https://github.com/aien-dev/omega-mv/bl
 - `while COND bound N`: at most N body passes, N 1..999999 (error 8 outside). Without `bound` the
   limit is 1000000 passes. One more pass traps 4. The condition is recomputed before every pass.
 - `for i T K` runs i = 0..K-1. A literal K needs no hidden guard; a name or expression K gets the
-  1000000-pass guard.
+  1000000-pass guard. `for` takes no `bound` word (error 5, observed at `e5b32567`).
 - `break` and `continue` (`omc` only, gate7); `continue` in a `while` re-runs the condition and bound.
 - Choose N from a proof, not a guess. Example: a read loop where every pass adds at least one byte to
   a 65536-byte buffer needs at most 65536 passes. Write that reasoning in a `note`.
@@ -885,7 +1018,7 @@ separate namespace in the same registry (OMEGESE section 11.1). The message form
 
 | Code | Meaning | Code | Meaning |
 |---|---|---|---|
-| 1, 2 | compiler I/O | 13 | non-function name over 8 characters |
+| 1, 2 | compiler input / output (stdin a directory: 1; stdout `/dev/full`: 2; both observed) | 13 | non-function name over 8 characters |
 | 3 | unknown name or field | 14 | capacity at `91b3c932`: 8192 names, 4096 functions, 512 nested blocks, 1024 nesting depth, 8 MiB input/output |
 | 4 | line ends too early | 15 | missing `end` |
 | 5 | extra words on the line | 16 | syntax / unknown word |
@@ -933,6 +1066,12 @@ most 16 MiB of `uchar`; `text` inside a function-mode unit is error 9 (both OBSE
 omc `2c824805`). AUTHOR-CLAIMED, not rechecked: `global` inside a function-mode unit is error 9, and
 omega-bridge `431fff0a` `native c` exits 110 when an entry's array length is written as a `const`
 name (write the literal in the entry signature).
+
+One minimal refusal per code is in `examples/errNN_*.om` of this repository, with its exact stderr
+line in `errNN_*.expect`, and `examples/gate.sh` runs them: codes 1..23 and 27..30, observed at
+`e5b32567`, plus code 25 (`err25_target`, added 2026-10-31 at `91c83438`). Code 24 has no
+reproduction (section 0), and 25 and 26 were unused at `e5b32567`; since `bf54b19f` the target
+checks emit 25 (section 0, rerun at `91c83438`).
 
 ## 11a. Executable contracts (merged #807 through #768)
 
@@ -1083,6 +1222,11 @@ check proves nothing.
 - `examples/fnv1a32.om`: reads all of stdin with a partial-read loop, hashes it (FNV-1a 32, unsigned
   wrap), writes 4 little-endian bytes with a partial-write loop, distinct exit codes for each failure.
 - `examples/trap_narrow.om`: a masked narrowing succeeds, an unmasked one traps 5 (exit 105).
+
+Both carry `.expect` (and for `fnv1a32`, `.stdin` `abc` and the 4 expected bytes in `.stdout`) and
+run in [`examples/gate.sh`](../../examples/gate.sh) with the 97 programs in the repository's
+`examples/` directory; section 0 records the `e5b32567` rerun of every row below. The portable guide
+for writing a first program is [`skills/writing-omega/SKILL.md`](../writing-omega/SKILL.md).
 
 Observed on 2026-10-25, Linux AArch64 host only, compiler sha256 `734f0a39...6b61`:
 

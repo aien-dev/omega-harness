@@ -8,19 +8,24 @@ Agent skills for working in Omega and the AIEN repositories: the checks that cat
 repeat, written as guidance an agent loads before acting. It is documentation and procedure, not a
 compiler, a runtime, a gate, or evidence that any claim is true.
 
-Six skills live under `skills/<name>/SKILL.md` in the Agent Skills layout (frontmatter `name` and
+Seven skills live under `skills/<name>/SKILL.md` in the Agent Skills layout (frontmatter `name` and
 `description`, then the body):
 
 | Path | Covers |
 |---|---|
 | `skills/omega-harness/SKILL.md` | The workflow: orient, implement in `.om`, compile, run, challenge, effects, repeated errors, guide upkeep |
+| `skills/writing-omega/SKILL.md` | Portable guide for writing a correct `.om` program on any machine: shape, types, words, traps, errors 1..30, common mistakes with their refusals, known pin defects |
 | `skills/omega-encoding/SKILL.md` | The language the seeded compiler accepts at a pinned commit: words, types, traps, bounds, registers, host I/O, byte layouts, error codes |
 | `skills/omega-communication/SKILL.md` | Claim ladder, report shape, agent handoffs, semantic and wire data, corrections |
 | `skills/aien-repositories/SKILL.md` | Mission, plan authority, task to repository routing, status discipline, known source drift |
 | `skills/crumb-protocol/SKILL.md` | Directory coordination: crumbs, locks, committed-crumb freshness, `CRUMB-VERIFY` and `crumb-doctor` |
 | `skills/wolfram-math/SKILL.md` | Mandatory Wolfram for every computation, its MCP setup, verification calls and failure handling |
 
-`skills/omega-encoding/examples/` holds two runnable `.om` programs. `LICENSE` is Apache 2.0.
+`examples/` holds the tested programs: each `NAME.om` with `NAME.expect` (and `NAME.stdout` when it
+prints), one per trap and error code plus the common mistakes. `examples/gate.sh OMC` checks the
+pinned compiler hash and reruns every program in `examples/` and `skills/*/examples/`; run it after
+any change to an example or a language rule. `skills/omega-encoding/examples/` holds two more
+runnable programs. `LICENSE` is Apache 2.0.
 
 ## Before you edit a skill
 
