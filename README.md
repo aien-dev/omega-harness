@@ -7,6 +7,7 @@ Skills can't make agents flawless. What these do is turn the mistakes agents kee
 | Skill | Use it for |
 |---|---|
 | [`omega-harness`](skills/omega-harness/SKILL.md) | The overall workflow: orient, implement in `.om`, compile, run, challenge, handle effects, learn from repeated errors |
+| [`writing-omega`](skills/writing-omega/SKILL.md) | A portable guide for writing a correct `.om` program on any machine: shape, types, words, traps, errors 1..30, common mistakes with their exact refusals, known compiler defects and workarounds |
 | [`omega-encoding`](skills/omega-encoding/SKILL.md) | The language the seeded compiler accepts: prefix words, types, traps, bounds, registers, host I/O, byte layouts, error codes, plus two runnable examples |
 | [`omega-communication`](skills/omega-communication/SKILL.md) | Status labels, reports, PR text, agent handoffs, receipts, wire formats, corrections |
 | [`aien-repositories`](skills/aien-repositories/SKILL.md) | What AIEN builds, who decides what, and which repository owns a task |
@@ -66,28 +67,34 @@ emitter, a PoCL CPU parity gate and a minimal OpenCL IL demo. `omega-harness`
 section 3 records the exact exercised source, toolchain, ABI, refusal boundary
 and evidence. CPU execution is not GPU or DPC++ qualification.
 
+The Neuralese supplement ([#919](https://github.com/aien-dev/omega-mv/pull/919), merged by
+train r1 #971 as `f56a372a`) keeps Omega's name and proposes model/decoder-bound
+representations that decode into explicit Omega operations on the ordinary checked
+path. `omega-harness` section 2 and `omega-communication` record its pin, native host
+codebook evidence and trust boundary. The learned experiment is PROPOSED / NOT_RUN; the
+bounded reference is MERGED and IMPLEMENTED / EXERCISED on the host, not hardware
+QUALIFIED or deployed.
+
+
 ## Check the examples yourself
 
-The examples run on Linux AArch64 hosts only:
+The examples run on Linux AArch64 hosts only. [`examples/`](examples/) holds 97 programs, each
+`NAME.om` with `NAME.expect` (and `NAME.stdout` when it prints): every trap, one refusal per error
+code, the common mistakes and the known defects. `examples/gate.sh` refuses any compiler but the
+pinned one, then compiles and runs every program here and in `skills/*/examples/`:
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv.git omega-src
-sha256sum omega-src/seed/out/omc   # 62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b at main bf54b19f (2026-10-29); 734f0a39... at the 2026-10-25 pin 55f9b0af
-omega-src/seed/out/omc < skills/omega-encoding/examples/fnv1a32.om > fnv 2> fnv.err
-compile_rc=$?
-printf 'compile rc=%s\n' "$compile_rc"
-cat fnv.err
-if [ "$compile_rc" -eq 0 ]; then
-    chmod +x fnv
-    printf abc > fnv.in
-    ./fnv < fnv.in > fnv.out
-    run_rc=$?
-    printf 'run rc=%s\n' "$run_rc"
-    if [ "$run_rc" -eq 0 ]; then od -An -tx1 fnv.out; fi  # 0b e9 47 1a
-fi
+git -C omega-src checkout 91c83438daec0bdb88bf5c077cae10f3d15d365d
+sha256sum omega-src/seed/out/omc   # 2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5 at main 91c83438 (2026-10-31); 734f0a39... at the 2026-10-25 pin 55f9b0af
+examples/gate.sh omega-src/seed/out/omc
 ```
 
-The `omega-encoding` skill (section 13) records the full set of observed results and the negative controls.
+It prints `PASS name` or `FAIL name: reason` per program and ends with
+`GATE PASS examples=99 pass=99 fail=0 omc=2aec185d...` (exit 0), `GATE FAIL ...` (exit 1), or a hash
+refusal (exit 2). The `omega-encoding` skill (section 0 and section 13) records the observed results
+and the negative controls; [`examples/WOLFRAM.md`](examples/WOLFRAM.md) records the Wolfram checks of
+the arithmetic expectations.
 
 ## Keeping it current
 
