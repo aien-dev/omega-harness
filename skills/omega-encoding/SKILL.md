@@ -984,6 +984,55 @@ omega MCP pin `2c824805…`, lack both.
     (reproduced at omc `2c824805…`: `d = xor c get A 0` is error 7, `xor c ulong get A 0` compiles).
   - Host words and `global` need program mode: without `fn main` the unit compiles in function mode
     and every host word is error 9 with an empty output file, which reads like a broken pin.
+- **VFIO device words: PENDING, not on `main`.** Draft
+  [omega-mv#878](https://github.com/aien-dev/omega-mv/pull/878), rechecked 2026-10-30 at head
+  `019108d5cbaae12bdad818741b6a97ac8572501b` (committed omc sha256
+  `d5d7d1029bf1b7011570d346e320bc793a0f3ee3c227033f7f8d2bbc292c4054`, self-rebuild byte-identical), adds
+  keyword ids 178/179 ([MAPPING.md#L18-L19](https://github.com/aien-dev/omega-mv/blob/019108d5cbaae12bdad818741b6a97ac8572501b/seed/host/MAPPING.md#L18-L19),
+  allowlist [#L66](https://github.com/aien-dev/omega-mv/blob/019108d5cbaae12bdad818741b6a97ac8572501b/seed/host/MAPPING.md#L66)):
+  `vfioctl fd req A off n -> long` takes only a **literal** request from the allowlist at its exact
+  `n` (GET_API_VERSION 15204/0, CHECK_EXTENSION 15205/4, SET_IOMMU 15206/4 value 3 only,
+  GROUP_GET_STATUS 15207/8, GROUP_SET_CONTAINER 15208/4, GROUP_GET_DEVICE_FD 15210 nonempty name
+  without zero bytes, DEVICE_GET_INFO 15211/24, DEVICE_GET_REGION_INFO 15212/32), writes
+  `argsz = n` when `n >= 8`, returns the result or -errno. A non-literal or unlisted request
+  (including DEVICE_RESET 15215) is compile error 9; wrong sizes or values trap 103 at run time.
+  Both words are AArch64 only: under `target x86linux` either one is error 25
+  ([#L85-L86](https://github.com/aien-dev/omega-mv/blob/019108d5cbaae12bdad818741b6a97ac8572501b/seed/host/MAPPING.md#L85-L86)).
+  Observed with that omc on Linux AArch64: `r = vfioctl neg int 1 uint 15207 a 0 8` returned -9
+  (EBADF, run exit 0 in a program checking it); `uint 15215` and a request held in a name are
+  error 9; a count held in a name compiled and trapped 103 at run time; the x86 form is error 25;
+  the PR's `seed/host/tests/vfio.om` exits 0 and `vfiocheck.om` prints
+  `PASS 15 VFIO compiler refusals`. Main's omc `62775d2a…` does not know the words (error 3).
+  Not calling DEVICE_RESET does not avoid a reset: Linux vfio-pci FLRs on device open when a reset
+  method is enabled and calls `pci_reset_bus` (SBR) on release even with `reset_method` empty.
+  `vfiomap fd A off 32 -> handle` maps one `vfio_region_info` read-only and shared, exactly its size
+  at its offset; flags must include READ and MMAP. Read with `mapget`, release with `mapdrop`;
+  `mapset` through it traps. Exercised on host fixtures and in QEMU against real `vfio-pci`
+  ([omega-gpu-driver qemu/w0-edu.log](https://github.com/aien-dev/omega-gpu-driver/blob/main/qemu/w0-edu.log)); not qualified on GB10.
+- **Keyword-id conflict, PENDING:** draft [omega-mv#946](https://github.com/aien-dev/omega-mv/pull/946)
+  (`cpufence`/`cpurelax`) also claims ids 178/179. Whichever of #878 and #946 merges second must
+  renumber and reseed, so the ids above can still change; recheck `fn kw` in `seed/omc/omc.om` at the
+  merge commit before quoting them.
+- **VFIO DMA and writable BAR: PENDING, stacked on #878.** Draft
+  [omega-mv#890](https://github.com/aien-dev/omega-mv/pull/890) (base branch `feat/vfio-device-calls`;
+  rechecked 2026-10-30 at head `f850c52622577eedcb65af3e1af09ab568101e7a`, which contains #878's head;
+  committed omc sha256 `fe6e986596f5d22fcfce2bd66006608f49a8f9a28c555066569350aedd3c408b`, self-rebuild byte-identical) adds keyword id 180
+  `vfiomapw fd A off 32 -> handle`: as `vfiomap`, but the
+  region flags must include READ, WRITE and MMAP and the map is shared read/write, so `mapget`/`mapset`
+  drive registers (one aligned access each, DSB SY on both sides)
+  ([MAPPING.md#L20](https://github.com/aien-dev/omega-mv/blob/f850c52622577eedcb65af3e1af09ab568101e7a/seed/host/MAPPING.md#L20)).
+  It also allows IOMMU_MAP_DMA 15217/32 and IOMMU_UNMAP_DMA 15218/24 in `vfioctl`
+  ([#L84-L99](https://github.com/aien-dev/omega-mv/blob/f850c52622577eedcb65af3e1af09ab568101e7a/seed/host/MAPPING.md#L84-L99)):
+  Omega code never supplies an address. Write a mapping handle into bytes 8..15 and the IOVA into
+  16..23; the compiler checks the handle like `mapget`, requires a read/write mapping and flags exactly
+  3, then stores the mapping's own base and whole length; any failed check traps 3 (exit 103).
+  UNMAP_DMA requires flags 0. Unmap before `mapdrop`: a dropped mapping that is still DMA-mapped
+  stays pinned until the container closes. All three VFIO words are error 25 under `target x86linux`
+  ([#L104-L105](https://github.com/aien-dev/omega-mv/blob/f850c52622577eedcb65af3e1af09ab568101e7a/seed/host/MAPPING.md#L104-L105)).
+  Observed with that omc: MAP_DMA on a zeroed span (no live handle) trapped 103; UNMAP_DMA on fd -1
+  returned -9; `vfiomapw` under x86 is error 25; the PR's `vfio.om` exits 0 and `vfiocheck.om` prints
+  `PASS 19 VFIO compiler refusals`. #878's omc refuses 15217 (error 9) and does not know `vfiomapw`
+  (error 3). Exercised on host fixtures only.
 
 ## 10. Wire serialization (only what the pin defines)
 
