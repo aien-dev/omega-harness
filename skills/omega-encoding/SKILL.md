@@ -1013,17 +1013,18 @@ check proves nothing.
    (#923, 2026-10-28) `target x86linux` selects an x86-64 Linux static-ELF backend in
    `seed/omc/omc.om`. Its status there is DRAFT, x86 execution is EMULATED (QEMU) only and native
    x86 qualification is NOT_RUN (`docs/X86-LINUX.md` lines 3 and 286).
-6. Documents disagree with the code at this pin; trust the code and name the conflict:
-   OM_COMPLETION FR-5 says mmap/ioctl are absent through main `62d1d0d6` (omega-mv draft PR #944 corrects
-   it to the shipped words, ids 166-177 in `seed/omc/genkw.awk`), and `seed/host/MAPPING.md`
-   ([#L66-L68](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/host/MAPPING.md#L66-L68)) still calls the device words a proposal not
-   on `main`, while `omc.om` reserves `devctl mapnew ... mapbind` (ids 166-177) and README
-   ([#L27](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/README.md#L27)) says they are on `main`. GPU launch and model execution through
-   them are not qualified. (README line 5's old "candidate branches" wording was corrected on main by
-   #801.) At main `bf54b19f`, `OM_COMPLETION.md` lines 72 and 80 still call FR-9 a draft with its
-   full fixture differential NOT_RUN, while `docs/X86-LINUX.md` lines 431-438 record the complete
-   EMULATED differential at `7ab5fdd0` (15179 PASS, 4 NOT_RUN, 222 EXCLUDED, no FAIL cases,
-   aggregate FAIL). Cite X86-LINUX.md and name the conflict.
+6. Documents can disagree with the code; trust the code and name the conflict. At main `91c83438d`
+   (rechecked 2026-10-31) the earlier conflicts are resolved: OM_COMPLETION FR-5
+   ([#L68](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/docs/one_layer/OM_COMPLETION.md#L68))
+   lists `devctl devcall uvmctl mapnew ... mapbind` (ids 166..177 in `seed/omc/genkw.awk`) as
+   implemented for AArch64 program mode (omega-mv #944, merged by train r5 #985 as `613765d2b`; it
+   said "absent" through `4376c2112`), and `seed/host/MAPPING.md`
+   ([#L68-L70](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/seed/host/MAPPING.md#L68-L70))
+   says the device words are on `main` (train r2 #972, `f5c9bd89a`). GPU launch and model execution
+   through them are not qualified. The FR-9 row
+   ([#L72](https://github.com/aien-dev/omega-mv/blob/91c83438daec0bdb88bf5c077cae10f3d15d365d/docs/one_layer/OM_COMPLETION.md#L72))
+   and `docs/X86-LINUX.md` line 450 now cite the same EMULATED differential at `62d1d0d6` (15182 PASS,
+   0 FAIL, 2 NOT_RUN, 222 EXCLUDED, aggregate FAIL); native x86 stays NOT_RUN.
 
 ## 13. Examples
 
