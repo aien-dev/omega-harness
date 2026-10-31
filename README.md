@@ -15,6 +15,12 @@ Skills can't make agents flawless. What these do is turn the mistakes agents kee
 
 The skills use the Agent Skills layout (`skills/<name>/SKILL.md` with `name` and `description` frontmatter), so any agent that reads that layout picks them up.
 
+## Human-Directed Agentic Engineering
+
+Development follows Human-Directed Agentic Engineering (HDAE): humans define goals, architecture, constraints, acceptance criteria and stopping points; agents implement, execute checks, diagnose failures and revise within those boundaries. Human review retains responsibility for claims, acceptance and release decisions. These skills make the agent's inner loop explicit without transferring the human's authority to a model.
+
+For the documented method and systems-software case study, see Gregory M. Kurtzer, *Ginux: Building an Independent Kernel That Runs Linux Userspace through Human-Directed Agentic Engineering* (2026), [doi:10.5281/zenodo.23682548](https://doi.org/10.5281/zenodo.23682548). Project authorship, compiler pins and historical evidence remain unchanged.
+
 ## Install
 
 Clone the repository, then put the skill directories where your agent looks for skills:
@@ -39,6 +45,14 @@ cp -R omega-harness/skills/* ~/.agents/skills/   # pick the directory for your a
 
 These skills cover working in Omega itself. Conversion between Omega and other languages belongs to [`omega-bridge`](https://github.com/aien-dev/omega-bridge). It converts a declared, checked subset and refuses to attempt universal conversion. You can run an MCP server in front of it if you want automated conversion, but that wrapper doesn't let it convert anything beyond that subset.
 
+Merged [omega-bridge #32](https://github.com/aien-dev/omega-bridge/pull/32) localizes private
+ABI1/ABI2 runtime symbols so independent generated translation units link without collisions.
+[#33](https://github.com/aien-dev/omega-bridge/pull/33) adds conservative integer-scalar
+freestanding output without pthread, mmap, heap or TLS; [#35](https://github.com/aien-dev/omega-bridge/pull/35)
+extends finite aggregate frame/output pools with checked refusal. Section 2 pins main
+`2efdd48cd0c7c232064d5870e77660a5a75966e1` and records host evidence and negative controls.
+Merged host-exercised source is not deployment or GPU qualification.
+
 The merged [omega-mv WebAssembly backend (#787)](https://github.com/aien-dev/omega-mv/pull/787)
 is a compiler backend for the existing scalar OSC IR v1 wire format, not a foreign-source
 converter. Its seeded Omega writer and read-only Node oracle boundary are documented in
@@ -58,7 +72,7 @@ The examples run on Linux AArch64 hosts only:
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv.git omega-src
-sha256sum omega-src/seed/out/omc   # 734f0a39319fbfa930bcc62cb30dbf06d47d78e126372b74f5baf478e6126b61 at the pin
+sha256sum omega-src/seed/out/omc   # 62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b at main bf54b19f (2026-10-29); 734f0a39... at the 2026-10-25 pin 55f9b0af
 omega-src/seed/out/omc < skills/omega-encoding/examples/fnv1a32.om > fnv 2> fnv.err
 compile_rc=$?
 printf 'compile rc=%s\n' "$compile_rc"
@@ -80,5 +94,7 @@ The `omega-encoding` skill (section 13) records the full set of observed results
 **The agent that makes a change updates the guides.** If your work changes the Omega language, the compiler or its pin, build or gate commands, the encoder or bridge, repository ownership or status, or this harness, update the matching skill in the same piece of work. Then open a PR here with the evidence. If you can't, open an issue saying what is now stale. `omega-harness` section 6 has the full map of which change goes in which skill.
 
 Each skill names the omega-mv commit it was checked against and lists known disagreements. Historical sections retain their dated pins. `omega-encoding` section 0 adds scoped pins for the IR/wasm backend, the merged Omega 1.0 roadmap, and main `91b3c932` (compiler `189ada82…3b54`): executable contracts, expanded capacity and the f32 return fix. The batch has host evidence, not GPU qualification. When the compiler changes, recheck cited lines, rerun examples, then update pins. Do not edit old evidence. Contributions follow the [shared AIEN agent rules](https://www.aienos.com/agents/RULES.md).
+
+The [native GPU realization guidance](skills/omega-communication/SKILL.md#native-gpu-realization-records-2026-10-28) distinguishes quantization indexes, canonical artifact identity, session residency and independent qualification. It tracks the CUDApp #26 work without treating host fixtures or unmerged components as production admission.
 
 Written by Drake Stapleton with AIEN agents. Apache License 2.0.
