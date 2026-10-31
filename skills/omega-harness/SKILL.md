@@ -410,6 +410,28 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
   contract checks. No DPC++, Level Zero, GPU or Alpha qualification is implied.
   The standalone acceptance gate is not wired into protected gate manifests.
 
+### Developer kernel template (GitHub, CPU only)
+
+[aien-dev/omega-kernel-template](https://github.com/aien-dev/omega-kernel-template) is the
+public on-ramp for this backend: a developer creates a repo from it
+(`gh repo create my-kernel --template aien-dev/omega-kernel-template --public --clone`), edits
+`kernel.om` and `reference.py`, and pushes. A free `ubuntu-24.04-arm` Actions job then fetches the
+pinned omega-mv `omc`, `irspirv.om`, `opencl-host.c` and `parity.py` (commit `369dbc96`, sha256 in
+`toolchain.lock`), runs every case natively on AArch64 and as SPIR-V on a PoCL 7.2 CPU device built
+by the repo's own `toolchain.yml`, compares with `reference.py`, and uploads an
+`omega-kernel-receipt` artifact (`receipt.json`, `SHA256SUMS`).
+
+- Evidence: `main` run 40426781699 PASS 138/138; negative control `demo/wrong-kernel` (overflowing
+  average) run 40426783628 FAIL 20/138. Rerun 2026-10-31 by workflow_dispatch: `main` at `02050226`
+  run 41196263282 PASS 138/138, `demo/wrong-kernel` at `d26761f0` run 41196264947 FAIL 20/138.
+  This is CPU-EXERCISED evidence only: no GPU, sm_121 SASS or CUDA++ path runs, and the receipt
+  says so in `not_run`. The template still pins omega-mv `369dbc96` (omc `2c824805`), not the
+  general compiler pin above.
+- When omega-mv changes `omc` or `seed/spirv/`, a template pin bump needs a passing template run
+  first; the PoCL asset changes only through `toolchain.yml`, whose self-test must pass.
+- Its `tools/check.sh`, `tools/fetch.sh` and `tools/cases.py` are INTERIM host glue whose successor
+  is an Omega conductor unit.
+
 ### Aienux SMMU probe event qualification (path 1)
 
 - Merged: [aienux#469](https://github.com/aien-dev/aienux/pull/469) landed on main
