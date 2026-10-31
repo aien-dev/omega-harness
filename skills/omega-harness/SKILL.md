@@ -409,6 +409,24 @@ Merged as `3a10bd29fb7debdcf2c8f5cb58680cc74cb5b1f3`; compiler pin unchanged.
   words are explicit refusals. Contract strings remain metadata, not runtime
   contract checks. No DPC++, Level Zero, GPU or Alpha qualification is implied.
   The standalone acceptance gate is not wired into protected gate manifests.
+- Pending, not merged: the E1 open-math SPIR-V tier
+  ([omega-mv #889](https://github.com/aien-dev/omega-mv/pull/889) plus the
+  stacked [omega-mv #901](https://github.com/aien-dev/omega-mv/pull/901)) adds an NDRange ABI: work item `g` reads
+  `inputs[g*P + j]` and writes `outputs[2g]`, `outputs[2g+1]`; `g = 0` is the
+  single-call ABI above. `opencl-host --sweep MODULE.spv KERNEL START COUNT`
+  launches a one-parameter kernel over `START..START+COUNT-1` and prints the low
+  32 bits of each result; any nonzero status fails. Large IR-mode units need the
+  #889 candidate compiler (sha256 `2cf38551…`, fixpoint stage1 = stage2 =
+  stage3; not the pin): per function 480 registers (each distinct literal takes
+  one), 512 blocks, 4096 instructions, 480 names, 64 open blocks, error 14 over
+  them. The pinned batch 2 compiler stops at 64 registers, 32 literals, 32
+  blocks and 256 instructions.
+- Checked conversions trap on the device exactly as on the host: `ulong` of a
+  negative `long` returns status `105` (trap 5). Mask on the signed type first
+  (`kq = and add k qoff 3`, then `q = ulong kq`); converting first and masking
+  after traps for every negative `k`. Sampled PoCL parity found this in the E1
+  trig quadrant. Host check with pinned omc `2c824805…`: `q = ulong add k 1` on
+  `k = -5` exits 105; `kq = and add k 1 3` then `ulong kq` exits 0.
 
 ### Developer kernel template (GitHub, CPU only)
 
