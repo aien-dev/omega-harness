@@ -42,7 +42,11 @@ Mounted as MCP tools by the hosted service `https://agenttools.wolfram.com/mcp`:
    returned `(3 sqrt(3))/2`.
 2. **If the tools are missing**, add that block and restart the session. MCP servers mount at session
    start, so a running session cannot pick up the new block. Do not install a local Wolfram Engine to
-   satisfy this rule: the hosted endpoint is the supported path.
+   satisfy this rule: the hosted endpoint is the supported path. Some hosts keep `mcp.json` read-only
+   under an operator-managed store (the file is a symlink into a protected location). There, never
+   unlink, replace or chmod it: ask the operator, and change it only through the host's documented
+   update command. Adding or changing another MCP server (for example an issue tracker) follows the
+   same route, and the Wolfram block must survive the change.
 3. **If the endpoint demands credentials** (another machine, a changed policy), the secret lives in the
    vault and is injected at launch, for example `atlas-vault run CORTEX_TOKEN -- <server>`. Never write
    a token into `mcp.json`, a repository file, a commit or a log.
