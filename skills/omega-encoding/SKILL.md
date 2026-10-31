@@ -1068,7 +1068,11 @@ fixed limit (section 4).
   `om4: line 16484: error 14`, exit 14. So 17 entries are free. **Decision (Drake, 2026-10-31): stay
   within 512 for now (option 3).** A prototype that moves om4's table to 4096 entries is draft
   [omega-mv#1013](https://github.com/aien-dev/omega-mv/pull/1013) (`646ed1ec`, om4 `bfc1cfd1…`, omc
-  bytes unchanged). It is PROPOSED only: until Drake merges it, the 512 cap below holds. Earlier
+  bytes unchanged), **parked until after alpha**: do not merge it unless `omc.om` needs more than 512
+  functions or an alpha-critical fix needs more than the free entries. If it merges, the published
+  challenge pin moves in the same release as a new version (v1 = om4 `d0da40e4` at `369dbc96` stays
+  checkable), `seed/challenge/run.sh` builds the new pin, and never while an outside recheck
+  (DRA-58) is running. Its cubic cycle check is omega-mv#1014. Until it merges, the 512 cap below holds. Earlier
   checks: main `62d1d0d66` (2026-10-30), `4376c2112` and `91c83438d` (2026-10-31), when `omc.om` had
   512 functions and one more gave `om4: line 15953: error 14`. om4 is the seed rung that compiles `seed/omc/omc.om` into the first
   `omc` (`seed/omega-from-seed.sh`
