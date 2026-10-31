@@ -128,7 +128,7 @@ reference from omega-mv #919 is **MERGED** and **IMPLEMENTED / EXERCISED (host)*
 not QUALIFIED or DEPLOYED: train r1 [#971](https://github.com/aien-dev/omega-mv/pull/971)
 merged it as `f56a372aec4909f0601bb4f74ce07b066dd54cf2`
 ([#919 close comment](https://github.com/aien-dev/omega-mv/pull/919#issuecomment-6529992046)).
-Current pin: omega-mv main `91c83438daec0bdb88bf5c077cae10f3d15d365d`. The original
+Current pin: omega-mv main `3a163bc5eafa5be4b9ca97b7f17046c33f0d9032`. The original
 evidence pins were documentation `e79566c191ea8ef11888e69ce50d8fadf375d4fd` and clean
 implementation `39e89fb1c2aaed99ddc05ec565274dd05792b70f` on main `6999fa9e6`.
 
@@ -153,7 +153,7 @@ The original run used compiler `seed/out/omc` SHA-256
 `d6290c7663c2b4bafb59eb3fdf812476e977f4c144def71095c6248ef9b96b84` (receipt
 `neuralese/host-results.287fdc263f7af93107c378ba63c92202a0e6c1479cb1ff6971706b423b0b15fb.json`,
 kept unedited on main). The conductor refuses any compiler other than the pinned one,
-so at main `91c83438` use the current omc SHA-256. From a fresh Linux AArch64 clone,
+so at main `3a163bc5` use the current omc SHA-256. From a fresh Linux AArch64 clone,
 with the scratch directory absent:
 
 ```sh
@@ -161,16 +161,18 @@ mkdir -p build
 if seed/out/omc < seed/qualification/om2/gate.om > build/neuralese-gate; then
   chmod +x build/neuralese-gate &&
   build/neuralese-gate seed/out/omc \
-    2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5 \
+    24caacf463cc29c5413d5b2565ef8f88c76e60a585bbad44d2388cb1ac29abb7 \
     neuralese/host.cases build/neuralese-host
 else
   exit 1
 fi
 ```
 
-MEASURED 2026-10-31 at main `91c83438` (omc `2aec185d...d8d5`):
-`OM2GATE PASS cases=54 pass=54 fail=0 invalid=0 not_run=0`, the same count as the
-original `d6290c76` receipt. Negative control: one byte appended to
+MEASURED 2026-10-31 at main `3a163bc5` (omc `24caacf4...abb7`):
+`OM2GATE PASS cases=54 pass=54 fail=0 invalid=0 not_run=0` (exit 0), the same count as at
+`91c83438` (omc `2aec185d...d8d5`) and in the original `d6290c76` receipt; passing `2aec185d` as the
+pin hash to the same conductor gives `OM2GATE INVALID cases=54 pass=0 fail=0 invalid=0 not_run=54`
+(exit 3). Earlier negative control (2026-10-31 at `91c83438`): one byte appended to
 `neuralese/fixtures/positive-1-7.om` gives `decode-positive-1-7 FAIL ... stdout differs
 at byte 128` and `OM2GATE FAIL cases=54 pass=53 fail=1`. Cases include exact
 decoded-source and executed-result checks, seventeen guard-removal mutant kills,
@@ -270,18 +272,18 @@ MJB/MJR authority or production qualification. The independent NL6 replay is
 Use the target repository's documented commands. A host-only seed workflow on AArch64 Linux, in a disposable clone pinned to an exact revision, looks like this:
 
 Current main source pin (checked 2026-10-31): omega-mv
-`91c83438daec0bdb88bf5c077cae10f3d15d365d` (squash of
-[#965](https://github.com/aien-dev/omega-mv/pull/965), error-code registry and IR error 30, after
-#946 `d94617177` and #970 `1db941627`).
-`seed/omc/omc.om`: 15,952 lines, sha256
-`92eb49f35715147ccb6c6b00a96b9cb38d7f7383de14d4f6521d2e07eaad465c`;
+`3a163bc5eafa5be4b9ca97b7f17046c33f0d9032` (squash of
+[#857](https://github.com/aien-dev/omega-mv/pull/857), `for ... bound N`, after #967, #948, #875,
+#918, #853 and #848; the list is in `omega-encoding` section 0).
+`seed/omc/omc.om`: 16,422 lines, sha256
+`0ed35c70437d498cbce3deb661bb24ba4753ec16a8890450a482aaea147bca2a`;
 `seed/out/omc`: sha256
-`2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`, equal to
-`seed/out/omc.sha256`, and reproduced by `sh seed/omega-from-seed.sh` in a fresh clone (exit 0).
-Example reruns at this compiler are in `omega-encoding` section 0. The earlier main pins
-`bf54b19fa` (#923, omc `62775d2a…712b`, unchanged through `4376c2112`), `1db941627` (#970, omc
-`7a8b84fc…`), the candidate pin `1fe5976d` (#911, compiler `d6290c76...6b84`) and older pins below
-remain dated history.
+`24caacf463cc29c5413d5b2565ef8f88c76e60a585bbad44d2388cb1ac29abb7`, equal to
+`seed/out/omc.sha256`, and reproduced by `sh seed/omega-from-seed.sh` in a clean detached
+worktree (exit 0). Example reruns at this compiler are in `omega-encoding` section 0. The earlier
+main pins `91c83438d` (#965, omc `2aec185d…d8d5`), `bf54b19fa` (#923, omc `62775d2a…712b`,
+unchanged through `4376c2112`), `1db941627` (#970, omc `7a8b84fc…`), the candidate pin `1fe5976d`
+(#911, compiler `d6290c76...6b84`) and older pins below remain dated history.
 
 
 ```sh
@@ -361,7 +363,7 @@ fi
   were carried over byte-identically. Merge status does not establish deployment or trusted clocks.
 - Record the source revision, the compiler, source and binary hashes, the exact command, the platform, expected versus observed result, and the limits. A local smoke run is not repository qualification, not a merge and not a deployment.
 - Pinned `aien-test` verifier sources must be built from a trusted directory outside the candidate tree (`RUNNER_TEMP` in GitHub Actions), with an explicit separate target directory. Cargo loads configuration from its current directory and ancestors even with `--manifest-path`; source pins alone do not exclude a candidate `.cargo/config.toml`. Cache dependency registries/git only, never the compiled verifier target from a candidate run. Challenge both PR and Alpha commands with a candidate rustc-wrapper and a trusted-source negative control. This workflow correction is merged in [sovereign-core #771](https://github.com/aien-dev/aien-sovereign-core-mv/pull/771), merge `2369d7c8`; that source status does not assert deployment of local verifier services.
-- om/tls coverage commands (merged: omega-mv #862 `audit/tls-coverage`, landed in train #979 `4376c211`; current main `91c83438`, omc sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`). `sh om/tls/test/wycheproof/ledger.sh WYCHEPROOF_DIR LOGDIR` accounts for every test of every C2SP/wycheproof `testvectors_v1` file at `d17cc89f` (347 rows in `ledger.tsv`) as pass, fail, na (with the written reason), not_run or unexplained, reading `LOGDIR/SUITE.log` from the primitive suites (`aesgcm chacha sha2 x25519 ec rsa mlkem ecdh`, each `sh om/tls/test/SUITE/run.sh OMC`); exit 0 PASS, 1 FAIL (a failure, an unexplained test or a ledger error), 3 NOT_RUN (applicable tests absent). A skipped or absent suite is NOT_RUN, never a pass. `sh om/tls/test/wycheproof/ledger-nc.sh WYCHEPROOF_DIR LOGDIR` is its negative control: a deleted row, a planted `FAIL` and an altered header sha256 must each make the ledger exit 1. Observed 2026-10-31 at main `91c83438` with omc `2aec185d`, Spark cores 5-9 at nice 19: all eight suites exit 0 (`SHA2 PASS`, `CHACHA PASS`, `AESGCM PASS`, `X25519 PASS`, `EC PASS`, `RSA PASS`, `MLKEM PASS`, `ECDH PASS`, every mutant detected); `ledger.sh` exit 0 with `WYCHEPROOF-LEDGER PASS files=347 tests=145057 pass=13804 fail=0 na=131253 not_run=0 unexplained=0 errors=0`; `ledger-nc.sh` exit 0, each of row, fail and header `rc=1 detected`; control: `ledger.sh` with an empty LOGDIR exits 3 (`WYCHEPROOF-LEDGER NOT_RUN ... pass=0 ... not_run=13804`). `sh om/tls/test/bogo/run.sh OMC BORINGSSL_DIR GO` builds the pure-.om BoGo client shim and the pinned BoringSSL runner (`om/tls/test/bogo/PINS`: commit, Go version, URL and sha256; Go is a test oracle only) and prints `BOGO-RESULTS tests= pass= fail= na= skip=` plus `na-reason`/`fail-reason` lines. `na` is only two runner-side refusals of a TLS 1.3-only client (`tls12-only`: runner MaxVersion below TLS 1.3; `record-301`: BoringSSL demands 0x0301 on the initial record, which RFC 8446 5.1 does not require); na is never counted as a pass. The runs use `-loose-errors`, so expected-failure tests pass on any error; the negative control therefore re-runs passing candidates without `-loose-errors`, keeps only success-expecting ones, runs them against an echo-corrupting shim and requires `BOGO-NC ... still_pass=0`. Exit 0/1/3 as above. The runner's leaf certificates have an empty subject with a non-critical SAN, which `x509.om` refuses per RFC 5280 4.2.1.6, so run.sh applies `runner-critical-san.patch` to the runner fixture by default; with `BOGO_UNPATCHED=1` handshakes using those leaves fail with `X509_ERR_MALFORMED` (an explained policy difference, not a pass). The BoGo run was not rerun for this refresh (NOT_RUN): heavy runs go to GitHub `ubuntu-24.04-arm` runners, not the Spark.
+- om/tls coverage commands (merged: omega-mv #862 `audit/tls-coverage`, landed in train #979 `4376c211`; observed at main `91c83438`, omc sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5`, the pin before the current `3a163bc5`; not rerun at `24caacf4`). `sh om/tls/test/wycheproof/ledger.sh WYCHEPROOF_DIR LOGDIR` accounts for every test of every C2SP/wycheproof `testvectors_v1` file at `d17cc89f` (347 rows in `ledger.tsv`) as pass, fail, na (with the written reason), not_run or unexplained, reading `LOGDIR/SUITE.log` from the primitive suites (`aesgcm chacha sha2 x25519 ec rsa mlkem ecdh`, each `sh om/tls/test/SUITE/run.sh OMC`); exit 0 PASS, 1 FAIL (a failure, an unexplained test or a ledger error), 3 NOT_RUN (applicable tests absent). A skipped or absent suite is NOT_RUN, never a pass. `sh om/tls/test/wycheproof/ledger-nc.sh WYCHEPROOF_DIR LOGDIR` is its negative control: a deleted row, a planted `FAIL` and an altered header sha256 must each make the ledger exit 1. Observed 2026-10-31 at main `91c83438` with omc `2aec185d`, Spark cores 5-9 at nice 19: all eight suites exit 0 (`SHA2 PASS`, `CHACHA PASS`, `AESGCM PASS`, `X25519 PASS`, `EC PASS`, `RSA PASS`, `MLKEM PASS`, `ECDH PASS`, every mutant detected); `ledger.sh` exit 0 with `WYCHEPROOF-LEDGER PASS files=347 tests=145057 pass=13804 fail=0 na=131253 not_run=0 unexplained=0 errors=0`; `ledger-nc.sh` exit 0, each of row, fail and header `rc=1 detected`; control: `ledger.sh` with an empty LOGDIR exits 3 (`WYCHEPROOF-LEDGER NOT_RUN ... pass=0 ... not_run=13804`). `sh om/tls/test/bogo/run.sh OMC BORINGSSL_DIR GO` builds the pure-.om BoGo client shim and the pinned BoringSSL runner (`om/tls/test/bogo/PINS`: commit, Go version, URL and sha256; Go is a test oracle only) and prints `BOGO-RESULTS tests= pass= fail= na= skip=` plus `na-reason`/`fail-reason` lines. `na` is only two runner-side refusals of a TLS 1.3-only client (`tls12-only`: runner MaxVersion below TLS 1.3; `record-301`: BoringSSL demands 0x0301 on the initial record, which RFC 8446 5.1 does not require); na is never counted as a pass. The runs use `-loose-errors`, so expected-failure tests pass on any error; the negative control therefore re-runs passing candidates without `-loose-errors`, keeps only success-expecting ones, runs them against an echo-corrupting shim and requires `BOGO-NC ... still_pass=0`. Exit 0/1/3 as above. The runner's leaf certificates have an empty subject with a non-critical SAN, which `x509.om` refuses per RFC 5280 4.2.1.6, so run.sh applies `runner-critical-san.patch` to the runner fixture by default; with `BOGO_UNPATCHED=1` handshakes using those leaves fail with `X509_ERR_MALFORMED` (an explained policy difference, not a pass). The BoGo run was not rerun for this refresh (NOT_RUN): heavy runs go to GitHub `ubuntu-24.04-arm` runners, not the Spark.
 
 ### SPIR-V OpenCL Kernel backend
 

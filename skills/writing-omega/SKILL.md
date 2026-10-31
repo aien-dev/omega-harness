@@ -14,8 +14,8 @@ For compiler internals, register rules, wire formats and the reasons behind each
 
 | Pin | Value |
 |---|---|
-| omega-mv commit | `91c83438daec0bdb88bf5c077cae10f3d15d365d` |
-| compiler `seed/out/omc` | sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5` |
+| omega-mv commit | `3a163bc5eafa5be4b9ca97b7f17046c33f0d9032` |
+| compiler `seed/out/omc` | sha256 `24caacf463cc29c5413d5b2565ef8f88c76e60a585bbad44d2388cb1ac29abb7` |
 | language reference | `docs/one_layer/OMEGESE.md` at that commit |
 | host | Linux AArch64 only; omc writes a static AArch64 Linux ELF |
 
@@ -26,7 +26,7 @@ decides; this guide records the known disagreements.
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv && cd omega-mv
-git checkout 91c83438daec0bdb88bf5c077cae10f3d15d365d
+git checkout 3a163bc5eafa5be4b9ca97b7f17046c33f0d9032
 sha256sum seed/out/omc      # must print the pinned hash
 sh seed/omega-from-seed.sh  # optional: rebuild omc from the 408-byte loader
 seed/out/omc < prog.om > prog; echo "compile $?"
@@ -103,7 +103,7 @@ Every declaration and statement form at the pin (OMEGESE sections 9 to 12 are th
 | `put A i v`, `put p f v` | function body | store into an array element or a field |
 | `f v1 v2 ...` | function body | a call to a `void` function |
 | `if C` ... `else` ... `end` | function body | `else` is optional; no `else if` |
-| `while C bound N` ... `end` | function body | N 1..999999 |
+| `while C bound N` ... `end` | function body | N 1..9223372036854775807 (IR mode 1..1000000) |
 | `for i T K` ... `end` | function body | `unroll` after K in OM-2, K 1..64 |
 | `break`, `continue` | inside a loop | |
 | `ret`, `ret v` | function body | `ret v` in a function with a result |
@@ -187,10 +187,12 @@ A trap ends the process with exit status 100 + N. Output already written stays w
 
 ## 6. Loops and bounds
 
-- `while COND bound N` runs the body at most N times, N 1..999999 (error 8 outside). Without
-  `bound` the limit is 1000000. One more pass traps 4. Choose N from an argument you can write down
-  in a `note`, for example "every pass consumes at least one byte of a 65536-byte input".
-- `for i T K` runs i from 0 to K-1. `for` takes no `bound` (error 5); K is the limit.
+- `while COND bound N` runs the body at most N times, N 1..9223372036854775807 (error 8 outside;
+  IR mode 1..1000000). Without `bound` the limit is 1000000. One more pass traps 4. Choose N from
+  an argument you can write down in a `note`, for example "every pass consumes at least one byte of
+  a 65536-byte input".
+- `for i T K` runs i from 0 to K-1. `for i T K bound N` takes the same N as `while` and traps 4
+  when K exceeds N (`for_bound.om`, `trap4_for_bound.om`).
 - `break` and `continue` work in both loops. There is no `else if`: nest an `if` inside `else`.
 - No loop runs forever and recursion is bounded by the stack.
 
@@ -296,7 +298,7 @@ with its exact stderr line in the matching `.expect`, except 24, which needs a g
 | 5 | words left after a complete statement | `err05_extra_words` | count each word's values; there is no infix |
 | 6 | malformed number | `err06_bad_number` | decimal digits; hex only in OM-2, lowercase |
 | 7 | type mismatch | `err07_type_mismatch` | convert with a type word: `add int 1 int u` |
-| 8 | number out of range | `err08_out_of_range` | a literal that fits its type; a bound 1..999999; a trap code 1..14 |
+| 8 | number out of range | `err08_out_of_range` | a literal that fits its type; a bound 1..9223372036854775807 (IR mode 1..1000000); a trap code 1..14 |
 | 9 | a word in a place where it is not allowed | `err09_disallowed` | move it: `new` only in a function's outermost block, `struct` before the first `fn` |
 | 10 | duplicate name | `err10_duplicate` | choose a name that is not visible, not a function, not a struct |
 | 11 | a number with nothing to give it a type | `err11_ambiguous` | `x = uint 5` |
@@ -355,8 +357,8 @@ Each row is a program in `examples/` with its observed refusal.
 | `return x` | `ret x` | error 18 (silent assignment) | `mistake_return.om` |
 | `else if c` | `else`, then a nested `if c` | error 5 | `mistake_else_if.om` |
 | `fn main argc int to int` | `argcnt`, `argread` | error 9 | `mistake_main_args.om` |
-| `for i ulong n bound 10` | `while lt i n bound 10` | error 5 | `mistake_for_bound.om` |
-| `while c bound 1000000` | a bound 1..999999 | error 8 | `mistake_bound_range.om` |
+| `while c bound 9223372036854775808` (or `bound 0`) | a bound 1..9223372036854775807 | error 8 | `mistake_bound_range.om` |
+| `ir` unit with `while c bound 1000001` | an IR bound 1..1000000 | error 8 | `mistake_ir_bound.om` |
 | `a = new uchar n 0` | a literal or `const` length | error 16 | `mistake_new_var_len.om` |
 | `free a` | nothing: no heap | error 9 | `mistake_free.om` |
 | `len = ...` | another name | error 16 | `mistake_reserved_name.om` |

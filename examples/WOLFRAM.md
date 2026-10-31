@@ -68,3 +68,17 @@ BitAnd[12, 10]
 ```
 8
 ```
+
+Third call, 2026-10-31, for `for_bound` (exit status 10, the sum of `i` over the 5 passes) with the
+omc `24caacf4…abb7` pin, query and result verbatim:
+
+```wolfram
+{Sum[i, {i, 0, 4}], 512 - 495, Mod[1500000,89], Mod[1100000,89], Mod[1234567,89], Mod[2000000,89], 2^63 - 1}
+```
+
+```
+{10, 17, 83, 49, 48, 81, 9223372036854775807}
+```
+
+The other entries are the `omega-encoding` section 0 and section 8 numbers (free om4 function entries,
+loop probe exit statuses, the largest `bound`).

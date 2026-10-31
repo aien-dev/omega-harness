@@ -78,20 +78,20 @@ QUALIFIED or deployed.
 
 ## Check the examples yourself
 
-The examples run on Linux AArch64 hosts only. [`examples/`](examples/) holds 97 programs, each
+The examples run on Linux AArch64 hosts only. [`examples/`](examples/) holds 99 programs, each
 `NAME.om` with `NAME.expect` (and `NAME.stdout` when it prints): every trap, one refusal per error
 code, the common mistakes and the known defects. `examples/gate.sh` refuses any compiler but the
 pinned one, then compiles and runs every program here and in `skills/*/examples/`:
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv.git omega-src
-git -C omega-src checkout 91c83438daec0bdb88bf5c077cae10f3d15d365d
-sha256sum omega-src/seed/out/omc   # 2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5 at main 91c83438 (2026-10-31); 734f0a39... at the 2026-10-25 pin 55f9b0af
+git -C omega-src checkout 3a163bc5eafa5be4b9ca97b7f17046c33f0d9032
+sha256sum omega-src/seed/out/omc   # 24caacf463cc29c5413d5b2565ef8f88c76e60a585bbad44d2388cb1ac29abb7 at main 3a163bc5 (2026-10-31); 2aec185d... at the previous pin 91c83438; 734f0a39... at the 2026-10-25 pin 55f9b0af
 examples/gate.sh omega-src/seed/out/omc
 ```
 
 It prints `PASS name` or `FAIL name: reason` per program and ends with
-`GATE PASS examples=99 pass=99 fail=0 omc=2aec185d...` (exit 0), `GATE FAIL ...` (exit 1), or a hash
+`GATE PASS examples=101 pass=101 fail=0 omc=24caacf4...` (exit 0), `GATE FAIL ...` (exit 1), or a hash
 refusal (exit 2). The `omega-encoding` skill (section 0 and section 13) records the observed results
 and the negative controls; [`examples/WOLFRAM.md`](examples/WOLFRAM.md) records the Wolfram checks of
 the arithmetic expectations.
