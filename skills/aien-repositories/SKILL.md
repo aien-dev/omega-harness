@@ -15,6 +15,19 @@ AIEN, led by Drake Stapleton with agents as collaborators, is building persisten
 
 Phase (2026-10-26): AienOS as a product entered **alpha testing** (phases: alpha testing, then beta, then full release). "Alpha" here is the product phase, not a model name and not Core's `aien-alpha` tag pipeline. The downloadable package is called **Sovereign Intelligence** (SI), built on AienOS: the Core engine built from `aien-sovereign-core-mv` main, the seeded Omega install wizard and `omc`, and the CUDApp user-space replacement. Its home and only download location is [aien-dev/sovereign-intelligence](https://github.com/aien-dev/sovereign-intelligence) (GitHub Releases named "Sovereign Intelligence alpha-YYYYMMDD.N", installer under `installer/`, `docs/WHAT-I-AM-BUILDING.md` holds the per-repository audit with evidence levels; install from the public repo, never a script from aienos.com: `git clone --branch alpha-20261026.2 https://github.com/aien-dev/sovereign-intelligence && cd sovereign-intelligence && sh installer/install.sh`, and `aienos.com/install.sh` is a 301 to the repo's README; page: https://www.aienos.com/alpha/). [aien-dev/AienOS-nv](https://github.com/aien-dev/AienOS-nv) is AienOS's own repository and links back to SI. The name `aien-dev/aienos` is retired by GitHub and stays a redirect to `aienux`; never point a release or link there. In copy write "Sovereign Intelligence, built on AienOS", never "AienOS is now SI". Check SI's releases before claiming a published artifact. The GPU path runs only on DGX Spark GB10 (sm_121) and nothing is QUALIFIED: the 3x physical qualification is NOT_RUN. Components testers do not receive in that bundle (for example the aienux kernel, physics-mv and research repositories) keep their own labels, which may still say pre-alpha.
 
+SI alpha engine pin and pending tooling (2026-10-31, PENDING: every PR below is a draft and none is merged). The shipped engine is Core `59b05a71` (`ENGINE_SHA256` `19173f9e…`, `installer/build.sh:31-32`). It is an ancestor of Core main, not main's head. That matters because Core main's `aien-serve-http` refuses to start without `AIEN_SERVE_HTTP_BEARER_TOKEN` and requires `Authorization: Bearer`, while `59b05a71` checks neither. SI main's `installer/install.sh:21` names `TAG=alpha-20261029.1`, which has no published release, so testers still use `alpha-20261026.2`. Check `gh release list -R aien-dev/sovereign-intelligence` before you say otherwise. Draft work for the "SI Alpha — one verified path" project:
+- SI #54: `aienos doctor --report` (`report.om`).
+- SI #57: `installer/rig/wfcheck.om`, a seeded .om CI gate that refuses workflows letting `pull_request` reach a self-hosted runner. Core #854 does the same for Forgejo.
+- SI #62: an e2e harness with `evcheck.om`.
+- SI #64: failure-path scripts.
+- SI #65: reset-to-stock with `stock.om`.
+- SI #66: a per-install bearer token.
+- Core #852: read caps.
+- Core #859: a container build whose engine sha256 does not depend on the checkout path. A shipped-path rebuild reproduces `19173f9e…` only when CARGO_HOME is at the original path.
+- Core #860: a golden-token comparator, `om/golden/golden.om`.
+
+Update this paragraph as these PRs merge.
+
 Sovereign Intelligence (SI) is also the project's front door: its README maps the whole stack and indexes every public aien-dev repository by layer with its evidence level. The index is rebuilt hourly from GitHub by `index/gen/index.om`, which exits 1 and names any public repository without an entry in `index/curated.yml`. Rule: after editing any aien-dev repository's purpose, status or links, or adding a repository, update its `index/curated.yml` entry in the same piece of work. Never name a private repository there.
 
 The short working doctrine is:
