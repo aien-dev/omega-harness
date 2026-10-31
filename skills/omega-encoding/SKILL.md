@@ -805,25 +805,29 @@ the target's limits, and a NaN gives 0, with no trap (observed at `e5b32567`,
   not say "reserved". Observed on omc `2c824805…` (omega-mv `e5b32567`), host only: `fn f len ulong
   to ulong` gives `omc: line 1: error 16`, and a local `len = ulong 3` gives `omc: line 2: error 16`.
   The same program with the parameter renamed to `n` compiles (exit 0). Use `n`, `cnt` or `size`.
-- **PENDING, not on omega-mv main** ([omega-mv#875](https://github.com/aien-dev/omega-mv/pull/875), draft,
-  rechecked 2026-10-30 at head `a183bbf5e053a2074b2aca778d856e178603506b`, committed omc sha256
-  `00386bf9ec7bd5718891e92367653593ac70a30554daf601decd48f8d8065aa7`, which rebuilds itself byte for
-  byte from that head's `omc.om`; the same omc as the earlier head `efd1b4e0`). Keyword ids: `dit` 225,
-  `scrub` 226 in `fn kw2`, the OM-2 table (`seed/omc/omc.om` L1310, L1368-L1371 at that head). Both are
-  emitted inline, not as helper functions, because om4 holds 512 functions and `omc.om` is at that limit
-  (L7275-L7276); the head has 512 `^fn ` lines. Two OM-2-only, program-mode-only, AArch64-only value
+- **`dit` and `scrub`: merged in [omega-mv#875](https://github.com/aien-dev/omega-mv/pull/875) as
+  `2367874399001efdc7f1ff345fb327469bc1a135` (2026-10-31), committed omc sha256
+  `3862655902e3bb9f502ebca2e1e5e5edb6175bf512be731a63c700a6dce8d355`. The general pin of this skill
+  (omega-mv `91c83438`, omc `2aec185d…`) predates it: do not rely on these words until the pin moves
+  past `23678743`.** Keyword ids: `dit` 225, `scrub` 226 in `fn kw2`, the OM-2 table
+  ([omc.om#L1329](https://github.com/aien-dev/omega-mv/blob/2367874399001efdc7f1ff345fb327469bc1a135/seed/omc/omc.om#L1329),
+  [#L1384-L1388](https://github.com/aien-dev/omega-mv/blob/2367874399001efdc7f1ff345fb327469bc1a135/seed/omc/omc.om#L1384-L1388)).
+  Both are emitted inline, not as helper functions, because om4 holds 512 functions and `omc.om` is at
+  that limit ([#L7525-L7526](https://github.com/aien-dev/omega-mv/blob/2367874399001efdc7f1ff345fb327469bc1a135/seed/omc/omc.om#L7525-L7526));
+  the merge commit has 512 `^fn ` lines. Two OM-2-only, program-mode-only, AArch64-only value
   words, reserved only in `om2` units. `dit v` (v int 0/1, else trap 3) writes PSTATE.DIT and gives the
   previous bit as a long. `scrub n` (n ulong, a multiple of 16, at most 1048576, else trap 3; trap 6 when
   SP - n is below the stack floor) zeroes `[SP - n, SP)`, the dead general registers (free pool
   registers, X16, X7, X18-X26, X29) and V0-V31, and gives 0. Refusals: function mode error 9, a wrong
   operand type error 7, use as a name or as a bare statement (`scrub 16` on its own line) in an `om2`
-  unit error 16, `target x86linux` error 25; `ir` with `om2` is already error 16. Observed with that omc
-  on 2026-10-30 (host only), each fixture of `seed/omc/om2/s5/` run directly: `dit-ok` exit 0,
-  `dit-two`/`dit-neg`/`scrub-odd`/`scrub-big` trap 3 (exit 103), `scrub-floor` exit 106, `scrub-ctl`
-  exit 10 (its negative control), `scrub-mem`/`scrub-live`/`scrub-emit`/`om1-names` exit 0, the
-  refusal fixtures 9/7/16 as above, and `dit-ok` behind `target x86linux` error 25. Until #875 merges,
-  main's omc `62775d2a…` does not know the words: `a = dit 0` in an `om2` unit is error 3, while
-  `dit`/`scrub` used as names still compile, as in OM-1. Do not use them against the main pin.
+  unit error 16, `target x86linux` error 25; `ir` with `om2` is already error 16. Observed with omc
+  `38626559…` on 2026-10-31 (host only), each fixture of `seed/omc/om2/s5/` at `23678743` run directly:
+  `dit-ok` exit 0, `dit-two`/`dit-neg`/`scrub-odd`/`scrub-big` trap 3 (exit 103), `scrub-floor` exit
+  106, `scrub-ctl` exit 10 (its negative control), `scrub-mem`/`scrub-live`/`scrub-emit`/`om1-names`
+  exit 0, the refusal fixtures 9/7/16 as above, `scrub-emit` output sha256 `5ba83eaf…` as in
+  `s5.cases`, and `dit-ok` behind `target x86linux` error 25. The pinned omc `2aec185d…` does not know
+  the words: every fixture that uses them is error 3, while `dit-name`/`scrub-name` (the words as
+  names) compile as in OM-1, and `scrub-ctl`/`om1-names` behave as with `38626559…`.
 - **16 registers per function** (pool x0-x6, x8-x15, x17; [omc.om#L82-L91](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/seed/omc/omc.om#L82-L91)).
   Parameters, every live name, the hidden counter of each open `while` / value-count `for`, and the
   temporaries of the current statement all draw from it; error 12 when the next one is not available
@@ -913,7 +917,8 @@ fixed limit (section 4).
   `^fn ` lines (`main` included), so it is full. Observed: om4 compiled main's `omc.om` with exit 0;
   the same file plus one three-line function gave `om4: line 15625: error 14`, exit 14, and the seed
   chain stops there. Any omc change that adds a function must fold or remove another one (#875 inlines
-  `dit`/`scrub` for this reason, its `omc.om` note at L7275-L7276 on head `efd1b4e0`). On 2026-10-30
+  `dit`/`scrub` for this reason; its `omc.om` note is at L7525-L7526 in the merge commit `23678743`,
+  which still has exactly 512 `^fn ` lines). On 2026-10-30
   a clean `git merge-tree` of main with draft
   [#817](https://github.com/aien-dev/omega-mv/pull/817) (head `d0d794d0`) has 532 functions and with
   draft [#832](https://github.com/aien-dev/omega-mv/pull/832) (head `707faca6`) 526, so both are
