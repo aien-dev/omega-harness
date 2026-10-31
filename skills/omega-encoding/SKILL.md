@@ -578,6 +578,14 @@ bound in an outer `if`, then load inside it.
   same results 2026-10-31 with main omc `62775d2a…712b` at omega-mv `4376c2112`; see also **Hex** in
   section 8).
   `true` / `false` are the bools.
+- Hex literals, OM-2 units only (`om2` first non-note line; `spec/omegese-om2.md` section 2): `0x`
+  then 1..16 lowercase digits `0-9a-f`, value unsigned, typed by the place under the decimal range rule
+  (`int 0xffffffff` is error 8: no two's-complement reinterpretation). Error 6: `-0x..`, `0X`, no
+  digits, 17+ digits, uppercase, `_`, any other character. `0x2a` and `42` compile to identical bytes;
+  signed minima need decimal. An OM-1 unit, IR mode included, has no hex literal (error 6). Fixtures:
+  `seed/omc/om2/hex/` (gate PR #951, merged by train r3 #979 as `4376c2112`). Rerun 2026-10-31 at
+  main `91c83438d` with omc `2aec185d…`: `hex.cases` gives `OM2GATE PASS cases=51 pass=51`, and
+  `mutants.cases` gives the expected `OM2GATE FAIL cases=8 pass=3 fail=5` (each `tok_hex` mutant killed).
 - Shift with a bare left operand takes the shift amount's type: `shl 1 sh` with `sh` a `uchar` shifts
   a `uchar`. Write `shl ulong 1 sh` when you mean 64 bits ([#L97-L99](https://github.com/aien-dev/omega-mv/blob/55f9b0af47de70a3d06357985cf99ae3e45c016f/docs/one_layer/OMEGESE.md#L97-L99)).
 - Float literals: `digits.digits[e[+|-]digits][f32|f64]`, a digit on both sides of the dot; exact
