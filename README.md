@@ -16,6 +16,12 @@ Skills can't make agents flawless. What these do is turn the mistakes agents kee
 
 The skills use the Agent Skills layout (`skills/<name>/SKILL.md` with `name` and `description` frontmatter), so any agent that reads that layout picks them up.
 
+## Human-Directed Agentic Engineering
+
+Development follows Human-Directed Agentic Engineering (HDAE): humans define goals, architecture, constraints, acceptance criteria and stopping points; agents implement, execute checks, diagnose failures and revise within those boundaries. Human review retains responsibility for claims, acceptance and release decisions. These skills make the agent's inner loop explicit without transferring the human's authority to a model.
+
+For the documented method and systems-software case study, see Gregory M. Kurtzer, *Ginux: Building an Independent Kernel That Runs Linux Userspace through Human-Directed Agentic Engineering* (2026), [doi:10.5281/zenodo.23682548](https://doi.org/10.5281/zenodo.23682548). Project authorship, compiler pins and historical evidence remain unchanged.
+
 ## Install
 
 Clone the repository, then put the skill directories where your agent looks for skills:
@@ -40,6 +46,14 @@ cp -R omega-harness/skills/* ~/.agents/skills/   # pick the directory for your a
 
 These skills cover working in Omega itself. Conversion between Omega and other languages belongs to [`omega-bridge`](https://github.com/aien-dev/omega-bridge). It converts a declared, checked subset and refuses to attempt universal conversion. You can run an MCP server in front of it if you want automated conversion, but that wrapper doesn't let it convert anything beyond that subset.
 
+Merged [omega-bridge #32](https://github.com/aien-dev/omega-bridge/pull/32) localizes private
+ABI1/ABI2 runtime symbols so independent generated translation units link without collisions.
+[#33](https://github.com/aien-dev/omega-bridge/pull/33) adds conservative integer-scalar
+freestanding output without pthread, mmap, heap or TLS; [#35](https://github.com/aien-dev/omega-bridge/pull/35)
+extends finite aggregate frame/output pools with checked refusal. Section 2 pins main
+`2efdd48cd0c7c232064d5870e77660a5a75966e1` and records host evidence and negative controls.
+Merged host-exercised source is not deployment or GPU qualification.
+
 The merged [omega-mv WebAssembly backend (#787)](https://github.com/aien-dev/omega-mv/pull/787)
 is a compiler backend for the existing scalar OSC IR v1 wire format, not a foreign-source
 converter. Its seeded Omega writer and read-only Node oracle boundary are documented in
@@ -55,20 +69,20 @@ and evidence. CPU execution is not GPU or DPC++ qualification.
 
 ## Check the examples yourself
 
-The examples run on Linux AArch64 hosts only. [`examples/`](examples/) holds 96 programs, each
+The examples run on Linux AArch64 hosts only. [`examples/`](examples/) holds 97 programs, each
 `NAME.om` with `NAME.expect` (and `NAME.stdout` when it prints): every trap, one refusal per error
 code, the common mistakes and the known defects. `examples/gate.sh` refuses any compiler but the
 pinned one, then compiles and runs every program here and in `skills/*/examples/`:
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv.git omega-src
-git -C omega-src checkout bf54b19fa590e8ae925c0e80815516dbf41e7326
-sha256sum omega-src/seed/out/omc   # 62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b
+git -C omega-src checkout 91c83438daec0bdb88bf5c077cae10f3d15d365d
+sha256sum omega-src/seed/out/omc   # 2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5 at main 91c83438 (2026-10-31); 734f0a39... at the 2026-10-25 pin 55f9b0af
 examples/gate.sh omega-src/seed/out/omc
 ```
 
 It prints `PASS name` or `FAIL name: reason` per program and ends with
-`GATE PASS examples=98 pass=98 fail=0 omc=62775d2a...` (exit 0), `GATE FAIL ...` (exit 1), or a hash
+`GATE PASS examples=99 pass=99 fail=0 omc=2aec185d...` (exit 0), `GATE FAIL ...` (exit 1), or a hash
 refusal (exit 2). The `omega-encoding` skill (section 0 and section 13) records the observed results
 and the negative controls; [`examples/WOLFRAM.md`](examples/WOLFRAM.md) records the Wolfram checks of
 the arithmetic expectations.
@@ -78,5 +92,7 @@ the arithmetic expectations.
 **The agent that makes a change updates the guides.** If your work changes the Omega language, the compiler or its pin, build or gate commands, the encoder or bridge, repository ownership or status, or this harness, update the matching skill in the same piece of work. Then open a PR here with the evidence. If you can't, open an issue saying what is now stale. `omega-harness` section 6 has the full map of which change goes in which skill.
 
 Each skill names the omega-mv commit it was checked against and lists known disagreements. Historical sections retain their dated pins. `omega-encoding` section 0 adds scoped pins for the IR/wasm backend, the merged Omega 1.0 roadmap, and main `91b3c932` (compiler `189ada82…3b54`): executable contracts, expanded capacity and the f32 return fix. The batch has host evidence, not GPU qualification. When the compiler changes, recheck cited lines, rerun examples, then update pins. Do not edit old evidence. Contributions follow the [shared AIEN agent rules](https://www.aienos.com/agents/RULES.md).
+
+The [native GPU realization guidance](skills/omega-communication/SKILL.md#native-gpu-realization-records-2026-10-28) distinguishes quantization indexes, canonical artifact identity, session residency and independent qualification. It tracks the CUDApp #26 work without treating host fixtures or unmerged components as production admission.
 
 Written by Drake Stapleton with AIEN agents. Apache License 2.0.

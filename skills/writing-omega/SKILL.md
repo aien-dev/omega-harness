@@ -14,8 +14,8 @@ For compiler internals, register rules, wire formats and the reasons behind each
 
 | Pin | Value |
 |---|---|
-| omega-mv commit | `bf54b19fa590e8ae925c0e80815516dbf41e7326` |
-| compiler `seed/out/omc` | sha256 `62775d2a391cfef7cde64e387655caa9809a267093112910ec76bfa568f3712b` |
+| omega-mv commit | `91c83438daec0bdb88bf5c077cae10f3d15d365d` |
+| compiler `seed/out/omc` | sha256 `2aec185d4ed6d7a6a5779ed656b4e56904742bde5551b02893fb5f73916ad8d5` |
 | language reference | `docs/one_layer/OMEGESE.md` at that commit |
 | host | Linux AArch64 only; omc writes a static AArch64 Linux ELF |
 
@@ -26,7 +26,7 @@ decides; this guide records the known disagreements.
 
 ```sh
 git clone https://github.com/aien-dev/omega-mv && cd omega-mv
-git checkout bf54b19fa590e8ae925c0e80815516dbf41e7326
+git checkout 91c83438daec0bdb88bf5c077cae10f3d15d365d
 sha256sum seed/out/omc      # must print the pinned hash
 sh seed/omega-from-seed.sh  # optional: rebuild omc from the 408-byte loader
 seed/out/omc < prog.om > prog; echo "compile $?"
@@ -313,17 +313,20 @@ with its exact stderr line in the matching `.expect`, except 24, which needs a g
 | 22 | a text escape other than `\n \t \\ \"` | `err22_text_escape` | build other bytes with `put` |
 | 23 | array or pool size limit | `err23_size` | smaller arrays (section 8 limits) |
 | 24 | a conditional branch farther than 1 MiB of code | generated, below | move long bodies into functions |
-| 25, 26 | never emitted at the pin | none | none |
+| 25 | unknown `target` name, or an AArch64-only path on another target | `err25_target` | omit `target` for AArch64, or name a target the unit fits (`target x86linux` with `fn main` compiles; `target x86efi` with the same unit is error 25) |
+| 26 | never emitted at the pin | none | none |
 | 27 | OM-2 `fresh` element read before it is written | `err27_fresh` | `put` every element before the `get` |
 | 28 | OM-2 `seal` outside the constructor | `err28_seal` | `seal` only as the whole body of `fn NAMEmk ... to NAME` |
 | 29 | OM-2 `layout` field past the size or overlapping | `err29_layout` | keep every field inside SIZE and apart |
 | 30 | OM-2 contract clause not allowed | `err30_contract` | integer words on parameters only (and `result` in `ensures`); no calls, floats or host words |
 
-How the emitted set was established at the pin: in `seed/omc/omc.om`, `fn fail` (line 293) writes
-the stderr line and exits with the code (`exit int code`, line 322). The only other exits are
-`exit int 0` and `exit 0`, so every refusal goes through `fail`. Its callers pass the literals 1..24
+How the emitted set was established at the pin: in `seed/omc/omc.om`, `fn fail` (line 324) writes
+the stderr line and exits with the code (`exit int code`, line 356). The only other exits are
+`exit int 0` and `exit 0`, so every refusal goes through `fail`. Its callers pass the literals 1..25
 and 27..30, or forward a literal 3, 4, 6, 8, 13 or 16 through `lenval`, `nfail` and `unkfail`. No
-caller passes 25 or 26, so those two codes are never emitted. A trap inside omc itself would exit
+caller passes 26, so that code is never emitted (the registry `seed/omc/error-codes.reg` lists it as
+"no emitting site"). Code 25 comes from the target checks (`fail 25` in `fn emit` and six other
+sites). A trap inside omc itself would exit
 100 + N, which is not an error code.
 
 Error 24 needs more than 1 MiB of code inside one loop. This program, with 270000 copies of the
