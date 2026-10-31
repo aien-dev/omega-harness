@@ -115,6 +115,73 @@ say so and stop rather than estimating.
   Source merge status does not establish browser deployment.
 - No outside dependency is adopted silently (Drake, 2026-10-25). When the work needs one, code it in seeded Omega and route any conversion through `aien-dev/omega-bridge` — which, per `docs/CAPABILITIES.md` and `docs/NATIVE-ABI.md`, emits checked C and Python from a bounded `.om` subset and lets foreign callers call compiled Omega units. It does **not** import arbitrary C or Python (`Python/C input conversion is not implemented`), so an existing host implementation cannot be pulled in; a missing converter is a concrete extension proposal, not an assumption. A host binary, library or language runtime that remains in the build or production path gets its exact version, what it does for us, and the Omega replacement recorded next to the artifact. Verification oracles are exempt: the pinned compiler, QEMU/OVMF and read-only checkers (mtools, sgdisk, fsck.vfat, git, gh) stay in use.
 
+### Pending independent GPU driver host slice
+
+`aien-dev/omega-gpu-driver` [draft #6](https://github.com/aien-dev/omega-gpu-driver/pull/6),
+stacked on drafts #4/#3, has candidate source `95383da4789556c9ca09befb9c6ab788e4e25d79`
+(2026-10-28). It remains pending, not main, qualified or deployed. Its compiler is specifically
+`omega-mv@397e67040fb74853c6814097fe02ae4e1ebd6f66` (draft #890 atop #878),
+omc sha256 `bcfa582892afca8f65e551fe56867d918d86e84540c7381be8fa9ef18d0cf0f6`,
+not the different compiler candidate in section 3. Protocol authority is NVIDIA
+`open-gpu-kernel-modules@20e4e6e19cc26ba47b5cbe23130a396be100c427` (580.173.02);
+the independent boot-image oracle is
+`aienux@a108b1144a064aa7b824374a622d627c6ba91fd1` (#463). This deliberately corrects
+the old `c5bb3a4b` oracle's common-mode GB10B COT bug: the vendor GB10B MCTP HAL
+returns 1, not SOM|EOM `0xc0000000`. The old-value mutant now fails exact parity.
+Do not treat the former matching C/Omega bytes as proof of the corrected header.
+
+Seeded `.om` now encodes the complete bounded boot arena/COT and non-CC RPC frames,
+boot/guest/static handshake, RM allocation/control/free and timeout/error/sequencer suspension.
+Reuse `gsp/sysinfo.om` and `chan/params.om`; do not duplicate their encoders.
+`gsp/owned.om` stages complete arena bytes through an owned checked map handle and binds
+uncertain boot completion to retention of the matching published backing. It is not a real
+queue publisher, memory fence, firmware authenticator or hardware RPC endpoint.
+
+At the former `b1c8e6e` candidate all 27 original host runners were exercised. At the
+new candidate all 29 `tests/*.sh` host runners have final exit0 with the pinned compiler
+and corrected clean C reference. Initial failures are retained: a redundant profile guard
+required updating the behavior mutant, and the private window simulator needed the pinned
+`build/omc` link; the affected gates were rerun successfully. See
+`tests/gsp-qualification-host-receipt.txt` for exact commands, outcomes and assembly/binary
+hashes. All 13 arena mutants (including old MCTP) and six compiling SEC2 mutants were detected.
+GB20B has 15 passing simulator cases, including wrong profile/package, secure-boot/response
+timeouts, bad envelope, firmware error, pointer failure and delayed success.
+GCC 13.3.0-6ubuntu2~24.04.1 and Python 3.12.3 are verification-only dependencies.
+
+`gsp/arena.om` profile 2 and `gsp/sec2.om` implement the vendor-selected GB20B cold-production
+COTv2 candidate: gb20y and distinct GB20B boot/FMC source profiles, zero FRTS fields,
+FWSEC scratch wait and MSGQ command-response validation before common GSP completion.
+Package mismatches refuse before register effects. `gpchip` remains GB10B-only transport
+admission; `gpclass` classification is not admission. Existing `fwprep` still extracts GB10B,
+and caller package assertions are not firmware authentication. The GB20B fixture is synthetic,
+not an authenticated extracted package. Read the candidate's `GB20B.md` before composing it.
+Vendor secure-boot timing requires a native monotonic timer policy, not a simulator poll count.
+
+Mapped queue cursors use aligned `mapget`/`mapset`; the pinned compiler brackets each with
+DSB SY. That is process instruction ordering only, not device coherency, cache maintenance or
+`dma_wmb`/`dma_rmb`. Channels follow prepared (`chprep`) -> RM-scheduled (submit-ready) ->
+disabled (prepared); hardware sequencer dispatch is refused whole before any effect.
+Completion-semaphore progress is not engine idle; WFI/membar is a separate absent effect.
+A private implementation outside this public repository is a separate track and is not part
+of this candidate.
+
+Hardware and kernel execution remain NOT_RUN. Preserve production refusal until measured device
+identity, owned live queue transport, release/acquire/coherency, queue notification, sequencer
+dispatch, channel scheduling, completion-semaphore progress and fault/drain idle proof exist.
+Published or quarantined backing is retained, never automatically reclaimed after a timeout.
+The Linux-process ELF/VFIO compiler profile can remove NVIDIA modules only while retaining Linux
+VFIO/IOMMU services; it is not an Omega kernel module or a completed kernel replacement.
+A separate reviewed kernel execution/effects profile, typed DMA/MMIO spans and deferred IRQ
+transport are required for kernel execution. No device/VFIO open, service/module change,
+authorization, gate or trust change was part of this host work.
+
+`build.sh` still builds only `w0`/`fwprep`, not a composed `ogd boot/hello/exec`.
+The native Aienux loader/ABI, profile-bound MMIO/DMA/IRQ capabilities, visibility fence,
+uncached completion and quiesce/bus-master-off before SMMU reclaim remain absent effects.
+The documented minimal W0 identity request is unexecuted and requires current operator
+authorization: VFIO open/release can implicitly FLR/SBR even for read-only BOOT_42.
+Never infer a hardware window or service-stop permission from these host receipts.
+
 ## 3. Compile, execute, challenge
 
 Use the target repository's documented commands. A host-only seed workflow on AArch64 Linux, in a disposable clone pinned to an exact revision, looks like this:
