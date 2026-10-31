@@ -662,6 +662,18 @@ Historical note: up to omc `2c824805…` (omega-mv `e5b32567`, the omega MCP pin
 the wrong word: `pwrite` from a `text` was error 20 and `pread` into a `text` compiled and returned
 `-EFAULT` at run time. Code written for that pin copied a text into a `new` array before `pwrite`.
 
+**x86efi firmware boundary word `efi` (draft, pending merge of [omega-mv#981](https://github.com/aien-dev/omega-mv/pull/981), stacked on #977).**
+Under `target x86efi` the word is `st = efi OP ARG A OFF N` with a `ulong` result; errors have
+bit 63 set and a code in the low byte. OPs 0..10: info, key, stall, gop blt, time, rng, recv, tx,
+net up, pointer, clock. #981 adds OP 11, the file word, for the firmware Allen's self-install:
+`ARG` low byte = sub-op, next byte = volume index k. Sub 0 counts the Simple-File-System volumes
+(at most 64) and finds the one this image was loaded from, result `count | boot << 8` (boot 255
+when none). Sub 1 reads `\EFI\BOOT\BOOTX64.EFI` from volume k into `A[OFF..OFF+N)` and returns the
+byte count; a file larger than N is refused (code 24). Sub 2 overwrites that file on volume k with
+`A[OFF..OFF+N)`; the file must already exist (code 26) and the result is the bytes written. Codes
+15..31; file and root handles close on every path. Exercised under QEMU/OVMF with two usb-storage
+disks (omc `ca021340…`); physical hardware NOT_RUN.
+
 - Types: `fd`, flags, modes, pids are `int`; offsets, counts, capacities `ulong`; file positions and
   intervals `long`; buffers are `uchar` arrays. Every result is `long`.
 - A result is a **count or minus the Linux errno**. `read` may return fewer bytes than asked, 0 at
